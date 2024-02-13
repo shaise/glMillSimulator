@@ -1,4 +1,4 @@
-#include "MillObject.h"
+#include "MillPathSegment.h"
 #include <GL/glut.h>
 #include "SimShapes.h"
 
@@ -8,7 +8,7 @@
 #define SET_TRIPLE_OFFS(var, idx, offs, x, y, z) {var[idx] = x + offs; var[idx+1] = y + offs; var[idx+2] = z + offs;}
 
 namespace MillSim {
-    MillObject::MillObject(EndMill *endmill, MillMotion* from, MillMotion* to)
+    MillPathSegment::MillPathSegment(EndMill *endmill, MillMotion* from, MillMotion* to)
     {
         float diffx = to->x - from->x;
         float diffy = to->y - from->y;
@@ -21,16 +21,16 @@ namespace MillSim {
             GeneratePath(from, to);
     }
 
-    MillObject::~MillObject()
+    MillPathSegment::~MillPathSegment()
     {
         glDeleteLists(mDisplayListId, 1);
     }
 
-    void MillObject::render() {
+    void MillPathSegment::render() {
         glCallList(mDisplayListId);
     }
 
-    void MillObject::GenerateCylinder(MillMotion* from, MillMotion* to)
+    void MillPathSegment::GenerateCylinder(MillMotion* from, MillMotion* to)
     {
         GLuint id = glGenLists(1);
         glNewList(id, GL_COMPILE);
@@ -43,7 +43,7 @@ namespace MillSim {
         mDisplayListId = id;
     }
 
-    void MillObject::GeneratePath(MillMotion* from, MillMotion* to)
+    void MillPathSegment::GeneratePath(MillMotion* from, MillMotion* to)
     {
         int nFullPoints = PROFILE_BUFFER_POINTS(mEndmill->mNPoints);
         GLuint id = glGenLists(1);

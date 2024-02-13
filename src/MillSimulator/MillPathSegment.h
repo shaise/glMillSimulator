@@ -7,7 +7,7 @@
 
 namespace MillSim {
 
-    class MillObject
+    class MillPathSegment
     {
     public:        
         /// <summary>
@@ -16,8 +16,8 @@ namespace MillSim {
         /// <param name="diam">Mill diameter</param>
         /// <param name="from">Start point</param>
         /// <param name="to">End point</param>
-        MillObject(EndMill *endmill, MillMotion *from, MillMotion *to);
-        virtual ~MillObject();
+        MillPathSegment(EndMill *endmill, MillMotion *from, MillMotion *to);
+        virtual ~MillPathSegment();
 
 
         /// Calls the display list.
