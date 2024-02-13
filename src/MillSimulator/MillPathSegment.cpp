@@ -15,10 +15,14 @@ namespace MillSim {
         mXYDistance = sqrtf(diffx * diffx + diffy * diffy);
         mXYAngle = atan2f(diffy, diffx) * 180.0f / PI;
         mEndmill = endmill;
-        if (IsVerticalMotion(from, to))
+        if (IsVerticalMotion(from, to)) {
             GenerateCylinder(from, to);
-        else
+            mTarget = *to;
+        }
+        else {
             GeneratePath(from, to);
+            mTarget = *from;
+        }
     }
 
     MillPathSegment::~MillPathSegment()
@@ -27,7 +31,10 @@ namespace MillSim {
     }
 
     void MillPathSegment::render() {
+        glPushMatrix();
+        glTranslatef(mTarget.x, mTarget.y, mTarget.z);
         glCallList(mDisplayListId);
+        glPopMatrix();
     }
 
     void MillPathSegment::GenerateCylinder(MillMotion* from, MillMotion* to)
@@ -36,7 +43,7 @@ namespace MillSim {
         glNewList(id, GL_COMPILE);
         glPushMatrix();
         //glLoadIdentity();
-        glTranslatef(to->x, to->y, to->z);
+        //glTranslatef(to->x, to->y, to->z);
         RotateProfile(mEndmill->mProfPoints, mEndmill->mNPoints, 0, 0, mEndmill->mNSlices, false);
         //SolidCylinder(diam / 2, 4, 16, 1);
         glPopMatrix();
@@ -51,7 +58,7 @@ namespace MillSim {
         glNewList(id, GL_COMPILE);
         glPushMatrix();
         //glLoadIdentity();
-        glTranslatef(from->x, from->y, from->z);
+        //glTranslatef(from->x, from->y, from->z);
         glRotatef(mXYAngle, 0, 0, 1);
         ExtrudeProfile(mEndmill->mProfPoints, nFullPoints, mXYDistance, 0);
         TesselateProfile(mEndmill->mProfPoints, nFullPoints, 0, 0);

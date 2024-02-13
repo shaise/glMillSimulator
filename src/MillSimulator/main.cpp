@@ -38,6 +38,13 @@ int curMillOpIx = 0;
 std::vector<MillSim::MillPathSegment*> MillPathSegments;
 
 MillMotion flatMillMotions[] = {
+    {0.4f, 0.4f, 1},
+    {0.4f, 0.4f, 0.1f},
+    {0.4f, 0.4f, 1},
+    {-0.4f, -0.4f, 1},
+    {-0.4f, -0.4f, 0.1f},
+    {-0.4f, -0.4f, 1},
+
     {1.5f, 1.5f, 1},
     { 1.5f, 1.5f, 0.15f},
     {1.5f, -1.5f, 0.15f},
@@ -344,6 +351,8 @@ void display()
 
     int len = (int)MillPathSegments.size();
 
+    GlsimToolStep2();
+
     for (int i = 0; i < len; i++)
     {
         MillSim::MillPathSegment* p = MillPathSegments.at(i);
@@ -367,7 +376,7 @@ void display()
     GlsimRenderStock();
     gStockObject->render();
     GlsimRenderTools();
-    for (int i = 1; i < len; i++)
+    for (int i = 0; i < len; i++)
         MillPathSegments.at(i)->render();
 
     GlsimEnd();
@@ -457,7 +466,7 @@ const char* fragmentShaderSource = "#version 330 core\n"
 void init()
 {
    // gray background
-    glClearColor(0.9f, 0.9f, 0.9f, 1.0f);
+    glClearColor(0.9f, 0.9f, 0.5f, 1.0f);
 
     // Enable two OpenGL lights
     GLfloat light_diffuse[] = { 1.0f,  1.0f,  1.0f,  1.0f };  // white diffuse light

@@ -34,7 +34,7 @@ namespace MillSim {
          unsigned int mDisplayListId;
          float mXYDistance;
          float mXYAngle;
-
+         MillMotion mTarget;
     };
 }
 
