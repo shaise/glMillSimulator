@@ -5,7 +5,7 @@
 // simulating cnc mill operation using Sequenced Convex Subtraction (SCS) by Nigel Stewart et al.
 //
 
-#include "MillObject.h"
+#include "MillPathSegment.h"
 #include "StockObject.h"
 #include "MillOperation.h"
 #include "SimShapes.h"
@@ -35,7 +35,7 @@ int gToolId = -1;
 int curMillOpIx = 0;
 #define STOCK_HEIGHT 0.2f
 
-std::vector<MillSim::MillObject*> millObjects;
+std::vector<MillSim::MillPathSegment*> MillPathSegments;
 
 MillMotion flatMillMotions[] = {
     {1.5f, 1.5f, 1},
@@ -120,8 +120,8 @@ MillMotion ballMillMotions[] = {
 #define NUM_BALL_MOTIONS (sizeof(ballMillMotions) / sizeof(MillMotion))
 
 EndMillFlat endMillFlat01(0.1f, 16);
-EndMillTaper endMillTaper02(0.1f, 16, 90, 0.02);
-EndMillBall endMillBall03(0.1f, 16, 4, 0.02);
+EndMillTaper endMillTaper02(0.1f, 16, 90, 0.02f);
+EndMillBall endMillBall03(0.1f, 16, 4, 0.02f);
 
 MillOperation millOperations[] = {
     {&endMillFlat01, {0, 0, 1}, flatMillMotions, NUM_FLAT_MOTIONS },
@@ -133,13 +133,13 @@ MillOperation millOperations[] = {
 MillOperation* curMillOperation;
 MillSim::StockObject* gStockObject;
 
-void clearMillObjects() {
-    for (std::vector<MillSim::MillObject*>::const_iterator i = millObjects.begin(); i != millObjects.end(); ++i) {
-        MillSim::MillObject* p = *i;
+void clearMillPathSegments() {
+    for (std::vector<MillSim::MillPathSegment*>::const_iterator i = MillPathSegments.begin(); i != MillPathSegments.end(); ++i) {
+        MillSim::MillPathSegment* p = *i;
         delete p;
     }
     
-    millObjects.clear();
+    MillPathSegments.clear();
 }
 
 float random(float from, float to)
@@ -152,7 +152,7 @@ float random(float from, float to)
 void setMill(bool isClear) {
     if (isClear)
     {
-        clearMillObjects();
+        clearMillPathSegments();
         curMillOpIx = 0;
         curMillOperation = &millOperations[curMillOpIx];
     }
@@ -220,7 +220,7 @@ void SimNext()
         gDestPos.z = gCurPos.z + gMotionStep.z;
         gIsInStock = !((curMotion->z > STOCK_HEIGHT && gCurPos.z > STOCK_HEIGHT) || ((gDestPos.z > gCurPos.z) && IsVerticalMotion(&gCurPos , &gDestPos)));
         if (gIsInStock)
-            millObjects.push_back(new MillSim::MillObject(curMillOperation->endmill, &gCurPos, &gDestPos));
+            MillPathSegments.push_back(new MillSim::MillPathSegment(curMillOperation->endmill, &gCurPos, &gDestPos));
         gPathStep++;
     }
     else
@@ -231,10 +231,10 @@ void SimNext()
         gDestPos.z = gCurPos.z + gMotionStep.z * gcurstep;
         if (gIsInStock)
         {
-            MillSim::MillObject* p = millObjects.back();
-            millObjects.pop_back();
+            MillSim::MillPathSegment* p = MillPathSegments.back();
+            MillPathSegments.pop_back();
             delete(p);
-            millObjects.push_back(new MillSim::MillObject(curMillOperation->endmill, &gCurPos, &gDestPos));
+            MillPathSegments.push_back(new MillSim::MillPathSegment(curMillOperation->endmill, &gCurPos, &gDestPos));
         }
     }
 }
@@ -342,11 +342,11 @@ void display()
     GlsimStart();
     gStockObject->render();
 
-    int len = millObjects.size();
+    int len = (int)MillPathSegments.size();
 
     for (int i = 0; i < len; i++)
     {
-        MillSim::MillObject* p = millObjects.at(i);
+        MillSim::MillPathSegment* p = MillPathSegments.at(i);
         GlsimToolStep1();
         p->render();
         GlsimToolStep2();
@@ -355,7 +355,7 @@ void display()
 
     for (int i = len - 1; i >= 0 ; i--)
     {
-        MillSim::MillObject* p = millObjects.at(i);
+        MillSim::MillPathSegment* p = MillPathSegments.at(i);
         GlsimToolStep1();
         p->render();
         GlsimToolStep2();
@@ -368,7 +368,7 @@ void display()
     gStockObject->render();
     GlsimRenderTools();
     for (int i = 1; i < len; i++)
-        millObjects.at(i)->render();
+        MillPathSegments.at(i)->render();
 
     GlsimEnd();
     

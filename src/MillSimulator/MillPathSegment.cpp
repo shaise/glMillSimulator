@@ -35,6 +35,7 @@ namespace MillSim {
         GLuint id = glGenLists(1);
         glNewList(id, GL_COMPILE);
         glPushMatrix();
+        //glLoadIdentity();
         glTranslatef(to->x, to->y, to->z);
         RotateProfile(mEndmill->mProfPoints, mEndmill->mNPoints, 0, 0, mEndmill->mNSlices, false);
         //SolidCylinder(diam / 2, 4, 16, 1);
@@ -49,6 +50,7 @@ namespace MillSim {
         GLuint id = glGenLists(1);
         glNewList(id, GL_COMPILE);
         glPushMatrix();
+        //glLoadIdentity();
         glTranslatef(from->x, from->y, from->z);
         glRotatef(mXYAngle, 0, 0, 1);
         ExtrudeProfile(mEndmill->mProfPoints, nFullPoints, mXYDistance, 0);
