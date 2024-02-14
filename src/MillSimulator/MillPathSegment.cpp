@@ -15,59 +15,42 @@ namespace MillSim {
         mXYDistance = sqrtf(diffx * diffx + diffy * diffy);
         mXYAngle = atan2f(diffy, diffx) * 180.0f / PI;
         mEndmill = endmill;
+        mDisplayListId = 0;
         if (IsVerticalMotion(from, to)) {
-            GenerateCylinder(from, to);
+            mMotionType = MTVertical;
             mTarget = *to;
+            numRenderSteps = 1;
         }
         else {
-            GeneratePath(from, to);
+            mMotionType = MTHorizontal;
             mTarget = *from;
+            numRenderSteps = 1;
         }
     }
 
     MillPathSegment::~MillPathSegment()
     {
-        glDeleteLists(mDisplayListId, 1);
+        if (mDisplayListId > 0)
+            glDeleteLists(mDisplayListId, 1);
     }
 
     void MillPathSegment::render() {
         glPushMatrix();
         glTranslatef(mTarget.x, mTarget.y, mTarget.z);
-        glCallList(mDisplayListId);
+        if (mMotionType == MTVertical)
+            glCallList(mEndmill->mToolDisplayId);
+        else
+        {
+            glRotatef(mXYAngle, 0, 0, 1);
+            glPushMatrix();
+            glScalef(mXYDistance, 1, 1);
+            glCallList(mEndmill->mPathDisplayId);
+            glPopMatrix();
+            glTranslatef(mXYDistance, 0, 0);
+            glCallList(mEndmill->mHToolDisplayId);
+        }
+        //glCallList(mDisplayListId);
         glPopMatrix();
     }
-
-    void MillPathSegment::GenerateCylinder(MillMotion* from, MillMotion* to)
-    {
-        GLuint id = glGenLists(1);
-        glNewList(id, GL_COMPILE);
-        glPushMatrix();
-        //glLoadIdentity();
-        //glTranslatef(to->x, to->y, to->z);
-        RotateProfile(mEndmill->mProfPoints, mEndmill->mNPoints, 0, 0, mEndmill->mNSlices, false);
-        //SolidCylinder(diam / 2, 4, 16, 1);
-        glPopMatrix();
-        glEndList();
-        mDisplayListId = id;
-    }
-
-    void MillPathSegment::GeneratePath(MillMotion* from, MillMotion* to)
-    {
-        int nFullPoints = PROFILE_BUFFER_POINTS(mEndmill->mNPoints);
-        GLuint id = glGenLists(1);
-        glNewList(id, GL_COMPILE);
-        glPushMatrix();
-        //glLoadIdentity();
-        //glTranslatef(from->x, from->y, from->z);
-        glRotatef(mXYAngle, 0, 0, 1);
-        ExtrudeProfile(mEndmill->mProfPoints, nFullPoints, mXYDistance, 0);
-        TesselateProfile(mEndmill->mProfPoints, nFullPoints, 0, 0);
-        RotateProfile(mEndmill->mProfPoints, mEndmill->mNPoints, mXYDistance, 0, mEndmill->mNSlices / 2, true);
-        glPopMatrix();
-        glEndList();
-
-        mDisplayListId = id;
-    }
-
 
 }

@@ -28,6 +28,7 @@ EndMillBall::EndMillBall(float radius, int nslices, int nSections, float flatRad
 	if (flatRadius > 0)
 		SET_DUAL(mProfPoints, idx, 0, 0);
 	MirrorPointBuffer();
+	//GenerateDisplayLists();
 }
 
 EndMillBall::~EndMillBall()

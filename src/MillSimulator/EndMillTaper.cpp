@@ -22,4 +22,5 @@ EndMillTaper::EndMillTaper(float radius, int nslices, float taperAngle, float fl
 	}
 	mProfPoints = _profVerts;
 	MirrorPointBuffer();
+	//GenerateDisplayLists();
 }

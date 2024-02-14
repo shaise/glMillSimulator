@@ -13,11 +13,15 @@ public:
 	float mRadius;
 	int mNPoints = 0;
 	int mNSlices;
+	unsigned int mPathDisplayId;
+	unsigned int mHToolDisplayId;
+	unsigned int mToolDisplayId;
 
 public:
 	EndMill(float radius, int nslices);
-	virtual ~EndMill() {};
-
+	virtual ~EndMill();
+	void GenerateDisplayLists();
+	
 protected:
 	void MirrorPointBuffer();
 };

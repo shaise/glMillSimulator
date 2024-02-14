@@ -7,6 +7,13 @@
 
 namespace MillSim {
 
+    enum MotionType
+    {
+        MTVertical = 0,
+        MTHorizontal,
+        MTCurved
+    };
+
     class MillPathSegment
     {
     public:        
@@ -25,16 +32,16 @@ namespace MillSim {
 
     public:
         EndMill* mEndmill = nullptr;
+        int numRenderSteps;
 
     protected:
-        void GenerateCylinder(MillMotion* from, MillMotion* to);
-        void GeneratePath(MillMotion* from, MillMotion* to);
 
     protected:
          unsigned int mDisplayListId;
          float mXYDistance;
          float mXYAngle;
          MillMotion mTarget;
+         MotionType mMotionType;
     };
 }
 

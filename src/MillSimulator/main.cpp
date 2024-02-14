@@ -463,6 +463,12 @@ const char* fragmentShaderSource = "#version 330 core\n"
     "   FragColor = ourColor;\n"
     "}\n\0";
 
+void timer(int) {
+    glutPostRedisplay();
+    glutTimerFunc(1000 / 60, timer, 0);
+    idle();
+}
+
 void init()
 {
    // gray background
@@ -491,8 +497,12 @@ void init()
     gluPerspective(40.0, 4.0/3.0, 1.0, 20.0);
     glMatrixMode(GL_MODELVIEW);
     
-    // setup primitives
+    // setup tools ans stock
     gStockObject = new MillSim::StockObject(-2, -2, 0.0001f, 3.5, 3.5, 0.2f);
+    endMillFlat01.GenerateDisplayLists();
+    endMillTaper02.GenerateDisplayLists();
+    endMillBall03.GenerateDisplayLists();
+
     setMill(true);
 }
 
@@ -506,8 +516,9 @@ int main(int argc, char **argv)
     glutDisplayFunc(display);
     glutKeyboardFunc(key);
 
-    glutIdleFunc(idle);
+    //glutIdleFunc(idle);
     init();
+    timer(0);
     glutMainLoop();
 
     return 0;

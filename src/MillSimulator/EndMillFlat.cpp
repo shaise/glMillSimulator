@@ -10,4 +10,5 @@ EndMillFlat::EndMillFlat(float radius, int nslices) : EndMill(radius, nslices)
 	mNPoints = 3;
 	mProfPoints = _profVerts;
 	MirrorPointBuffer();
+	//GenerateDisplayLists();
 }
