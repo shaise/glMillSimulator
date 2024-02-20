@@ -19,8 +19,6 @@ struct MillMotion
 constexpr auto EPSILON = 0.00001f;
 #define EQ_FLOAT(x,y) (fabs((x) - (y)) < EPSILON)
 
-bool IsVerticalMotion(MillMotion* m1, MillMotion* m2);
-
 class MillOperation
 {
 public:

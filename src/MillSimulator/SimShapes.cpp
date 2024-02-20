@@ -162,11 +162,12 @@ void RotateProfile(float* profPoints, int nPoints, float distance, float deltaHe
     free(vertices);
 }
 
-void ExtrudeProfile(float* profPoints, int nPoints, float distance, float deltaHeight)
+// extrude profile parallel to its plane
+void ExtrudeProfilePar(float* profPoints, int nPoints, float distance, float deltaHeight)
 {
     float vertices[3 * 4];
     //float normals[3 * 4];
-    
+
     glEnableClientState(GL_VERTEX_ARRAY);
     //glEnableClientState(GL_NORMAL_ARRAY);
     glVertexPointer(3, GL_FLOAT, 0, vertices);
@@ -198,38 +199,100 @@ void ExtrudeProfile(float* profPoints, int nPoints, float distance, float deltaH
     glDisableClientState(GL_VERTEX_ARRAY);
 }
 
+
+void FillNgon(float* vertices, int nPoints, float normX, float normY, float normZ)
+{
+    glEnableClientState(GL_VERTEX_ARRAY);
+    glVertexPointer(3, GL_FLOAT, 0, vertices);
+    glNormal3f(normX, normY, normZ);
+    glDrawArrays(GL_TRIANGLE_FAN, 0, nPoints);
+    glDisableClientState(GL_VERTEX_ARRAY);
+}
+
+// extrude profile radially 
+void ExtrudeProfileRad(float* profPoints, int nPoints, float radius, float angleRad, float deltaHeight, bool capStart, bool capEnd)
+{
+    int nverts = nPoints * 3;
+    float vertices[3 * 4];
+    float* capStartVerts = nullptr, *capEndVerts = nullptr;
+    if (capStart || capEnd)
+    {
+        capStartVerts = (float*)malloc(2 * nverts * sizeof(float));
+        if (capStartVerts == nullptr)
+            return;
+    }
+    if (capEnd)
+        capEndVerts = capStartVerts + nverts;
+    int capStartIdx = 0;
+    int capEndIdx = nverts - 3;
+
+    glEnableClientState(GL_VERTEX_ARRAY);
+    glVertexPointer(3, GL_FLOAT, 0, vertices);
+    int nPointsD = nPoints * 2;
+    float cosAng = cosf(angleRad);
+    float sinAng = sinf(angleRad);
+    for (int i = 0; i < nPointsD; i += 2)
+    {
+        int idx = 0;
+        float y1 = profPoints[i] + radius;
+        float z1 = profPoints[i + 1];
+        int i2 = (i + 2) % nPointsD;
+        float y2 = profPoints[i2] + radius;
+        float z2 = profPoints[i2 + 1];
+
+        // start verts
+        SET_TRIPLE(vertices, idx, 0, y1, z1);
+        SET_TRIPLE(vertices, idx, 0, y2, z2);
+        if (capStart)
+            SET_TRIPLE(capStartVerts, capStartIdx, 0, y1, z1);
+
+        float x1 = y1 * sinAng;
+        float x2 = y2 * sinAng;
+        y1 *= cosAng;
+        y2 *= cosAng;
+        z1 += deltaHeight;
+        z2 += deltaHeight;
+        SET_TRIPLE(vertices, idx, x1, y1, z1);
+        SET_TRIPLE(vertices, idx, x2, y2, z2);
+        if (capEnd)
+        {
+            SET_TRIPLE(capEndVerts, capEndIdx, x1, y1, z1);
+            capEndIdx -= 6; // end cap winding reversed so vert order is reversed
+        }
+
+        // normals
+        float ydiff = y2 - y1;
+        float zdiff = z2 - z1;
+        float len = sqrtf(ydiff * ydiff + zdiff * zdiff);
+        float ny = -zdiff / len;
+        float nz = ydiff / len;
+        float nx = -sinAng * ny;
+        ny *= cosAng;
+        glNormal3f(nx, ny, nz);
+        glDrawElements(GL_TRIANGLES, 6, GL_UNSIGNED_SHORT, quadIndices);
+    }
+    glDisableClientState(GL_VERTEX_ARRAY);
+    if (capStart)
+        FillNgon(capStartVerts, nPoints, -1, 0, 0);
+    if (capEnd)
+        FillNgon(capEndVerts, nPoints, cosAng, -sinAng, 0);
+}
+
 void TesselateProfile(float* profPoints, int nPoints, float distance, float deltaHeight)
 {
     int nverts = nPoints * 3;
     float* vertices = (float*)malloc(nverts * sizeof(float));
     if (vertices == nullptr)
         return;
-    GLshort *indices = (GLshort*)malloc(nPoints * sizeof(GLshort));
-    if (indices == nullptr)
-    {
-        free(vertices);
-        return;
-    }
 
     int idx = 0;
     for (int i = 0; i < nPoints; i ++)
     {
-        indices[i] = i;
         int i2 = i * 2;
         SET_TRIPLE(vertices, idx, distance, profPoints[i2], profPoints[i2 + 1]);
     }
- 
-    glEnableClientState(GL_VERTEX_ARRAY);
-    glVertexPointer(3, GL_FLOAT, 0, vertices);
-    if (distance > 0.0)
-        glNormal3f(1, 0, 0);
-    else
-        glNormal3f(-1, 0, 0);
-    //glDrawArrays(GL_TRIANGLE_FAN, 0, nverts);
-    glDrawElements(GL_TRIANGLE_FAN, nPoints, GL_UNSIGNED_SHORT, indices);
-    glDisableClientState(GL_VERTEX_ARRAY);
-
-    free(indices);
+    float normX = (distance > 0.0) ? 1 : -1;
+    FillNgon(vertices, nPoints, normX, 0, 0);
     free(vertices);
 }
 

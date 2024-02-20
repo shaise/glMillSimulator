@@ -1,5 +1,5 @@
-#ifndef __flat_mill_primitive_h__
-#define __flat_mill_primitive_h__
+#ifndef __mill_path_segment_h__
+#define __mill_path_segment_h__
 
 
 #include "MillOperation.h"
@@ -13,6 +13,9 @@ namespace MillSim {
         MTHorizontal,
         MTCurved
     };
+
+    extern float resolution;
+
 
     class MillPathSegment
     {
@@ -29,17 +32,23 @@ namespace MillSim {
 
         /// Calls the display list.
         virtual void render();
+        virtual void render(int step);
 
     public:
         EndMill* mEndmill = nullptr;
         int numRenderSteps;
+        int numSimSteps;
 
     protected:
 
     protected:
          unsigned int mDisplayListId;
          float mXYDistance;
+         float mXYZDistance;
+         float mZDistance;
          float mXYAngle;
+         float mStartAng;
+         float mStepAng;
          MillMotion mTarget;
          MotionType mMotionType;
     };

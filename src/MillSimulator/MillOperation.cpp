@@ -1,10 +1,7 @@
 #include "MillOperation.h"
 #include "SimShapes.h"
+#include <cmath>
 
-bool IsVerticalMotion(MillMotion* m1, MillMotion* m2)
-{
-	return (m1->z != m2->z && EQ_FLOAT(m1->x, m2->x) && EQ_FLOAT(m1->y, m2->y));
-}
 
 void MillOperation::RenderTool()
 {

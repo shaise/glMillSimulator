@@ -21,7 +21,8 @@ public:
 	EndMill(float radius, int nslices);
 	virtual ~EndMill();
 	void GenerateDisplayLists();
-	
+	unsigned int GenerateArcSegmentDL(float radius, float angleRad, float zShift);
+
 protected:
 	void MirrorPointBuffer();
 };

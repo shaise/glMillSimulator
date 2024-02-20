@@ -334,6 +334,8 @@ void GlsimEnd(void)
     glDepthFunc(GL_LESS);
 }
 
+int nsegs = 0;
+
 void display()
 {
     glMatrixMode(GL_MODELVIEW);
@@ -397,6 +399,16 @@ void display()
         glDisable(GL_CULL_FACE);
     }
 
+    glPushMatrix();
+    glTranslatef(0, 0, 0.5);
+    for (int i = 0; i < nsegs; i++)
+    {
+        ExtrudeProfileRad(endMillTaper02.mProfPoints, PROFILE_BUFFER_POINTS(endMillTaper02.mNPoints), 1, 0.35, 0, true, true);
+        glRotatef(-20, 0, 0, 1);
+    }
+    glPopMatrix();
+
+
     renderTime = glutGet(GLUT_ELAPSED_TIME) - msec;
 
     ShowStats();
@@ -442,6 +454,10 @@ void key(unsigned char k, int, int) {
         break;
     case 's':
         simulate = !simulate;
+        break;
+    case 'i':
+        nsegs++;
+        break;
     default:
         break;
     }
@@ -465,7 +481,7 @@ const char* fragmentShaderSource = "#version 330 core\n"
 
 void timer(int) {
     glutPostRedisplay();
-    glutTimerFunc(1000 / 60, timer, 0);
+    glutTimerFunc(1000 / 100, timer, 0);
     idle();
 }
 
@@ -498,7 +514,8 @@ void init()
     glMatrixMode(GL_MODELVIEW);
     
     // setup tools ans stock
-    gStockObject = new MillSim::StockObject(-2, -2, 0.0001f, 3.5, 3.5, 0.2f);
+    //MillSim::resolution = 0.1;
+    gStockObject = new MillSim::StockObject(-2, -2, 0.0001f, 4, 4, 0.2f);
     endMillFlat01.GenerateDisplayLists();
     endMillTaper02.GenerateDisplayLists();
     endMillBall03.GenerateDisplayLists();
@@ -516,9 +533,9 @@ int main(int argc, char **argv)
     glutDisplayFunc(display);
     glutKeyboardFunc(key);
 
-    //glutIdleFunc(idle);
+    glutIdleFunc(idle);
     init();
-    timer(0);
+    //timer(0);
     glutMainLoop();
 
     return 0;

@@ -1,5 +1,5 @@
-#pragma once
-
+#ifndef __stock_object_h__
+#define __stock_object_h__
 namespace MillSim {
 
     class StockObject
@@ -27,3 +27,4 @@ namespace MillSim {
     };
 }
 
+#endif
