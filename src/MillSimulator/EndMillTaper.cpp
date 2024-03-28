@@ -5,7 +5,7 @@
 EndMillTaper::EndMillTaper(float radius, int nslices, float taperAngle, float flatRadius):
 	EndMill(radius, nslices)
 {
-	float ta = (float)tanf(taperAngle * PI / 360);
+	float ta = (float)tanf((float)(taperAngle * PI / 360));
 	float l1 = flatRadius / ta;
 	if (l1 < 0.0001)
 		l1 = 0;

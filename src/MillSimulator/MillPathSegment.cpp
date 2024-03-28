@@ -35,6 +35,7 @@ namespace MillSim {
         mXYAngle = atan2f(diffy, diffx) * 180.0f / PI;
         mEndmill = endmill;
         mDisplayListId = 0;
+        mStartAng = mStepAng = 0;
         if (IsArcMotion(to))
         {
             mMotionType = MTCurved;

@@ -16,8 +16,8 @@ EndMillBall::EndMillBall(float radius, int nslices, int nSections, float flatRad
 
 	float r2 = radius - flatRadius;
 	if (r2 < 0.0001)
-		r2 = 0.0001;
-	float astep =  PI / (2 * nSections);
+		r2 = 0.0001f;
+	float astep =  (float)(PI / (2 * nSections));
 	int idx = 0;
 	SET_DUAL(mProfPoints, idx, radius, MILL_HEIGHT);
 	SET_DUAL(mProfPoints, idx, radius, r2);
