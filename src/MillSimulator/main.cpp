@@ -225,7 +225,7 @@ void SimNext()
         gDestPos.x = gCurPos.x + gMotionStep.x;
         gDestPos.y = gCurPos.y + gMotionStep.y;
         gDestPos.z = gCurPos.z + gMotionStep.z;
-        gIsInStock = !((curMotion->z > STOCK_HEIGHT && gCurPos.z > STOCK_HEIGHT) || ((gDestPos.z > gCurPos.z) && IsVerticalMotion(&gCurPos , &gDestPos)));
+        gIsInStock = !((curMotion->z > STOCK_HEIGHT && gCurPos.z > STOCK_HEIGHT) || ((gDestPos.z > gCurPos.z) && MillSim::IsVerticalMotion(&gCurPos , &gDestPos)));
         if (gIsInStock)
             MillPathSegments.push_back(new MillSim::MillPathSegment(curMillOperation->endmill, &gCurPos, &gDestPos));
         gPathStep++;

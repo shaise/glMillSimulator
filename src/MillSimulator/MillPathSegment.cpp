@@ -9,18 +9,19 @@
 #define MAX_SEG_DEG (PI / 4.0f)   // 45 deg
 #define NIN_SEG_DEG (PI / 90.0f)  // 2 deg
 
-bool IsVerticalMotion(MillMotion* m1, MillMotion* m2)
-{
-    return (m1->z != m2->z && EQ_FLOAT(m1->x, m2->x) && EQ_FLOAT(m1->y, m2->y));
-}
-
-bool IsArcMotion(MillMotion* m)
-{
-    return fabs(m->i > EPSILON) || fabs(m->j) > EPSILON;
-}
 
 
 namespace MillSim {
+
+    bool IsVerticalMotion(MillMotion* m1, MillMotion* m2)
+    {
+        return (m1->z != m2->z && EQ_FLOAT(m1->x, m2->x) && EQ_FLOAT(m1->y, m2->y));
+    }
+
+    bool IsArcMotion(MillMotion* m)
+    {
+        return fabs(m->i > EPSILON) || fabs(m->j) > EPSILON;
+    }
 
     float resolution = 0.1;
 

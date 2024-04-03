@@ -16,6 +16,8 @@ namespace MillSim {
 
     extern float resolution;
 
+    bool IsVerticalMotion(MillMotion* m1, MillMotion* m2);
+
 
     class MillPathSegment
     {
