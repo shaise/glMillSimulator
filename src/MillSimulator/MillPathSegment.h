@@ -38,8 +38,9 @@ namespace MillSim {
 
     public:
         EndMill* mEndmill = nullptr;
+        MillMotion headPos;
         int numRenderSteps;
-        int numSimSteps;
+        //int numSimSteps;
 
     protected:
 
@@ -51,7 +52,11 @@ namespace MillSim {
          float mXYAngle;
          float mStartAng;
          float mStepAng;
+         float mStepDistance;
+         float mDiffX, mDiffY, mDiffZ;
+         float mStepX, mStepY, mStepZ;
          MillMotion mTarget;
+         MillMotion mStartPos;
          MotionType mMotionType;
     };
 }

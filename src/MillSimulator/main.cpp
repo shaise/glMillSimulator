@@ -210,7 +210,12 @@ void SimNext()
             GenetateTool(curMillOperation);
 
         gCurPos = gDestPos;
-        MillMotion* curMotion = &curMillOperation->path[gPathStep];
+        gDestPos = curMillOperation->path[gPathStep];
+        MillSim::MillPathSegment* segment = new MillSim::MillPathSegment(curMillOperation->endmill, &gCurPos, &gDestPos);
+        gnsteps = segment->numRenderSteps;
+        gcurstep = 0;
+        MillPathSegments.push_back(segment);
+        /*
         float diffx = curMotion->x - gCurPos.x;
         float diffy = curMotion->y - gCurPos.y;
         float diffz = curMotion->z - gCurPos.z;
@@ -228,22 +233,10 @@ void SimNext()
         gIsInStock = !((curMotion->z > STOCK_HEIGHT && gCurPos.z > STOCK_HEIGHT) || ((gDestPos.z > gCurPos.z) && MillSim::IsVerticalMotion(&gCurPos , &gDestPos)));
         if (gIsInStock)
             MillPathSegments.push_back(new MillSim::MillPathSegment(curMillOperation->endmill, &gCurPos, &gDestPos));
+        */
         gPathStep++;
     }
-    else
-    {
-        gcurstep++;
-        gDestPos.x = gCurPos.x + gMotionStep.x * gcurstep;
-        gDestPos.y = gCurPos.y + gMotionStep.y * gcurstep;
-        gDestPos.z = gCurPos.z + gMotionStep.z * gcurstep;
-        if (gIsInStock)
-        {
-            MillSim::MillPathSegment* p = MillPathSegments.back();
-            MillPathSegments.pop_back();
-            delete(p);
-            MillPathSegments.push_back(new MillSim::MillPathSegment(curMillOperation->endmill, &gCurPos, &gDestPos));
-        }
-    }
+    gcurstep++;
 }
 
 
@@ -336,6 +329,16 @@ void GlsimEnd(void)
 
 int nsegs = 0;
 
+void renderSegment(int i)
+{
+    MillSim::MillPathSegment* p = MillPathSegments.at(i);
+    int step = i == (MillPathSegments.size() - 1) ? gcurstep : p->numRenderSteps;
+    GlsimToolStep1();
+    p->render(step);
+    GlsimToolStep2();
+    p->render(step);
+}
+
 void display()
 {
     glMatrixMode(GL_MODELVIEW);
@@ -357,20 +360,12 @@ void display()
 
     for (int i = 0; i < len; i++)
     {
-        MillSim::MillPathSegment* p = MillPathSegments.at(i);
-        GlsimToolStep1();
-        p->render();
-        GlsimToolStep2();
-        p->render();
+        renderSegment(i);
     }
 
     for (int i = len - 1; i >= 0 ; i--)
     {
-        MillSim::MillPathSegment* p = MillPathSegments.at(i);
-        GlsimToolStep1();
-        p->render();
-        GlsimToolStep2();
-        p->render();
+        renderSegment(i);
     }
 
     GlsimClipBack();
@@ -379,21 +374,34 @@ void display()
     gStockObject->render();
     GlsimRenderTools();
     for (int i = 0; i < len; i++)
-        MillPathSegments.at(i)->render();
+    {
+        MillSim::MillPathSegment* p = MillPathSegments.at(i);
+        if (i == (len - 1))
+            MillPathSegments.at(i)->render(gcurstep);
+        else
+            MillPathSegments.at(i)->render();
+    }
 
     GlsimEnd();
     
     //gStockPrimitive->render();
+    
     glEnable(GL_CULL_FACE);
 
     if (gToolId >= 0)
     {
+        MillMotion* toolPos = &gDestPos;
+        if (len > 0)
+        {
+            MillSim::MillPathSegment* p = MillPathSegments.at(len - 1);
+            toolPos = &(p->headPos);
+        }
         glEnable(GL_CULL_FACE);
         glPushMatrix();
         /*int n = primitives.size() - 1;
         if (n > 0)
             primitives[n]->render();*/
-        glTranslatef(gDestPos.x, gDestPos.y, gDestPos.z);
+        glTranslatef(toolPos->x, toolPos->y, toolPos->z);
         glCallList(gToolId);
         glPopMatrix();
         glDisable(GL_CULL_FACE);

@@ -27,15 +27,16 @@ namespace MillSim {
 
     MillPathSegment::MillPathSegment(EndMill *endmill, MillMotion* from, MillMotion* to)
     {
-        float diffx = to->x - from->x;
-        float diffy = to->y - from->y;
-        float diffz = to->z - from->z;
-        mXYDistance = sqrtf(diffx * diffx + diffy * diffy);
-        mZDistance = fabs(diffz);
-        mXYZDistance = sqrtf(mXYDistance * mXYDistance + diffz * diffz);
-        mXYAngle = atan2f(diffy, diffx) * 180.0f / PI;
+        mDiffX = to->x - from->x;
+        mDiffY = to->y - from->y;
+        mDiffZ = to->z - from->z;
+        mXYDistance = sqrtf(mDiffX * mDiffX + mDiffY * mDiffY);
+        mZDistance = fabs(mDiffZ);
+        mXYZDistance = sqrtf(mXYDistance * mXYDistance + mDiffZ * mDiffZ);
+        mXYAngle = atan2f(mDiffY, mDiffX) * 180.0f / PI;
         mEndmill = endmill;
         mDisplayListId = 0;
+        mStartPos = *from;
         mStartAng = mStepAng = 0;
         if (IsArcMotion(to))
         {
@@ -48,30 +49,31 @@ namespace MillSim {
             else if (mStepAng < NIN_SEG_DEG)
                 mStepAng = NIN_SEG_DEG;
             mStartAng = atan2f(-to->i, -to->j);
-            float endAng = atan2f(diffx - to->i, diffy - to->j);
+            float endAng = atan2f(mDiffX - to->i, mDiffY - to->j);
             float sweepAng = mStartAng - endAng;
             if (sweepAng < EPSILON)
                 sweepAng += PI * 2;
             numRenderSteps = (int)(sweepAng / mStepAng) + 1;
             mStepAng = sweepAng / numRenderSteps;
             mDisplayListId = mEndmill->GenerateArcSegmentDL(radius, mStepAng, 0);
-            numSimSteps = numRenderSteps;
         }
         else
         {
-            numSimSteps = (int)(mXYZDistance / resolution);
-            if (numSimSteps == 0)
-                numSimSteps = 1;
+            numRenderSteps = (int)(mXYDistance / resolution);
+            if (numRenderSteps == 0)
+                numRenderSteps = 1;
+            mStepDistance = mXYDistance / numRenderSteps;
+            mStepX = mDiffX / numRenderSteps;
+            mStepY = mDiffY / numRenderSteps;
+            mStepZ = mDiffZ / numRenderSteps;
 
             if (IsVerticalMotion(from, to)) {
                 mMotionType = MTVertical;
                 mTarget = *to;
-                numRenderSteps = 1;
             }
             else {
                 mMotionType = MTHorizontal;
                 mTarget = *from;
-                numRenderSteps = 1;
             }
         }
     }
@@ -84,30 +86,37 @@ namespace MillSim {
 
     void MillPathSegment::render() 
     {
-        render(numRenderSteps - 1);
+        render(numRenderSteps);
     }
 
     void MillPathSegment::render(int step) 
     {
         glPushMatrix();
         glTranslatef(mTarget.x, mTarget.y, mTarget.z);
-        if (mMotionType == MTVertical)
-            glCallList(mEndmill->mToolDisplayId);
-        else if (mMotionType == MTCurved)
+        if (mMotionType == MTCurved)
         {
             glTranslatef(mTarget.i, mTarget.j, 0);
-            glRotatef(mStartAng - step * mStepAng, 0, 0, 1);
+            glRotatef(mStartAng - (step - 1) * mStepAng, 0, 0, 1);
             glCallList(mDisplayListId);
         }
         else
         {
-            glRotatef(mXYAngle, 0, 0, 1);
-            glPushMatrix();
-            glScalef(mXYDistance, 1, 1);
-            glCallList(mEndmill->mPathDisplayId);
-            glPopMatrix();
-            glTranslatef(mXYDistance, 0, 0);
-            glCallList(mEndmill->mHToolDisplayId);
+            headPos.x = mStartPos.x + mStepX * step;
+            headPos.y = mStartPos.y + mStepY * step;
+            headPos.z = mStartPos.z + mStepZ * step;
+            if (mMotionType == MTVertical)
+                glCallList(mEndmill->mToolDisplayId);
+            else
+            {
+                float renderDist = step * mStepDistance;
+                glRotatef(mXYAngle, 0, 0, 1);
+                glPushMatrix();
+                glScalef(renderDist, 1, 1);
+                glCallList(mEndmill->mPathDisplayId);
+                glPopMatrix();
+                glTranslatef(renderDist, 0, 0);
+                glCallList(mEndmill->mHToolDisplayId);
+            }
         }
         //glCallList(mDisplayListId);
         glPopMatrix();
