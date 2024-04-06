@@ -31,4 +31,45 @@ public:
 	void RenderTool();
 };
 
+class Vector3
+{
+public:
+	float x, y, z;
+
+public:
+	Vector3()
+	{
+		x = 0; y = 0; z = 0;
+	}
+
+	void FromMillMotion(MillMotion *mm)
+	{
+		x = mm->x; y = mm->y; z = mm->z;
+	}
+	void Add(Vector3* other)
+	{
+		x += other->x;
+		y += other->y;
+		z += other->z;
+	}
+	void Sub(Vector3* other)
+	{
+		x -= other->x;
+		y -= other->y;
+		z -= other->z;
+	}
+	void Div(float val)
+	{
+		x /= val;
+		y /= val;
+		z /= val;
+	}
+	void Mul(float val)
+	{
+		x *= val;
+		y *= val;
+		z *= val;
+	}
+
+};
 #endif

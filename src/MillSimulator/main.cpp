@@ -23,10 +23,9 @@ bool simulate = false;
 float rot = 0.0f;
 std::ostringstream fpsStream;
 
-MillMotion gZeroPos = { 0, 0, 0 };
-MillMotion gMotionStep = gZeroPos;
-MillMotion gCurPos = gZeroPos;
-MillMotion gDestPos = gZeroPos;
+MillMotion gZeroPos = { 0, 0,  0 };
+MillMotion gCurPos;
+MillMotion gDestPos;
 int gcurstep = 0;
 int gnsteps = 0;
 int gPathStep = 0;
@@ -164,7 +163,6 @@ void setMill(bool isClear) {
         curMillOperation = &millOperations[curMillOpIx];
     }
 
-    gMotionStep = gZeroPos;
     gCurPos = gZeroPos;
     gDestPos = curMillOperation->startPos;
     gcurstep = 0;
@@ -390,18 +388,19 @@ void display()
 
     if (gToolId >= 0)
     {
-        MillMotion* toolPos = &gDestPos;
+        Vector3 toolPos;
+        toolPos.FromMillMotion(&gDestPos);
         if (len > 0)
         {
             MillSim::MillPathSegment* p = MillPathSegments.at(len - 1);
-            toolPos = &(p->headPos);
+            toolPos = p->headPos;
         }
         glEnable(GL_CULL_FACE);
         glPushMatrix();
         /*int n = primitives.size() - 1;
         if (n > 0)
             primitives[n]->render();*/
-        glTranslatef(toolPos->x, toolPos->y, toolPos->z);
+        glTranslatef(toolPos.x, toolPos.y, toolPos.z);
         glCallList(gToolId);
         glPopMatrix();
         glDisable(GL_CULL_FACE);

@@ -27,53 +27,55 @@ namespace MillSim {
 
     MillPathSegment::MillPathSegment(EndMill *endmill, MillMotion* from, MillMotion* to)
     {
-        mDiffX = to->x - from->x;
-        mDiffY = to->y - from->y;
-        mDiffZ = to->z - from->z;
-        mXYDistance = sqrtf(mDiffX * mDiffX + mDiffY * mDiffY);
-        mZDistance = fabs(mDiffZ);
-        mXYZDistance = sqrtf(mXYDistance * mXYDistance + mDiffZ * mDiffZ);
-        mXYAngle = atan2f(mDiffY, mDiffX) * 180.0f / PI;
+        mDiff.x = to->x - from->x;
+        mDiff.y = to->y - from->y;
+        mDiff.z = to->z - from->z;
+        mXYDistance = sqrtf(mDiff.x * mDiff.x+ mDiff.y * mDiff.y);
+        mZDistance = fabs(mDiff.z);
+        mXYZDistance = sqrtf(mXYDistance * mXYDistance + mDiff.z * mDiff.z);
+        mXYAngle = atan2f(mDiff.y, mDiff.x) * 180.0f / PI;
         mEndmill = endmill;
         mDisplayListId = 0;
-        mStartPos = *from;
+        mStartPos.FromMillMotion(from);
         mStartAng = mStepAng = 0;
         if (IsArcMotion(to))
         {
             mMotionType = MTCurved;
-            mTarget = *from;
-            float radius = sqrtf(to->j * to->j + to->i * to->i);
-            float mStepAng = asinf(resolution / radius);
+            mTarget.FromMillMotion(from);
+            mRadius = sqrtf(to->j * to->j + to->i * to->i);
+            mStepAng = asinf(resolution / mRadius);
+            mCenter.FromMillMotion(to);
+            mCenter.x += to->i;
+            mCenter.y += to->j;
             if (mStepAng > MAX_SEG_DEG)
                 mStepAng = MAX_SEG_DEG;
             else if (mStepAng < NIN_SEG_DEG)
                 mStepAng = NIN_SEG_DEG;
             mStartAng = atan2f(-to->i, -to->j);
-            float endAng = atan2f(mDiffX - to->i, mDiffY - to->j);
+            float endAng = atan2f(mDiff.x - to->i, mDiff.y - to->j);
             float sweepAng = mStartAng - endAng;
             if (sweepAng < EPSILON)
                 sweepAng += PI * 2;
             numRenderSteps = (int)(sweepAng / mStepAng) + 1;
             mStepAng = sweepAng / numRenderSteps;
-            mDisplayListId = mEndmill->GenerateArcSegmentDL(radius, mStepAng, 0);
+            mDisplayListId = mEndmill->GenerateArcSegmentDL(mRadius, mStepAng, 0);
         }
         else
         {
-            numRenderSteps = (int)(mXYDistance / resolution);
+            numRenderSteps = (int)(mXYZDistance / resolution);
             if (numRenderSteps == 0)
                 numRenderSteps = 1;
             mStepDistance = mXYDistance / numRenderSteps;
-            mStepX = mDiffX / numRenderSteps;
-            mStepY = mDiffY / numRenderSteps;
-            mStepZ = mDiffZ / numRenderSteps;
+            mStep = mDiff;
+            mStep.Div(numRenderSteps);
 
             if (IsVerticalMotion(from, to)) {
                 mMotionType = MTVertical;
-                mTarget = *to;
+                mTarget.FromMillMotion(from);
             }
             else {
                 mMotionType = MTHorizontal;
-                mTarget = *from;
+                mTarget.FromMillMotion(from);
             }
         }
     }
@@ -92,23 +94,25 @@ namespace MillSim {
     void MillPathSegment::render(int step) 
     {
         glPushMatrix();
-        glTranslatef(mTarget.x, mTarget.y, mTarget.z);
         if (mMotionType == MTCurved)
         {
-            glTranslatef(mTarget.i, mTarget.j, 0);
+            glTranslatef(mCenter.x, mCenter.y, mCenter.z);
             glRotatef(mStartAng - (step - 1) * mStepAng, 0, 0, 1);
             glCallList(mDisplayListId);
         }
         else
         {
-            headPos.x = mStartPos.x + mStepX * step;
-            headPos.y = mStartPos.y + mStepY * step;
-            headPos.z = mStartPos.z + mStepZ * step;
-            if (mMotionType == MTVertical)
+            headPos = mStep;
+            headPos.Mul(step);
+            headPos.Add(&mStartPos);
+            if (mMotionType == MTVertical) {
+                glTranslatef(headPos.x, headPos.y, headPos.z);
                 glCallList(mEndmill->mToolDisplayId);
+            }
             else
             {
                 float renderDist = step * mStepDistance;
+                glTranslatef(mTarget.x, mTarget.y, mTarget.z);
                 glRotatef(mXYAngle, 0, 0, 1);
                 glPushMatrix();
                 glScalef(renderDist, 1, 1);
