@@ -35,7 +35,7 @@ int gPathStep = 0;
 bool gIsInStock;
 int gToolId = -1;
 int curMillOpIx = 0;
-#define STOCK_HEIGHT 0.2f
+#define STOCK_HEIGHT 2.0f
 
 std::vector<MillSim::MillPathSegment*> MillPathSegments;
 
@@ -45,8 +45,8 @@ MillMotion flatMillMotions[] = {
     //{4, 4, 10},
     {-4, -4, 10},
     //{-4, -4, 0},
-    {-4, -4, 1},
-    {4, 4, 1, 4, 4, 0},
+    {-4, -4, 2},
+    {4, 4, 0, 4, 4, 0},
     {4, 4, 10},
 
     {15, 15, 10},
@@ -118,9 +118,9 @@ MillMotion taperMillMotions[] = {
 MillMotion ballMillMotions[] = {
     {12, 12, 10},
     {12, 12, 1.5f},
-    {12, -12, 1.5f},
+    {12, -12, 2.5f},
     {-12, -12, 1.5f},
-    {-12, 12, 1.5f},
+    {-12, 12, 2.5f},
     {12, 12, 1.5f},
     {12, 12, 10},
     {0, 0, 10},
@@ -135,9 +135,9 @@ EndMillTaper endMillTaper02(1, 16, 90, 0.2f);
 EndMillBall endMillBall03(1, 16, 4, 0.2f);
 
 MillOperation millOperations[] = {
+    {&endMillBall03, {0, 0, 10}, ballMillMotions, NUM_BALL_MOTIONS },
     {&endMillFlat01, {0, 0, 10}, flatMillMotions, NUM_FLAT_MOTIONS },
     {&endMillTaper02, {0, 0, 10}, taperMillMotions, NUM_TAPER_MOTIONS },
-    {&endMillBall03, {0, 0, 10}, ballMillMotions, NUM_BALL_MOTIONS },
     {nullptr}
 };
 
@@ -215,7 +215,7 @@ void SimNext()
         gCurPos = gDestPos;
         gDestPos = curMillOperation->path[gPathStep];
         MillSim::MillPathSegment* segment = new MillSim::MillPathSegment(curMillOperation->endmill, &gCurPos, &gDestPos);
-        gnsteps = segment->numRenderSteps;
+        gnsteps = segment->numSimSteps;
         gcurstep = 0;
         MillPathSegments.push_back(segment);
         /*
@@ -332,14 +332,32 @@ void GlsimEnd(void)
 
 int nsegs = 0;
 
-void renderSegment(int i, bool isReversed)
+void renderSegmentForward(int iSeg)
 {
-    MillSim::MillPathSegment* p = MillPathSegments.at(i);
-    int step = i == (MillPathSegments.size() - 1) ? gcurstep : p->numRenderSteps;
-    GlsimToolStep1();
-    p->render(step, isReversed);
-    GlsimToolStep2();
-    p->render(step, isReversed);
+    MillSim::MillPathSegment* p = MillPathSegments.at(iSeg);
+    int step = iSeg == (MillPathSegments.size() - 1) ? gcurstep : p->numSimSteps;
+    int start = p->isMultyPart ? 1 : step;
+    for (int i = start; i <= step; i++)
+    {
+        GlsimToolStep1();
+        p->render(i);
+        GlsimToolStep2();
+        p->render(i);
+    }
+}
+
+void renderSegmentReversed(int iSeg)
+{
+    MillSim::MillPathSegment* p = MillPathSegments.at(iSeg);
+    int step = iSeg == (MillPathSegments.size() - 1) ? gcurstep : p->numSimSteps;
+    int end = p->isMultyPart ? 1 : step;
+    for (int i = step; i >= end; i--)
+    {
+        GlsimToolStep1();
+        p->render(i);
+        GlsimToolStep2();
+        p->render(i);
+    }
 }
 
 void display()
@@ -363,14 +381,16 @@ void display()
     GlsimToolStep2();
 
     for (int i = 0; i < len; i++)
-    {
-        renderSegment(i, true);
-    }
+        renderSegmentForward(i);
 
-    for (int i = len - 1; i >= 0 ; i--)
-    {
-        renderSegment(i, false);
-    }
+    for (int i = len - 1; i >= 0; i--)
+        renderSegmentForward(i);
+
+    for (int i = 0; i < len; i++)
+        renderSegmentReversed(i);
+
+    for (int i = len - 1; i >= 0; i--)
+        renderSegmentReversed(i);
 
     GlsimClipBack();
     gStockObject->render();
@@ -380,10 +400,10 @@ void display()
     for (int i = 0; i < len; i++)
     {
         MillSim::MillPathSegment* p = MillPathSegments.at(i);
-        if (i == (len - 1))
-            MillPathSegments.at(i)->render(gcurstep, false);
-        else
-            MillPathSegments.at(i)->render(false);
+        int step = (i == (len - 1)) ? gcurstep : p->numSimSteps;
+        int start = p->isMultyPart ? 1 : step;
+        for (int j = start; j <= step; j++)
+            MillPathSegments.at(i)->render(j);
     }
 
     GlsimEnd();
@@ -405,10 +425,10 @@ void display()
         glPopMatrix();
     }
 
-    if (len > 2 && debug > 0)
+    if (len > 3 && debug > 0)
     {
-         MillSim::MillPathSegment* p = MillPathSegments.at(2);
-         p->render(debug, false);
+        MillSim::MillPathSegment* p = MillPathSegments.at(3);
+        p->render(p->numSimSteps);
     }
 
 
@@ -450,7 +470,7 @@ void idle() {
         singleStep = false;
     }
 
-    display();
+    //display();
 
     ++fps;
 }
@@ -472,7 +492,7 @@ void key(unsigned char k, int, int) {
         break;
     case'd':
         debug++;
-        if (debug == 10) debug = 0;
+        if (debug == 30) debug = 0;
         break;
     default:
         break;
@@ -497,7 +517,7 @@ const char* fragmentShaderSource = "#version 330 core\n"
 
 void timer(int) {
     glutPostRedisplay();
-    glutTimerFunc(1000 / 100, timer, 0);
+    glutTimerFunc(1000 / 60, timer, 0);
     idle();
 }
 
@@ -549,9 +569,9 @@ int main(int argc, char **argv)
     glutDisplayFunc(display);
     glutKeyboardFunc(key);
 
-    glutIdleFunc(idle);
+    //glutIdleFunc(idle);
     init();
-    //timer(0);
+    timer(0);
     glutMainLoop();
 
     return 0;

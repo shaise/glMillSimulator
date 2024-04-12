@@ -33,16 +33,17 @@ namespace MillSim {
 
 
         /// Calls the display list.
-        virtual void render(bool isReversed);
-        virtual void render(int step, bool isReversed);
+        virtual void render(int substep);
         virtual Vector3* GetHeadPosition();
 
     public:
         EndMill* mEndmill = nullptr;
-        int numRenderSteps;
-        //int numSimSteps;
+        bool isMultyPart;
+        int numSimSteps;
 
     protected:
+        float mShearMat[16];
+
 
     protected:
          unsigned int mDisplayListId;
@@ -56,6 +57,7 @@ namespace MillSim {
          float mStepAngDeg;
          float mStepDistance;
          float mRadius;
+         float mArcDir;
          int mStepNumber;
          Vector3 mDiff;
          Vector3 mStepLength;

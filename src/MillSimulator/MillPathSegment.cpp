@@ -26,7 +26,14 @@ namespace MillSim {
     float resolution = 1;
 
     MillPathSegment::MillPathSegment(EndMill *endmill, MillMotion* from, MillMotion* to)
+        : mShearMat {
+            1.0f, 0.0f, 0.0f, 0.0f,
+            0.0f, 1.0f, 0.0f, 0.0f,
+            0.0f, 0.0f, 1.0f, 0.0f,
+            0.0f, 0.0f, 0.0f, 1.0f
+        }
     {
+        
         mDiff.x = to->x - from->x;
         mDiff.y = to->y - from->y;
         mDiff.z = to->z - from->z;
@@ -46,6 +53,7 @@ namespace MillSim {
             mCenter.FromMillMotion(from);
             mCenter.x += to->i;
             mCenter.y += to->j;
+            mArcDir = to->k < 0 ? -1 : 1;
             if (mStepAngRad > MAX_SEG_DEG)
                 mStepAngRad = MAX_SEG_DEG;
             else if (mStepAngRad < NIN_SEG_DEG)
@@ -55,26 +63,29 @@ namespace MillSim {
             float sweepAng = mStartAngRad - endAng;
             if (sweepAng < EPSILON)
                 sweepAng += PI * 2;
-            numRenderSteps = (int)(sweepAng / mStepAngRad) + 1;
-            mStepAngRad = sweepAng / numRenderSteps;
-            mDisplayListId = mEndmill->GenerateArcSegmentDL(mRadius, mStepAngRad+0.02, 0);
+            numSimSteps = (int)(sweepAng / mStepAngRad) + 1;
+            mStepAngRad = sweepAng / numSimSteps;
+            mDisplayListId = mEndmill->GenerateArcSegmentDL(mRadius, mStepAngRad * 1.05, mDiff.z / numSimSteps);
             mStartAngDeg = mStartAngRad * 180.0f / PI;
             mStepAngDeg = mStepAngRad * 180.0f / PI;
+            isMultyPart = true;
         }
         else
         {
-            numRenderSteps = (int)(mXYZDistance / resolution);
-            if (numRenderSteps == 0)
-                numRenderSteps = 1;
-            mStepDistance = mXYDistance / numRenderSteps;
+            numSimSteps = (int)(mXYZDistance / resolution);
+            if (numSimSteps == 0)
+                numSimSteps = 1;
+            isMultyPart = false;
+            mStepDistance = mXYDistance / numSimSteps;
             mStepLength = mDiff;
-            mStepLength.Div(numRenderSteps);
+            mStepLength.Div(numSimSteps);
 
             if (IsVerticalMotion(from, to)) {
                 mMotionType = MTVertical;
             }
             else {
                 mMotionType = MTHorizontal;
+                mShearMat[2] = mDiff.z / mXYDistance;
             }
         }
     }
@@ -85,26 +96,17 @@ namespace MillSim {
             glDeleteLists(mDisplayListId, 1);
     }
 
-    void MillPathSegment::render(bool isReversed)
-    {
-        render(numRenderSteps, isReversed);
-    }
 
-    void MillPathSegment::render(int step, bool isReversed) 
+    void MillPathSegment::render(int step) 
     {
         mStepNumber = step;
         glPushMatrix();
         if (mMotionType == MTCurved)
         {
-            glTranslatef(mCenter.x, mCenter.y, mCenter.z);
-            for (int i = 0; i < step; i++)
-            {
-                glPushMatrix();
-                int n = isReversed ? step - i - 1 : i;
-                glRotatef(mStartAngDeg - n * mStepAngDeg, 0, 0, 1);
-                glCallList(mDisplayListId);
-                glPopMatrix();
-            }
+            glTranslatef(mCenter.x, mCenter.y, mCenter.z + mDiff.z * (step - 1) / numSimSteps);
+            glRotatef(mStartAngDeg - (step - 1) * mStepAngDeg, 0, 0, 1);
+            glCallList(mDisplayListId);
+            glPopMatrix();
         }
         else
         {
@@ -121,10 +123,12 @@ namespace MillSim {
                 glTranslatef(mStartPos.x, mStartPos.y, mStartPos.z);
                 glRotatef(mXYAngle, 0, 0, 1);
                 glPushMatrix();
+                if (mDiff.z != 0.0)
+                    glMultMatrixf(mShearMat);
                 glScalef(renderDist, 1, 1);
                 glCallList(mEndmill->mPathDisplayId);
                 glPopMatrix();
-                glTranslatef(renderDist, 0, 0);
+                glTranslatef(renderDist, 0, mDiff.z);
                 glCallList(mEndmill->mHToolDisplayId);
             }
         }
