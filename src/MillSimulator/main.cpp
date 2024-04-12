@@ -20,10 +20,13 @@
 
 bool spin = true;
 bool simulate = false;
+bool singleStep = false;
+int debug = 0;
+bool isRotate = true;
 float rot = 0.0f;
 std::ostringstream fpsStream;
 
-MillMotion gZeroPos = { 0, 0,  0 };
+MillMotion gZeroPos = { 0, 0,  10 };
 MillMotion gCurPos;
 MillMotion gDestPos;
 int gcurstep = 0;
@@ -37,102 +40,104 @@ int curMillOpIx = 0;
 std::vector<MillSim::MillPathSegment*> MillPathSegments;
 
 MillMotion flatMillMotions[] = {
-    {0.4f, 0.4f, 1},
-    {0.4f, 0.4f, 0.1f},
-    {0.4f, 0.4f, 1},
-    {-0.4f, -0.4f, 1},
-    {-0.4f, -0.4f, 0.1f},
-    {-0.4f, -0.4f, 1},
+    //{4, 4, 10},
+    //{4, 4, 0},
+    //{4, 4, 10},
+    {-4, -4, 10},
+    //{-4, -4, 0},
+    {-4, -4, 1},
+    {4, 4, 1, 4, 4, 0},
+    {4, 4, 10},
 
-    {1.5f, 1.5f, 1},
-    { 1.5f, 1.5f, 0.15f},
-    {1.5f, -1.5f, 0.15f},
-    {-1.5f, -1.5f, 0.15f},
-    {-1.5f, 1.5f, 0.15f},
-    {1.5f, 1.5f, 0.15f},
+    {15, 15, 10},
+    { 15, 15, 1.5f},
+    {15, -15, 1.5f},
+    {-15, -15, 1.5f},
+    {-15, 15, 1.5f},
+    {15, 15, 1.5f},
 
-    {1.5f, 1.5f, 0.1f},
-    {1.5f, -1.5f, 0.1f},
-    {-1.5f, -1.5f, 0.1f},
-    {-1.5f, 1.5f, 0.1f},
-    {1.5f, 1.5f, 0.1f},
+    {15, 15, 1},
+    {15, -15, 1},
+    {-15, -15, 1},
+    {-15, 15, 1},
+    {15, 15, 1},
 
-    {1.5f, 1.5f, 0.05f},
-    {1.5f, -1.5f, 0.05f},
-    {-1.5f, -1.5f, 0.05f},
-    {-1.5f, 1.5f, 0.05f},
-    {1.5f, 1.5f, 0.05f},
+    {15, 15, 0.5f},
+    {15, -15, 0.5f},
+    {-15, -15, 0.5f},
+    {-15, 15, 0.5f},
+    {15, 15, 0.5f},
 
-    {1.5f, 1.5f, 0},
-    {1.5f, -1.5f, 0},
-    {-1.5f, -1.5f, 0},
-    {-1.5f, 1.5f, 0},
-    {1.5f, 1.5f, 0},
+    {15, 15, 0},
+    {15, -15, 0},
+    {-15, -15, 0},
+    {-15, 15, 0},
+    {15, 15, 0},
 
-    {1.5f, 1.5f, 1},
+    {15, 15, 10},
 
-    {0.8f, 0.8f, 1},
-    {0.8f, 0.8f, 0.15f},
-    {0.8f, -0.8f, 0.15f},
-    {0.61f, -0.8f, 0.15f},
-    {0.61f, 0.8f, 0.15f},
-    {0.42f, 0.8f, 0.15f},
-    {0.42f, -0.8f, 0.15f},
-    {0.23f, -0.8f, 0.15f},
-    {0.23f, 0.8f, 0.15f},
-    {0.04f, 0.8f, 0.15f},
-    {0.04f, -0.8f, 0.15f},
-    {-0.15f, -0.8f, 0.15f},
-    {-0.15f, 0.8f, 0.15f},
-    {-0.34f, 0.8f, 0.15f},
-    {-0.34f, -0.8f, 0.15f},
-    {-0.53f, -0.8f, 0.15f},
-    {-0.53f, 0.8f, 0.15f},
-    {-0.72f, 0.8f, 0.15f},
-    {-0.72f, -0.8f, 0.15f},
-    {-0.8f,  -0.8f, 0.15f},
-    {-0.8f,  0.8f, 0.15f},
-    { 0.8f,  0.8f, 0.15f},
-    { 0.8f,  -0.8f, 0.15f},
-    {-0.8f,  -0.8f, 0.15f},
+    {8, 8, 10},
+    {8, 8, 1.5f},
+    {8, -8, 1.5f},
+    {6.1f, -8, 1.5f},
+    {6.1f, 8, 1.5f},
+    {4.2f, 8, 1.5f},
+    {4.2f, -8, 1.5f},
+    {2.3f, -8, 1.5f},
+    {2.3f, 8, 1.5f},
+    {0.4f, 8, 1.5f},
+    {0.4f, -8, 1.5f},
+    {-1.5f, -8, 1.5f},
+    {-1.5f, 8, 1.5f},
+    {-3.4f, 8, 1.5f},
+    {-3.4f, -8, 1.5f},
+    {-5.3f, -8, 1.5f},
+    {-5.3f, 8, 1.5f},
+    {-7.2f, 8, 1.5f},
+    {-7.2f, -8, 1.5f},
+    {-8,  -8, 1.5f},
+    {-8,  8, 1.5f},
+    { 8,  8, 1.5f},
+    { 8,  -8, 1.5f},
+    {-8,  -8, 1.5f},
 
-    {-0.8f,  -0.8f, 1},
+    {-8,  -8, 10},
 };
 
 MillMotion taperMillMotions[] = {
-    {1.42f, 1.42f, 1},
-    {1.42f, 1.42f, 0.15f},
-    {1.42f, -1.42f, 0.15f},
-    {-1.42f, -1.42f, 0.15f},
-    {-1.42f, 1.42f, 0.15f},
-    {1.42f, 1.42f, 0.15f},
-    {1.42f, 1.42f, 1},
-    {0, 0, 1},
+    {14.2f, 14.2f, 10},
+    {14.2f, 14.2f, 1.5f},
+    {14.2f, -14.2f, 1.5f},
+    {-14.2f, -14.2f, 1.5f},
+    {-14.2f, 14.2f, 1.5f},
+    {14.2f, 14.2f, 1.5f},
+    {14.2f, 14.2f, 10},
+    {0, 0, 10},
 };
 
 MillMotion ballMillMotions[] = {
-    {1.2f, 1.2f, 1},
-    {1.2f, 1.2f, 0.15f},
-    {1.2f, -1.2f, 0.15f},
-    {-1.2f, -1.2f, 0.15f},
-    {-1.2f, 1.2f, 0.15f},
-    {1.2f, 1.2f, 0.15f},
-    {1.2f, 1.2f, 1},
-    {0, 0, 1},
+    {12, 12, 10},
+    {12, 12, 1.5f},
+    {12, -12, 1.5f},
+    {-12, -12, 1.5f},
+    {-12, 12, 1.5f},
+    {12, 12, 1.5f},
+    {12, 12, 10},
+    {0, 0, 10},
 };
 
 #define NUM_FLAT_MOTIONS (sizeof(flatMillMotions) / sizeof(MillMotion))
 #define NUM_TAPER_MOTIONS (sizeof(taperMillMotions) / sizeof(MillMotion))
 #define NUM_BALL_MOTIONS (sizeof(ballMillMotions) / sizeof(MillMotion))
 
-EndMillFlat endMillFlat01(0.1f, 16);
-EndMillTaper endMillTaper02(0.1f, 16, 90, 0.02f);
-EndMillBall endMillBall03(0.1f, 16, 4, 0.02f);
+EndMillFlat endMillFlat01(1, 16);
+EndMillTaper endMillTaper02(1, 16, 90, 0.2f);
+EndMillBall endMillBall03(1, 16, 4, 0.2f);
 
 MillOperation millOperations[] = {
-    {&endMillFlat01, {0, 0, 1}, flatMillMotions, NUM_FLAT_MOTIONS },
-    {&endMillTaper02, {0, 0, 1}, taperMillMotions, NUM_TAPER_MOTIONS },
-    {&endMillBall03, {0, 0, 1}, ballMillMotions, NUM_BALL_MOTIONS },
+    {&endMillFlat01, {0, 0, 10}, flatMillMotions, NUM_FLAT_MOTIONS },
+    {&endMillTaper02, {0, 0, 10}, taperMillMotions, NUM_TAPER_MOTIONS },
+    {&endMillBall03, {0, 0, 10}, ballMillMotions, NUM_BALL_MOTIONS },
     {nullptr}
 };
 
@@ -327,24 +332,25 @@ void GlsimEnd(void)
 
 int nsegs = 0;
 
-void renderSegment(int i)
+void renderSegment(int i, bool isReversed)
 {
     MillSim::MillPathSegment* p = MillPathSegments.at(i);
     int step = i == (MillPathSegments.size() - 1) ? gcurstep : p->numRenderSteps;
     GlsimToolStep1();
-    p->render(step);
+    p->render(step, isReversed);
     GlsimToolStep2();
-    p->render(step);
+    p->render(step, isReversed);
 }
 
 void display()
 {
     glMatrixMode(GL_MODELVIEW);
     glLoadIdentity();
-    gluLookAt(0.0, 7.5, 3.0,  /* eye  */
+    gluLookAt(0.0, 45, 30,  /* eye  */
               0.0, 0.0, 0.0,  /* taeget  */
               0.0, 0.0, 1.0); /* up vector */
-    glRotatef(rot, 0.0f, 0.0f, 1.0f);
+    if (isRotate)
+        glRotatef(rot, 0.0f, 0.0f, 1.0f);
 
     glClear(GL_COLOR_BUFFER_BIT | GL_DEPTH_BUFFER_BIT | GL_STENCIL_BUFFER_BIT);
     unsigned int msec = glutGet(GLUT_ELAPSED_TIME);
@@ -358,12 +364,12 @@ void display()
 
     for (int i = 0; i < len; i++)
     {
-        renderSegment(i);
+        renderSegment(i, true);
     }
 
     for (int i = len - 1; i >= 0 ; i--)
     {
-        renderSegment(i);
+        renderSegment(i, false);
     }
 
     GlsimClipBack();
@@ -375,15 +381,13 @@ void display()
     {
         MillSim::MillPathSegment* p = MillPathSegments.at(i);
         if (i == (len - 1))
-            MillPathSegments.at(i)->render(gcurstep);
+            MillPathSegments.at(i)->render(gcurstep, false);
         else
-            MillPathSegments.at(i)->render();
+            MillPathSegments.at(i)->render(false);
     }
 
     GlsimEnd();
-    
-    //gStockPrimitive->render();
-    
+        
     glEnable(GL_CULL_FACE);
 
     if (gToolId >= 0)
@@ -393,27 +397,19 @@ void display()
         if (len > 0)
         {
             MillSim::MillPathSegment* p = MillPathSegments.at(len - 1);
-            toolPos = p->headPos;
+            toolPos = *p->GetHeadPosition();
         }
-        glEnable(GL_CULL_FACE);
         glPushMatrix();
-        /*int n = primitives.size() - 1;
-        if (n > 0)
-            primitives[n]->render();*/
         glTranslatef(toolPos.x, toolPos.y, toolPos.z);
         glCallList(gToolId);
         glPopMatrix();
-        glDisable(GL_CULL_FACE);
     }
 
-    glPushMatrix();
-    glTranslatef(0, 0, 0.5);
-    for (int i = 0; i < nsegs; i++)
+    if (len > 2 && debug > 0)
     {
-        ExtrudeProfileRad(endMillTaper02.mProfPoints, PROFILE_BUFFER_POINTS(endMillTaper02.mNPoints), 1, 0.35, 0, true, true);
-        glRotatef(-20, 0, 0, 1);
+         MillSim::MillPathSegment* p = MillPathSegments.at(2);
+         p->render(debug, false);
     }
-    glPopMatrix();
 
 
     renderTime = glutGet(GLUT_ELAPSED_TIME) - msec;
@@ -422,6 +418,8 @@ void display()
 
     glutSwapBuffers();
 }
+
+int decim = 0;
 
 void idle() {
 
@@ -432,7 +430,7 @@ void idle() {
     last = msec;
     msec = glutGet(GLUT_ELAPSED_TIME);
     if (spin) {
-        rot += (msec-last)/40.0f; 
+        rot += (msec-last)/80.0f; 
         while (rot >= 360.0f)
 			rot -= 360.0f;
     }
@@ -446,8 +444,11 @@ void idle() {
         ancient = msec;
         fps = 0;  
     }
-    if (simulate)
+    if (simulate || singleStep)
+    {
         SimNext();
+        singleStep = false;
+    }
 
     display();
 
@@ -462,8 +463,16 @@ void key(unsigned char k, int, int) {
     case 's':
         simulate = !simulate;
         break;
+    case 't':
+        simulate = false;
+        singleStep = true;
+        break;
     case 'i':
         nsegs++;
+        break;
+    case'd':
+        debug++;
+        if (debug == 10) debug = 0;
         break;
     default:
         break;
@@ -500,8 +509,8 @@ void init()
     // Enable two OpenGL lights
     GLfloat light_diffuse[] = { 1.0f,  1.0f,  1.0f,  1.0f };  // white diffuse light
     GLfloat light_diffuse2[] = { 0.6f,  0.6f,  0.9f,  1.0f };  // purple diffuse light
-    GLfloat light_position0[] = {-2.0f, -2.0f,  -2.0f,  0.0f};  // Infinite light location
-    GLfloat light_position1[] = { 2.0f,  2.0f,  2.0f,  0.0f};  // Infinite light location
+    GLfloat light_position0[] = {-20, -20,  -20,  0};  // Infinite light location
+    GLfloat light_position1[] = { 20,  20,  20,  0};  // Infinite light location
 
     glLightfv(GL_LIGHT0, GL_DIFFUSE, light_diffuse2);
     glLightfv(GL_LIGHT0, GL_POSITION, light_position0);
@@ -517,12 +526,12 @@ void init()
 
     // Setup the view of the CSG shape
     glMatrixMode(GL_PROJECTION);
-    gluPerspective(40.0, 4.0/3.0, 1.0, 20.0);
+    gluPerspective(40.0, 4.0/3.0, 1.0, 200.0);
     glMatrixMode(GL_MODELVIEW);
     
     // setup tools ans stock
     //MillSim::resolution = 0.1;
-    gStockObject = new MillSim::StockObject(-2, -2, 0.0001f, 4, 4, 0.2f);
+    gStockObject = new MillSim::StockObject(-20, -20, 0.001f, 40, 40, 2);
     endMillFlat01.GenerateDisplayLists();
     endMillTaper02.GenerateDisplayLists();
     endMillBall03.GenerateDisplayLists();

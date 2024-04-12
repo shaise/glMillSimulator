@@ -46,29 +46,40 @@ public:
 	{
 		x = mm->x; y = mm->y; z = mm->z;
 	}
+
 	void Add(Vector3* other)
 	{
 		x += other->x;
 		y += other->y;
 		z += other->z;
 	}
+
 	void Sub(Vector3* other)
 	{
 		x -= other->x;
 		y -= other->y;
 		z -= other->z;
 	}
+
 	void Div(float val)
 	{
 		x /= val;
 		y /= val;
 		z /= val;
 	}
+
 	void Mul(float val)
 	{
 		x *= val;
 		y *= val;
 		z *= val;
+	}
+
+	void Set(float _x, float _y, float _z)
+	{
+		x = _x;
+		y = _y;
+		z = _z;
 	}
 
 };

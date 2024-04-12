@@ -33,12 +33,12 @@ namespace MillSim {
 
 
         /// Calls the display list.
-        virtual void render();
-        virtual void render(int step);
+        virtual void render(bool isReversed);
+        virtual void render(int step, bool isReversed);
+        virtual Vector3* GetHeadPosition();
 
     public:
         EndMill* mEndmill = nullptr;
-        Vector3 headPos;
         int numRenderSteps;
         //int numSimSteps;
 
@@ -50,15 +50,18 @@ namespace MillSim {
          float mXYZDistance;
          float mZDistance;
          float mXYAngle;
-         float mStartAng;
-         float mStepAng;
+         float mStartAngRad;
+         float mStepAngRad;
+         float mStartAngDeg;
+         float mStepAngDeg;
          float mStepDistance;
          float mRadius;
+         int mStepNumber;
          Vector3 mDiff;
-         Vector3 mStep;
+         Vector3 mStepLength;
          Vector3 mCenter;
-         Vector3 mTarget;
          Vector3 mStartPos;
+         Vector3 mHeadPos;
          MotionType mMotionType;
     };
 }

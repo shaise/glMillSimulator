@@ -23,7 +23,7 @@ namespace MillSim {
         return fabs(m->i > EPSILON) || fabs(m->j) > EPSILON;
     }
 
-    float resolution = 0.1;
+    float resolution = 1;
 
     MillPathSegment::MillPathSegment(EndMill *endmill, MillMotion* from, MillMotion* to)
     {
@@ -37,28 +37,29 @@ namespace MillSim {
         mEndmill = endmill;
         mDisplayListId = 0;
         mStartPos.FromMillMotion(from);
-        mStartAng = mStepAng = 0;
+        mStartAngRad = mStepAngRad = 0;
         if (IsArcMotion(to))
         {
             mMotionType = MTCurved;
-            mTarget.FromMillMotion(from);
             mRadius = sqrtf(to->j * to->j + to->i * to->i);
-            mStepAng = asinf(resolution / mRadius);
-            mCenter.FromMillMotion(to);
+            mStepAngRad = asinf(resolution / mRadius);
+            mCenter.FromMillMotion(from);
             mCenter.x += to->i;
             mCenter.y += to->j;
-            if (mStepAng > MAX_SEG_DEG)
-                mStepAng = MAX_SEG_DEG;
-            else if (mStepAng < NIN_SEG_DEG)
-                mStepAng = NIN_SEG_DEG;
-            mStartAng = atan2f(-to->i, -to->j);
-            float endAng = atan2f(mDiff.x - to->i, mDiff.y - to->j);
-            float sweepAng = mStartAng - endAng;
+            if (mStepAngRad > MAX_SEG_DEG)
+                mStepAngRad = MAX_SEG_DEG;
+            else if (mStepAngRad < NIN_SEG_DEG)
+                mStepAngRad = NIN_SEG_DEG;
+            mStartAngRad = atan2f(mCenter.x - from->x, from->y - mCenter.y);
+            float endAng = atan2f(mCenter.x - to->x, to->j - mCenter.y);
+            float sweepAng = mStartAngRad - endAng;
             if (sweepAng < EPSILON)
                 sweepAng += PI * 2;
-            numRenderSteps = (int)(sweepAng / mStepAng) + 1;
-            mStepAng = sweepAng / numRenderSteps;
-            mDisplayListId = mEndmill->GenerateArcSegmentDL(mRadius, mStepAng, 0);
+            numRenderSteps = (int)(sweepAng / mStepAngRad) + 1;
+            mStepAngRad = sweepAng / numRenderSteps;
+            mDisplayListId = mEndmill->GenerateArcSegmentDL(mRadius, mStepAngRad+0.02, 0);
+            mStartAngDeg = mStartAngRad * 180.0f / PI;
+            mStepAngDeg = mStepAngRad * 180.0f / PI;
         }
         else
         {
@@ -66,16 +67,14 @@ namespace MillSim {
             if (numRenderSteps == 0)
                 numRenderSteps = 1;
             mStepDistance = mXYDistance / numRenderSteps;
-            mStep = mDiff;
-            mStep.Div(numRenderSteps);
+            mStepLength = mDiff;
+            mStepLength.Div(numRenderSteps);
 
             if (IsVerticalMotion(from, to)) {
                 mMotionType = MTVertical;
-                mTarget.FromMillMotion(from);
             }
             else {
                 mMotionType = MTHorizontal;
-                mTarget.FromMillMotion(from);
             }
         }
     }
@@ -86,33 +85,40 @@ namespace MillSim {
             glDeleteLists(mDisplayListId, 1);
     }
 
-    void MillPathSegment::render() 
+    void MillPathSegment::render(bool isReversed)
     {
-        render(numRenderSteps);
+        render(numRenderSteps, isReversed);
     }
 
-    void MillPathSegment::render(int step) 
+    void MillPathSegment::render(int step, bool isReversed) 
     {
+        mStepNumber = step;
         glPushMatrix();
         if (mMotionType == MTCurved)
         {
             glTranslatef(mCenter.x, mCenter.y, mCenter.z);
-            glRotatef(mStartAng - (step - 1) * mStepAng, 0, 0, 1);
-            glCallList(mDisplayListId);
+            for (int i = 0; i < step; i++)
+            {
+                glPushMatrix();
+                int n = isReversed ? step - i - 1 : i;
+                glRotatef(mStartAngDeg - n * mStepAngDeg, 0, 0, 1);
+                glCallList(mDisplayListId);
+                glPopMatrix();
+            }
         }
         else
         {
-            headPos = mStep;
-            headPos.Mul(step);
-            headPos.Add(&mStartPos);
             if (mMotionType == MTVertical) {
-                glTranslatef(headPos.x, headPos.y, headPos.z);
+                if (mStepLength.z > 0)
+                    glTranslatef(mStartPos.x, mStartPos.y, mStartPos.z);
+                else
+                    glTranslatef(mStartPos.x, mStartPos.y, mStartPos.z + mStepNumber * mStepLength.z);
                 glCallList(mEndmill->mToolDisplayId);
             }
             else
             {
                 float renderDist = step * mStepDistance;
-                glTranslatef(mTarget.x, mTarget.y, mTarget.z);
+                glTranslatef(mStartPos.x, mStartPos.y, mStartPos.z);
                 glRotatef(mXYAngle, 0, 0, 1);
                 glPushMatrix();
                 glScalef(renderDist, 1, 1);
@@ -124,6 +130,23 @@ namespace MillSim {
         }
         //glCallList(mDisplayListId);
         glPopMatrix();
+    }
+
+    Vector3* MillPathSegment::GetHeadPosition()
+    {
+        if (mMotionType == MTCurved)
+        {
+            float angRad = mStartAngRad - mStepNumber * mStepAngRad;
+            mHeadPos.Set(-mRadius * sinf(angRad), mRadius * cosf(angRad), 0);
+            mHeadPos.Add(&mCenter);
+        }
+        else
+        {
+            mHeadPos = mStepLength;
+            mHeadPos.Mul(mStepNumber);
+            mHeadPos.Add(&mStartPos);
+        }
+        return &mHeadPos;
     }
 
 }
