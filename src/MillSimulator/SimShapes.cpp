@@ -8,6 +8,7 @@ float* cosTable = nullptr;
 int lastNumSlices = 0;
 int lastNumSectionIndices = 0;
 GLshort quadIndices[] = { 0, 2, 3, 0, 3, 1 };
+GLshort quadIndicesReversed[] = { 0, 3, 2, 0, 1, 3 };
 GLshort* sectionIndicesQuad = nullptr;
 GLshort* sectionIndicesTri = nullptr;
 
@@ -223,8 +224,14 @@ void ExtrudeProfileRad(float* profPoints, int nPoints, float radius, float angle
     }
     if (capEnd)
         capEndVerts = capStartVerts + nverts;
-    int capStartIdx = 0;
-    int capEndIdx = nverts - 3;
+
+    bool is_clockwise = angleRad > 0;
+    angleRad = fabs(angleRad);
+    float dir = is_clockwise ? 1.0f : -1.0f;
+
+    int capStartIdx = is_clockwise ? 0 : nverts - 3;
+    int capEndIdx = is_clockwise ? nverts - 3 : 0;
+
 
     glEnableClientState(GL_VERTEX_ARRAY);
     glVertexPointer(3, GL_FLOAT, 0, vertices);
@@ -243,11 +250,14 @@ void ExtrudeProfileRad(float* profPoints, int nPoints, float radius, float angle
         // start verts
         SET_TRIPLE(vertices, idx, 0, y1, z1);
         SET_TRIPLE(vertices, idx, 0, y2, z2);
-        if (capStart)
+        if (capStart) {
             SET_TRIPLE(capStartVerts, capStartIdx, 0, y1, z1);
+            if (!is_clockwise)
+                capStartIdx -= 6; // start cap winding reversed if direction is flipped
+        }
 
-        float x1 = y1 * sinAng;
-        float x2 = y2 * sinAng;
+        float x1 = y1 * sinAng * dir;
+        float x2 = y2 * sinAng * dir;
         y1 *= cosAng;
         y2 *= cosAng;
         z1 += deltaHeight;
@@ -257,7 +267,8 @@ void ExtrudeProfileRad(float* profPoints, int nPoints, float radius, float angle
         if (capEnd)
         {
             SET_TRIPLE(capEndVerts, capEndIdx, x1, y1, z1);
-            capEndIdx -= 6; // end cap winding reversed so vert order is reversed
+            if (is_clockwise)
+                capEndIdx -= 6; // end cap winding reversed so vert order is reversed
         }
 
         // normals
@@ -269,13 +280,16 @@ void ExtrudeProfileRad(float* profPoints, int nPoints, float radius, float angle
         float nx = -sinAng * ny;
         ny *= cosAng;
         glNormal3f(nx, ny, nz);
-        glDrawElements(GL_TRIANGLES, 6, GL_UNSIGNED_SHORT, quadIndices);
+        if (is_clockwise)
+            glDrawElements(GL_TRIANGLES, 6, GL_UNSIGNED_SHORT, quadIndices);
+        else
+            glDrawElements(GL_TRIANGLES, 6, GL_UNSIGNED_SHORT, quadIndicesReversed);
     }
     glDisableClientState(GL_VERTEX_ARRAY);
     if (capStart)
-        FillNgon(capStartVerts, nPoints, -1, 0, 0);
+        FillNgon(capStartVerts, nPoints, -1 * dir, 0, 0);
     if (capEnd)
-        FillNgon(capEndVerts, nPoints, cosAng, -sinAng, 0);
+        FillNgon(capEndVerts, nPoints, cosAng * dir, -sinAng, 0);
 }
 
 void TesselateProfile(float* profPoints, int nPoints, float distance, float deltaHeight)

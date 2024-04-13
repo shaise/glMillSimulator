@@ -40,14 +40,16 @@ int curMillOpIx = 0;
 std::vector<MillSim::MillPathSegment*> MillPathSegments;
 
 MillMotion flatMillMotions[] = {
-    //{4, 4, 10},
-    //{4, 4, 0},
-    //{4, 4, 10},
-    {-4, -4, 10},
+    //{-4, -4, 10},
+    //{-4, -4, 2},
+    //{-4, -4, 0, 4, 4, -1},
+    //{-4, -4, 10},
+
+    {-0.7, -0.7, 10},
     //{-4, -4, 0},
-    {-4, -4, 2},
-    {4, 4, 0, 4, 4, 0},
-    {4, 4, 10},
+    {-0.7, -0.7, 1},
+    {0.7, 0.7, 1, 0.7, 0.7, 0},
+    {0.7, 0.7, 10},
 
     {15, 15, 10},
     { 15, 15, 1.5f},
@@ -135,8 +137,8 @@ EndMillTaper endMillTaper02(1, 16, 90, 0.2f);
 EndMillBall endMillBall03(1, 16, 4, 0.2f);
 
 MillOperation millOperations[] = {
-    {&endMillBall03, {0, 0, 10}, ballMillMotions, NUM_BALL_MOTIONS },
     {&endMillFlat01, {0, 0, 10}, flatMillMotions, NUM_FLAT_MOTIONS },
+    {&endMillBall03, {0, 0, 10}, ballMillMotions, NUM_BALL_MOTIONS },
     {&endMillTaper02, {0, 0, 10}, taperMillMotions, NUM_TAPER_MOTIONS },
     {nullptr}
 };
@@ -425,10 +427,10 @@ void display()
         glPopMatrix();
     }
 
-    if (len > 3 && debug > 0)
+    if (len > 2 && debug > 0)
     {
-        MillSim::MillPathSegment* p = MillPathSegments.at(3);
-        p->render(p->numSimSteps);
+        MillSim::MillPathSegment* p = MillPathSegments.at(2);
+        p->render(debug);
     }
 
 

@@ -6,8 +6,9 @@
 #define N_MILL_SLICES 8
 #define SET_TRIPLE(var, idx, x, y, z) {var[idx] = x; var[idx+1] = y; var[idx+2] = z;}
 #define SET_TRIPLE_OFFS(var, idx, offs, x, y, z) {var[idx] = x + offs; var[idx+1] = y + offs; var[idx+2] = z + offs;}
-#define MAX_SEG_DEG (PI / 4.0f)   // 45 deg
+#define MAX_SEG_DEG (PI / 8.0f)   // 22.5 deg
 #define NIN_SEG_DEG (PI / 90.0f)  // 2 deg
+#define SWEEP_ARC_PAD 1.05f
 
 
 
@@ -49,7 +50,8 @@ namespace MillSim {
         {
             mMotionType = MTCurved;
             mRadius = sqrtf(to->j * to->j + to->i * to->i);
-            mStepAngRad = asinf(resolution / mRadius);
+            mSmallRad = mRadius <= mEndmill->mRadius;
+            mStepAngRad = mSmallRad ? MAX_SEG_DEG : asinf(resolution / mRadius);
             mCenter.FromMillMotion(from);
             mCenter.x += to->i;
             mCenter.y += to->j;
@@ -59,13 +61,17 @@ namespace MillSim {
             else if (mStepAngRad < NIN_SEG_DEG)
                 mStepAngRad = NIN_SEG_DEG;
             mStartAngRad = atan2f(mCenter.x - from->x, from->y - mCenter.y);
-            float endAng = atan2f(mCenter.x - to->x, to->j - mCenter.y);
-            float sweepAng = mStartAngRad - endAng;
+            float endAng = atan2f(mCenter.x - to->x, to->y - mCenter.y);
+            float sweepAng = (mStartAngRad - endAng) * mArcDir;
             if (sweepAng < EPSILON)
                 sweepAng += PI * 2;
             numSimSteps = (int)(sweepAng / mStepAngRad) + 1;
-            mStepAngRad = sweepAng / numSimSteps;
-            mDisplayListId = mEndmill->GenerateArcSegmentDL(mRadius, mStepAngRad * 1.05, mDiff.z / numSimSteps);
+            mStepAngRad = mArcDir * sweepAng / numSimSteps;
+            if (mSmallRad)
+                // when the radius is too small, we just use the tool itself to carve the stock
+                mDisplayListId = mEndmill->mToolDisplayId;
+            else
+                mDisplayListId = mEndmill->GenerateArcSegmentDL(mRadius, mStepAngRad * SWEEP_ARC_PAD, mDiff.z / numSimSteps);
             mStartAngDeg = mStartAngRad * 180.0f / PI;
             mStepAngDeg = mStepAngRad * 180.0f / PI;
             isMultyPart = true;
@@ -105,6 +111,8 @@ namespace MillSim {
         {
             glTranslatef(mCenter.x, mCenter.y, mCenter.z + mDiff.z * (step - 1) / numSimSteps);
             glRotatef(mStartAngDeg - (step - 1) * mStepAngDeg, 0, 0, 1);
+            if (mSmallRad)
+                glTranslatef(0, mRadius, 0);
             glCallList(mDisplayListId);
             glPopMatrix();
         }

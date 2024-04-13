@@ -58,6 +58,7 @@ namespace MillSim {
          float mStepDistance;
          float mRadius;
          float mArcDir;
+         bool mSmallRad;
          int mStepNumber;
          Vector3 mDiff;
          Vector3 mStepLength;
