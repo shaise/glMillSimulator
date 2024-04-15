@@ -1,5 +1,5 @@
 #include "MillPathSegment.h"
-#include <GL/glut.h>
+#include <GLFW/glfw3.h>
 #include "SimShapes.h"
 
 #define PI 3.1415926

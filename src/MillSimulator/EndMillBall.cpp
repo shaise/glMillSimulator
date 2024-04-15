@@ -1,6 +1,7 @@
 #include "EndMillBall.h"
 #include "SimShapes.h"
 #include <math.h>
+#include <malloc.h>
 
 EndMillBall::EndMillBall(float radius, int nslices, int nSections, float flatRadius):
 	EndMill(radius, nslices)

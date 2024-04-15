@@ -5,6 +5,10 @@
 // simulating cnc mill operation using Sequenced Convex Subtraction (SCS) by Nigel Stewart et al.
 //
 
+
+#include <GL/glew.h>
+#include <GLFW/glfw3.h>
+#include "linmath.h"
 #include "MillPathSegment.h"
 #include "StockObject.h"
 #include "MillOperation.h"
@@ -16,7 +20,6 @@
 #include <sstream>
 #include <string>
 #include <vector>
-#include <GL/glut.h>
 
 bool spin = true;
 bool simulate = false;
@@ -36,6 +39,7 @@ bool gIsInStock;
 int gToolId = -1;
 int curMillOpIx = 0;
 #define STOCK_HEIGHT 2.0f
+GLFWwindow* glwind;
 
 std::vector<MillSim::MillPathSegment*> MillPathSegments;
 
@@ -256,7 +260,7 @@ void ShowStats() {
     glDisable(GL_LIGHTING);
     std::string s = fpsStream.str();
     for (unsigned int i=0; i<s.size(); ++i) {
-        glutBitmapCharacter(GLUT_BITMAP_8_BY_13, s[i]);
+        //glutBitmapCharacter(GLUT_BITMAP_8_BY_13, s[i]);
     }
     glEnable(GL_LIGHTING);
     glPopMatrix();
@@ -362,18 +366,26 @@ void renderSegmentReversed(int iSeg)
     }
 }
 
+vec3 eye = { 0, 45, 30 };
+vec3 target = { 0, 0, 0 };
+vec3 upvec = { 0, 0, 1 };
+
 void display()
 {
     glMatrixMode(GL_MODELVIEW);
     glLoadIdentity();
-    gluLookAt(0.0, 45, 30,  /* eye  */
-              0.0, 0.0, 0.0,  /* taeget  */
-              0.0, 0.0, 1.0); /* up vector */
+    mat4x4 mat;
+    mat4x4_identity(mat);
+    mat4x4_look_at(mat, eye, target, upvec);
+    /*gluLookAt(0.0, 45, 30,  // eye 
+              0.0, 0.0, 0.0,  // taeget 
+              0.0, 0.0, 1.0); // up vector*/
+    glLoadMatrixf((const GLfloat*)&mat);
     if (isRotate)
         glRotatef(rot, 0.0f, 0.0f, 1.0f);
 
     glClear(GL_COLOR_BUFFER_BIT | GL_DEPTH_BUFFER_BIT | GL_STENCIL_BUFFER_BIT);
-    unsigned int msec = glutGet(GLUT_ELAPSED_TIME);
+    unsigned int msec = glfwGetTime() * 1000;
     
     GlsimStart();
     gStockObject->render();
@@ -434,11 +446,9 @@ void display()
     }
 
 
-    renderTime = glutGet(GLUT_ELAPSED_TIME) - msec;
+    renderTime = (glfwGetTime() * 1000) - msec;
 
     ShowStats();
-
-    glutSwapBuffers();
 }
 
 int decim = 0;
@@ -450,7 +460,7 @@ void idle() {
     static int msec = 0;        
     static int fps = 0;
     last = msec;
-    msec = glutGet(GLUT_ELAPSED_TIME);
+    msec = (glfwGetTime() * 1000);
     if (spin) {
         rot += (msec-last)/80.0f; 
         while (rot >= 360.0f)
@@ -477,29 +487,35 @@ void idle() {
     ++fps;
 }
 
-void key(unsigned char k, int, int) {
-    switch (k) {
+void key_callback(GLFWwindow* window, int key, int scancode, int action, int mods) 
+{
+    if (action != GLFW_PRESS)
+        return;
+    switch (key) {
     case ' ': 
         spin = !spin; 
         break;
-    case 's':
+    case 'S':
         simulate = !simulate;
         break;
-    case 't':
+    case 'T':
         simulate = false;
         singleStep = true;
         break;
-    case 'i':
+    case 'I':
         nsegs++;
         break;
-    case'd':
+    case'D':
         debug++;
         if (debug == 30) debug = 0;
+        break;
+    case GLFW_KEY_ESCAPE:
+        glfwSetWindowShouldClose(window, GLFW_TRUE);
         break;
     default:
         break;
     }
-    display();
+    //display();
 }
 
 const char* vertexShaderSource = "#version 330 core\n"
@@ -517,11 +533,6 @@ const char* fragmentShaderSource = "#version 330 core\n"
     "   FragColor = ourColor;\n"
     "}\n\0";
 
-void timer(int) {
-    glutPostRedisplay();
-    glutTimerFunc(1000 / 60, timer, 0);
-    idle();
-}
 
 void init()
 {
@@ -548,7 +559,10 @@ void init()
 
     // Setup the view of the CSG shape
     glMatrixMode(GL_PROJECTION);
-    gluPerspective(40.0, 4.0/3.0, 1.0, 200.0);
+    mat4x4 projmat;
+    mat4x4_perspective(projmat, 40.0, 4.0 / 3.0, 1.0, 200.0);
+    //gluPerspective(40.0, 4.0/3.0, 1.0, 200.0);
+    glLoadMatrixf((const GLfloat*)&projmat);
     glMatrixMode(GL_MODELVIEW);
     
     // setup tools ans stock
@@ -561,20 +575,52 @@ void init()
     setMill(true);
 }
 
+static void error_callback(int error, const char* description)
+{
+    fprintf(stderr, "Error: %s\n", description);
+}
+
+
 int main(int argc, char **argv)
 {
-    glutInit(&argc, argv);
-    glutInitWindowSize(800, 600);
-    glutInitDisplayMode(GLUT_DOUBLE | GLUT_RGB | GLUT_DEPTH | GLUT_STENCIL);
-    glutCreateWindow("Mill Simulation");
+    glfwSetErrorCallback(error_callback);
 
-    glutDisplayFunc(display);
-    glutKeyboardFunc(key);
+    if (!glfwInit())
+        exit(EXIT_FAILURE);
 
-    //glutIdleFunc(idle);
+
+    //glfwWindowHint(GLFW_CONTEXT_VERSION_MAJOR, 3);
+    //glfwWindowHint(GLFW_CONTEXT_VERSION_MINOR, 3);
+    //glfwWindowHint(GLFW_OPENGL_PROFILE, GLFW_OPENGL_CORE_PROFILE);
+
+    glwind = glfwCreateWindow(800, 600, "OpenGL Triangle", NULL, NULL);
+    if (!glwind)
+    {
+        glfwTerminate();
+        exit(EXIT_FAILURE);
+    }
+
+    glfwSetKeyCallback(glwind, key_callback);
+
+    glfwMakeContextCurrent(glwind);
+    glewInit();
+    glfwSwapInterval(1);
+
+    std::cout << glGetString(GL_VERSION) << std::endl;
     init();
-    timer(0);
-    glutMainLoop();
+    while (!glfwWindowShouldClose(glwind))
+    {
+        idle();
+        display();
+        glfwSwapBuffers(glwind);
+        glfwPollEvents();
+    }
+
+    glfwDestroyWindow(glwind);
+
+    glfwTerminate();
+    exit(EXIT_SUCCESS);
+
 
     return 0;
 }

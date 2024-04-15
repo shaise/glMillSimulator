@@ -1,5 +1,7 @@
 #include "SimShapes.h"
 #include <math.h>
+#include <malloc.h>
+#include <string.h>
 
 #define PI 3.14159265 
 
@@ -201,7 +203,7 @@ void ExtrudeProfilePar(float* profPoints, int nPoints, float distance, float del
 }
 
 
-void FillNgon(float* vertices, int nPoints, float normX, float normY, float normZ)
+void FillNgonOld(float* vertices, int nPoints, float normX, float normY, float normZ)
 {
     glEnableClientState(GL_VERTEX_ARRAY);
     glVertexPointer(3, GL_FLOAT, 0, vertices);
@@ -287,9 +289,9 @@ void ExtrudeProfileRad(float* profPoints, int nPoints, float radius, float angle
     }
     glDisableClientState(GL_VERTEX_ARRAY);
     if (capStart)
-        FillNgon(capStartVerts, nPoints, -1 * dir, 0, 0);
+        FillNgonOld(capStartVerts, nPoints, -1 * dir, 0, 0);
     if (capEnd)
-        FillNgon(capEndVerts, nPoints, cosAng * dir, -sinAng, 0);
+        FillNgonOld(capEndVerts, nPoints, cosAng * dir, -sinAng, 0);
 }
 
 void TesselateProfile(float* profPoints, int nPoints, float distance, float deltaHeight)
@@ -306,21 +308,89 @@ void TesselateProfile(float* profPoints, int nPoints, float distance, float delt
         SET_TRIPLE(vertices, idx, distance, profPoints[i2], profPoints[i2 + 1]);
     }
     float normX = (distance > 0.0) ? 1 : -1;
-    FillNgon(vertices, nPoints, normX, 0, 0);
+    FillNgonOld(vertices, nPoints, normX, 0, 0);
     free(vertices);
 }
 
+struct stIdxReturn
+{
+    int vidx;
+    int iidx;
+};
 
-void SolidCylinder(GLdouble radius, GLdouble height, GLint slices, GLint stacks) {
-
-    GLUquadricObj* qobj = gluNewQuadric();
-
-    gluCylinder(qobj, radius, radius, height, slices, stacks);
-    gluQuadricOrientation(qobj, GLU_INSIDE);
-    gluDisk(qobj, 0.0, radius, slices, stacks);
-    gluQuadricOrientation(qobj, GLU_OUTSIDE);
-    glTranslatef(0.0f, 0.0f, static_cast<GLfloat>(height));
-    gluDisk(qobj, 0.0, radius, slices, stacks);
-
-    gluDeleteQuadric(qobj);
+int GetNumExtrudedProfileVerts(int nPoints)
+{
+    return nPoints * 3 * 12; // n * 3 * 8 per extrude + 2 cups * n * 3 * 2 per cup
 }
+
+int GetNumExtrudedProfileIndices(int nPoints)
+{
+    return nPoints * 3 * 2 + (nPoints - 2) * 3;
+}
+
+stIdxReturn FillNgon(float* vbuffer, GLushort* ibuffer, int vistart, float* profPoints, int nPoints, float offsX, float offsZ, float normX)
+{
+    int vidx = 0;
+    int iidx = 0;
+    for (int i = 0; i < (nPoints * 2); i += 2)
+    {
+        SET_TRIPLE(vbuffer, vidx, offsX, profPoints[i], profPoints[i + 1] + offsZ);
+        SET_TRIPLE(vbuffer, vidx, normX, 0, 0);
+        if (i > 1)
+        {
+            if (normX < 0)
+            {
+                SET_TRIPLE(ibuffer, iidx, vistart, vistart + i - 1, vistart + i);
+            }
+            else
+            {
+                SET_TRIPLE(ibuffer, iidx, vistart, vistart + i, vistart + i - 1);
+            }
+        }
+    }
+    return { vidx, iidx };
+}
+
+void ExtrudeProfileLinear(float *vbuffer, GLushort *ibuffer, float* profPoints, int nPoints, float fromX, float toX, float fromZ, float toZ, bool capStart, bool capEnd)
+{
+    nPoints;
+    int vidx = 0;
+    int iidx = 0;
+    stIdxReturn idxRet;
+    // begin with a hollow pipe
+    for (int i = 0; i < (nPoints * 2); i += 2)
+    {
+        // verts
+        float y1 = profPoints[i];
+        float z1 = profPoints[i + 1];
+        int i2 = (i + 2) % nPoints;
+        float y2 = profPoints[i2];
+        float z2 = profPoints[i2 + 1];
+
+        // nornal
+        float ydiff = y2 - y1;
+        float zdiff = z2 - z1;
+        float len = sqrtf(ydiff * ydiff + zdiff * zdiff);
+        float ny = -zdiff / len;
+        float nz = ydiff / len;
+
+        SET_TRIPLE(vbuffer, vidx, fromX, y1, z1 + fromZ);
+        SET_TRIPLE(vbuffer, vidx, 0, ny, nz);
+        SET_TRIPLE(vbuffer, vidx, fromX, y2, z2 + fromZ);
+        SET_TRIPLE(vbuffer, vidx, 0, ny, nz);
+        SET_TRIPLE(vbuffer, vidx, toX, y1, z1 + toZ);
+        SET_TRIPLE(vbuffer, vidx, 0, ny, nz);
+        SET_TRIPLE(vbuffer, vidx, toX, y2, z2 + toZ);
+        SET_TRIPLE(vbuffer, vidx, 0, ny, nz);
+
+        //{ 0, 2, 3, 0, 3, 1 };
+        GLushort vistart = i * 4;
+        SET_TRIPLE(ibuffer, iidx, vistart, vistart + 2, vistart + 3);
+        SET_TRIPLE(ibuffer, iidx, vistart, vistart + 3, vistart + 1);
+    }
+    idxRet = FillNgon(vbuffer + vidx, ibuffer + iidx, vidx / 6, profPoints, nPoints, fromX, fromZ, -1);
+    vidx += idxRet.vidx;
+    iidx += idxRet.iidx;
+    FillNgon(vbuffer + vidx, ibuffer + iidx, vidx / 6, profPoints, nPoints, toX, toZ, -1);
+}
+

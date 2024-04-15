@@ -1,5 +1,5 @@
 #include "StockObject.h"
-#include <GL/glut.h>
+#include <GLFW/glfw3.h>
 
 
 MillSim::StockObject::StockObject(float x, float y, float z, float l, float w, float h)
@@ -13,7 +13,8 @@ MillSim::StockObject::StockObject(float x, float y, float z, float l, float w, f
     glPushMatrix();
     glTranslatef(l2, w2, h2);
     glScalef(l, w, h);
-    glutSolidCube(1);
+    
+    //glutSolidCube(1);
     glPopMatrix();
     glEndList();
     mDisplayListId = id;

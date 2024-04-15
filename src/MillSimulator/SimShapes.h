@@ -1,6 +1,6 @@
 #ifndef __sim_shapes_h__
 #define __sim_shapes_h__
-#include <GL/glut.h>
+#include <GLFW/glfw3.h>
 
 #define SET_DUAL(var, idx, y, z) {var[idx++] = y; var[idx++] = z; }
 #define SET_TRIPLE(var, idx, x, y, z) {var[idx++] = x; var[idx++] = y; var[idx++] = z; }

@@ -1,5 +1,5 @@
 #include "EndMill.h"
-#include <GL/glut.h>
+#include <GLFW/glfw3.h>
 #include "SimShapes.h"
 
 EndMill::EndMill(float radius, int nslices)
