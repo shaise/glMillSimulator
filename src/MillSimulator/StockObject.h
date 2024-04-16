@@ -23,6 +23,7 @@ namespace MillSim {
 
     private:
         unsigned int mDisplayListId;
+        float mProfile[8];
 
     };
 }

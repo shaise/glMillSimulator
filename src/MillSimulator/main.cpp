@@ -366,20 +366,21 @@ void renderSegmentReversed(int iSeg)
     }
 }
 
-vec3 eye = { 0, 45, 30 };
+vec3 eye = { 0, 60, 10 };
 vec3 target = { 0, 0, 0 };
 vec3 upvec = { 0, 0, 1 };
 
 void display()
 {
     glMatrixMode(GL_MODELVIEW);
-    glLoadIdentity();
     mat4x4 mat;
-    mat4x4_identity(mat);
-    mat4x4_look_at(mat, eye, target, upvec);
-    /*gluLookAt(0.0, 45, 30,  // eye 
-              0.0, 0.0, 0.0,  // taeget 
+    //glLoadIdentity();
+    /*gluLookAt(0.0, 45, 30,  // eye
+              0.0, 0.0, 0.0,  // taeget
               0.0, 0.0, 1.0); // up vector*/
+    //glGetFloatv(GL_MODELVIEW_MATRIX, (GLfloat*)&mat);
+    //mat4x4_identity(mat);
+    mat4x4_look_at(mat, eye, target, upvec);
     glLoadMatrixf((const GLfloat*)&mat);
     if (isRotate)
         glRotatef(rot, 0.0f, 0.0f, 1.0f);
@@ -387,8 +388,8 @@ void display()
     glClear(GL_COLOR_BUFFER_BIT | GL_DEPTH_BUFFER_BIT | GL_STENCIL_BUFFER_BIT);
     unsigned int msec = glfwGetTime() * 1000;
     
-    GlsimStart();
     gStockObject->render();
+    GlsimStart();
 
     int len = (int)MillPathSegments.size();
 
@@ -448,7 +449,7 @@ void display()
 
     renderTime = (glfwGetTime() * 1000) - msec;
 
-    ShowStats();
+    //ShowStats();
 }
 
 int decim = 0;
@@ -560,7 +561,7 @@ void init()
     // Setup the view of the CSG shape
     glMatrixMode(GL_PROJECTION);
     mat4x4 projmat;
-    mat4x4_perspective(projmat, 40.0, 4.0 / 3.0, 1.0, 200.0);
+    mat4x4_perspective(projmat, 0.7, 4.0 / 3.0, 1.0, 200.0);
     //gluPerspective(40.0, 4.0/3.0, 1.0, 200.0);
     glLoadMatrixf((const GLfloat*)&projmat);
     glMatrixMode(GL_MODELVIEW);

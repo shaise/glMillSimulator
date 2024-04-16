@@ -318,23 +318,24 @@ struct stIdxReturn
     int iidx;
 };
 
-int GetNumExtrudedProfileVerts(int nPoints)
+int GetNumExtrudedProfileVerts(int nPoints, int numCups)
 {
-    return nPoints * 3 * 12; // n * 3 * 8 per extrude + 2 cups * n * 3 * 2 per cup
+    return nPoints * 8 + numCups * 2;
 }
 
-int GetNumExtrudedProfileIndices(int nPoints)
+int GetNumExtrudedProfileIndices(int nPoints, int numCups)
 {
-    return nPoints * 3 * 2 + (nPoints - 2) * 3;
+    return (nPoints * 2 + (nPoints - 2) * numCups) * 3;
 }
 
 stIdxReturn FillNgon(float* vbuffer, GLushort* ibuffer, int vistart, float* profPoints, int nPoints, float offsX, float offsZ, float normX)
 {
     int vidx = 0;
     int iidx = 0;
-    for (int i = 0; i < (nPoints * 2); i += 2)
+    for (int i = 0; i < nPoints; i ++)
     {
-        SET_TRIPLE(vbuffer, vidx, offsX, profPoints[i], profPoints[i + 1] + offsZ);
+        int p1 = i * 2;
+        SET_TRIPLE(vbuffer, vidx, offsX, profPoints[p1], profPoints[p1 + 1] + offsZ);
         SET_TRIPLE(vbuffer, vidx, normX, 0, 0);
         if (i > 1)
         {
@@ -353,19 +354,19 @@ stIdxReturn FillNgon(float* vbuffer, GLushort* ibuffer, int vistart, float* prof
 
 void ExtrudeProfileLinear(float *vbuffer, GLushort *ibuffer, float* profPoints, int nPoints, float fromX, float toX, float fromZ, float toZ, bool capStart, bool capEnd)
 {
-    nPoints;
     int vidx = 0;
     int iidx = 0;
     stIdxReturn idxRet;
     // begin with a hollow pipe
-    for (int i = 0; i < (nPoints * 2); i += 2)
+    for (int i = 0; i < nPoints; i ++)
     {
         // verts
-        float y1 = profPoints[i];
-        float z1 = profPoints[i + 1];
-        int i2 = (i + 2) % nPoints;
-        float y2 = profPoints[i2];
-        float z2 = profPoints[i2 + 1];
+        int p1 = i * 2;
+        float y1 = profPoints[p1];
+        float z1 = profPoints[p1 + 1];
+        int p2 = (p1 + 2) % (nPoints * 2);
+        float y2 = profPoints[p2];
+        float z2 = profPoints[p2 + 1];
 
         // nornal
         float ydiff = y2 - y1;
@@ -391,6 +392,6 @@ void ExtrudeProfileLinear(float *vbuffer, GLushort *ibuffer, float* profPoints, 
     idxRet = FillNgon(vbuffer + vidx, ibuffer + iidx, vidx / 6, profPoints, nPoints, fromX, fromZ, -1);
     vidx += idxRet.vidx;
     iidx += idxRet.iidx;
-    FillNgon(vbuffer + vidx, ibuffer + iidx, vidx / 6, profPoints, nPoints, toX, toZ, -1);
+    FillNgon(vbuffer + vidx, ibuffer + iidx, vidx / 6, profPoints, nPoints, toX, toZ, 1);
 }
 
