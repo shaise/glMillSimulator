@@ -72,97 +72,90 @@ bool GenerateSliceIndices(int nPoints)
 
 void RotateProfile(float* profPoints, int nPoints, float distance, float deltaHeight, int nSlices, bool isHalfTurn)
 {
-    int half_nverts = (nSlices + 1) * 3;
-    int nverts = half_nverts * 2;
-    float* vertices = (float*)malloc(nverts * sizeof(float));
-    if (vertices == nullptr)
+    int vidx = 0;
+    int iidx = 0;
+    int numVerts, numIndices;
+    int vstart;
+
+    numVerts = nPoints * 2 * (nSlices + 1);
+    numIndices = (nPoints - 1) * nSlices * 6;
+
+    float* vbuffer = (float*)malloc(numVerts * 6 * sizeof(float));
+    if (vbuffer == nullptr)
         return;
-    float* normals = (float*)malloc(nverts * sizeof(float));
-    if (normals == nullptr)
+    GLushort* ibuffer = (GLushort*)malloc(numIndices * sizeof(GLushort));
+    if (ibuffer == nullptr)
     {
-        free(vertices);
+        free(vbuffer);
         return;
     }
     int nsinvals = nSlices;
     if (isHalfTurn)
         nsinvals *= 2;
     if (GenerateSinTable(nsinvals) == false)
+    {
+        free(vbuffer);
+        free(ibuffer);
         return;
-    int nidxs = nSlices * 2 * 3;
-    if (GenerateSliceIndices(nSlices) == false)
-        return;
-    if (fabsf(profPoints[nidxs - 2]) < 0.00001)
-        nidxs -= 3; // if y value is too close to zero render only 1 triangle since all are merged to the same point
-
-    glEnableClientState(GL_VERTEX_ARRAY);
-    glEnableClientState(GL_NORMAL_ARRAY);
-    glVertexPointer(3, GL_FLOAT, 0, vertices);
-    glNormalPointer(GL_FLOAT, 0, normals);
+    }
 
     for (int i = 0; i < nPoints; i++)
     {
-        int vidx = 0;
-        int iidx = 0;
         int i2 = i * 2;
-        float rad = fabsf(profPoints[i2]);
-        float z = profPoints[i2 + 1];
 
-        i2 = (i > 0 ? i - 1 : i) * 2;
-        float diffy = profPoints[i2 + 2] - profPoints[i2];
-        float diffz = profPoints[i2 + 3] - profPoints[i2 + 1];
+        float prevy = i > 0 ? profPoints[i2 - 2] : 0;
+        float prevz = i > 0 ? profPoints[i2 - 1] : profPoints[i2 + 1];
+        float prevrad = fabsf(prevy);
+        float rad = fabsf(profPoints[i2]);
+        float z2 = profPoints[i2 + 1];
+        float diffy = profPoints[i2] - prevy;
+        float diffz = z2 - prevz;
         float len = sqrtf(diffy * diffy + diffz * diffz);
         float nz = diffy / len;
+        vstart = i * 2 * (nSlices + 1);
 
         for (int j = 0; j <= nSlices; j++)
         {
             // generate vertices
             float sx = sinTable[j];
             float sy = cosTable[j];
-            float x = rad * sx + distance;
-            float y = rad * sy;
-            SET_TRIPLE(vertices, vidx, x, y, z);
+            float x1 = prevrad * sx + distance;
+            float y1 = prevrad * sy;
+            float x2 = rad * sx + distance;
+            float y2 = rad * sy;
 
             // generate normals
             float ny = -diffz / len;
             float nx = ny * sx;
             ny *= sy;
-            SET_TRIPLE(normals, iidx, nx, ny, nz);
+
+            SET_TRIPLE(vbuffer, vidx, x1, y1, prevz);
+            SET_TRIPLE(vbuffer, vidx, nx, ny, nz);
+            SET_TRIPLE(vbuffer, vidx, x2, y2, z2);
+            SET_TRIPLE(vbuffer, vidx, nx, ny, nz);
+
+            if (j != nSlices)
+            {
+                // generate indices { 0, 3, 1, 0, 2, 3 }
+                int pos = vstart + 2 * j;
+                if (i < (nPoints - 1))
+                    SET_TRIPLE(ibuffer, iidx, pos, pos + 3, pos + 1);
+                if (i > 0)
+                    SET_TRIPLE(ibuffer, iidx, pos, pos + 2, pos + 3);
+            }
         }
-        if (i > 0)
-        {
-            memcpy(&normals[half_nverts], &normals[0], half_nverts * sizeof(float));
-            if (i == (nPoints - 1)) 
-                glDrawElements(GL_TRIANGLES, nSlices * 3, GL_UNSIGNED_SHORT, sectionIndicesTri);
-            else
-                glDrawElements(GL_TRIANGLES, nSlices * 2 * 3, GL_UNSIGNED_SHORT, sectionIndicesQuad);
-        }
- 
-        memcpy(&vertices[half_nverts], &vertices[0], half_nverts * sizeof(float));
     }
-    free(vertices);
-    free(normals);
+
+    glEnableClientState(GL_VERTEX_ARRAY);
+    glEnableClientState(GL_NORMAL_ARRAY);
+    glVertexPointer(3, GL_FLOAT, 24, vbuffer);
+    glNormalPointer(GL_FLOAT, 24, vbuffer + 3);
+    glDrawElements(GL_TRIANGLES, numIndices, GL_UNSIGNED_SHORT, ibuffer);
     glDisableClientState(GL_NORMAL_ARRAY);
     glDisableClientState(GL_VERTEX_ARRAY);
 
-    // create top disc
-    nverts = (nSlices + 2) * 3;
-    vertices = (float*)malloc(nverts * sizeof(float));
-    if (vertices == nullptr)
-        return;
-    int idx = 0;
-    float y = profPoints[0];
-    float z = profPoints[1];
-    for (int j = nSlices; j >= 0; j--)
-    {
-        SET_TRIPLE(vertices, idx, distance + y * sinTable[j], y * cosTable[j], z);
-    }
-    glEnableClientState(GL_VERTEX_ARRAY);
-    glVertexPointer(3, GL_FLOAT, 0, vertices);
-    glNormal3f(0, 0, 1);
-    glDrawArrays(GL_TRIANGLE_FAN, 0, nSlices + 1);
-    glDisableClientState(GL_VERTEX_ARRAY);
-
-    free(vertices);
+    free(vbuffer);
+    free(ibuffer);
 }
 
 void CalculateExtrudeBufferSizes(int nProfilePoints, bool capStart, bool capEnd,
@@ -199,7 +192,7 @@ void ExtrudeProfileRadial(float* profPoints, int nPoints, float radius, float an
     float* vbuffer = (float*)malloc(numVerts * 6 * sizeof(float));
     if (!vbuffer)
         return;
-    GLushort* ibuffer = (GLushort*)malloc(numIndices * sizeof(float));
+    GLushort* ibuffer = (GLushort*)malloc(numIndices * sizeof(GLushort));
     if (!ibuffer)
     {
         free(vbuffer);
@@ -295,7 +288,7 @@ void ExtrudeProfileLinear(float* profPoints, int nPoints, float fromX, float toX
     float* vbuffer = (float*)malloc(numVerts * 6 * sizeof(float));
     if (!vbuffer)
         return;
-    GLushort* ibuffer = (GLushort*)malloc(numIndices * sizeof(float));
+    GLushort* ibuffer = (GLushort*)malloc(numIndices * sizeof(GLushort));
     if (!ibuffer)
     {
         free(vbuffer);

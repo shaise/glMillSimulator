@@ -444,8 +444,8 @@ void display()
 
     if (len > 2 && debug > 0)
     {
-        MillSim::MillPathSegment* p = MillPathSegments.at(2);
-        p->render(debug);
+        MillSim::MillPathSegment* p = MillPathSegments.at(debug);
+        p->render(1);
     }
 
 
