@@ -8,11 +8,8 @@
 
 void RotateProfile(float* profPoints, int nPoints, float distance, float deltaHeight, int nSlices, bool isHalfTurn);
 void ExtrudeProfileRad(float* profPoints, int nPoints, float radius, float angleRad, float deltaHeight, bool capStart, bool capEnd);
+void ExtrudeProfileRadial(float* profPoints, int nPoints, float radius, float angleRad, float deltaHeight, bool capStart, bool capEnd);
 void ExtrudeProfileLinear(float* profPoints, int nPoints, float fromX, float toX, float fromZ, float toZ, bool capStart, bool capEnd);
-
-int GetNumExtrudedProfileVerts(int nPoints, int numCups);
-int GetNumExtrudedProfileIndices(int nPoints, int numCups);
-
 
 #endif
 

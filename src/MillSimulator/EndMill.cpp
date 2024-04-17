@@ -37,8 +37,6 @@ void EndMill::GenerateDisplayLists()
 	int nFullPoints = PROFILE_BUFFER_POINTS(mNPoints);
 	mPathDisplayId = glGenLists(1);
 	glNewList(mPathDisplayId, GL_COMPILE);
-	//ExtrudeProfilePar(mProfPoints, nFullPoints, 1, 0);
-	//TesselateProfile(mProfPoints, nFullPoints, 0, 0);
 	ExtrudeProfileLinear(mProfPoints, nFullPoints, 0, 1, 0, 0, true, false);
 	glEndList();
 }
@@ -48,7 +46,7 @@ unsigned int EndMill::GenerateArcSegmentDL(float radius, float angleRad, float z
 	int nFullPoints = PROFILE_BUFFER_POINTS(mNPoints);
 	unsigned int dispId = glGenLists(1);
 	glNewList(dispId, GL_COMPILE);
-	ExtrudeProfileRad(mProfPoints, PROFILE_BUFFER_POINTS(mNPoints), radius, angleRad, zShift, true, true);
+	ExtrudeProfileRadial(mProfPoints, PROFILE_BUFFER_POINTS(mNPoints), radius, angleRad, zShift, true, true);
 	glEndList();
 	return dispId;
 }
