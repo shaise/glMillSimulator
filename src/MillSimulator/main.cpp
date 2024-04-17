@@ -38,6 +38,7 @@ int gPathStep = 0;
 bool gIsInStock;
 int gToolId = -1;
 int curMillOpIx = 0;
+float eyeHeight = 30;
 #define STOCK_HEIGHT 2.0f
 GLFWwindow* glwind;
 
@@ -366,7 +367,7 @@ void renderSegmentReversed(int iSeg)
     }
 }
 
-vec3 eye = { 0, 60, 10 };
+vec3 eye = { 0, 60, 30 };
 vec3 target = { 0, 0, 0 };
 vec3 upvec = { 0, 0, 1 };
 
@@ -380,6 +381,7 @@ void display()
               0.0, 0.0, 1.0); // up vector*/
     //glGetFloatv(GL_MODELVIEW_MATRIX, (GLfloat*)&mat);
     //mat4x4_identity(mat);
+    eye[2] = eyeHeight;
     mat4x4_look_at(mat, eye, target, upvec);
     glLoadMatrixf((const GLfloat*)&mat);
     if (isRotate)
@@ -388,8 +390,8 @@ void display()
     glClear(GL_COLOR_BUFFER_BIT | GL_DEPTH_BUFFER_BIT | GL_STENCIL_BUFFER_BIT);
     unsigned int msec = glfwGetTime() * 1000;
     
-    gStockObject->render();
     GlsimStart();
+    gStockObject->render();
 
     int len = (int)MillPathSegments.size();
 
@@ -512,6 +514,12 @@ void key_callback(GLFWwindow* window, int key, int scancode, int action, int mod
         break;
     case GLFW_KEY_ESCAPE:
         glfwSetWindowShouldClose(window, GLFW_TRUE);
+        break;
+    case GLFW_KEY_UP:
+        eyeHeight += 5;
+        break;
+    case GLFW_KEY_DOWN:
+        eyeHeight -= 5;
         break;
     default:
         break;

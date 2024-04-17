@@ -37,8 +37,9 @@ void EndMill::GenerateDisplayLists()
 	int nFullPoints = PROFILE_BUFFER_POINTS(mNPoints);
 	mPathDisplayId = glGenLists(1);
 	glNewList(mPathDisplayId, GL_COMPILE);
-	ExtrudeProfilePar(mProfPoints, nFullPoints, 1, 0);
-	TesselateProfile(mProfPoints, nFullPoints, 0, 0);
+	//ExtrudeProfilePar(mProfPoints, nFullPoints, 1, 0);
+	//TesselateProfile(mProfPoints, nFullPoints, 0, 0);
+	ExtrudeProfileLinear(mProfPoints, nFullPoints, 0, 1, 0, 0, true, false);
 	glEndList();
 }
 
