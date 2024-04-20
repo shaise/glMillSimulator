@@ -6,47 +6,35 @@ EndMill::EndMill(float radius, int nslices)
 {
 	mRadius = radius;
 	mNSlices = nslices;
-	mToolDisplayId = mHToolDisplayId = mPathDisplayId = 0;
+	//mToolDisplayId = mHToolDisplayId = mPathDisplayId = 0;
 }
 
 EndMill::~EndMill()
 {
-	if (mToolDisplayId > 0)
-		glDeleteLists(mToolDisplayId, 1);
-	if (mHToolDisplayId > 0)
-		glDeleteLists(mHToolDisplayId, 1);
-	if (mPathDisplayId > 0)
-		glDeleteLists(mPathDisplayId, 1);
+	mToolShape.FreeResources();
+	mHToolShape.FreeResources();
+	mPathShape.FreeResources();
 }
 
 void EndMill::GenerateDisplayLists()
 {
 	// full tool
-	mToolDisplayId = glGenLists(1);
-	glNewList(mToolDisplayId, GL_COMPILE);
-	RotateProfile(mProfPoints, mNPoints, 0, 0, mNSlices, false);
-	glEndList();
+	RotateProfile(mProfPoints, mNPoints, 0, 0, mNSlices, false, &mToolShape);
 
 	// half tool
-	mHToolDisplayId = glGenLists(1);
-	glNewList(mHToolDisplayId, GL_COMPILE);
-	RotateProfile(mProfPoints, mNPoints, 0, 0, mNSlices / 2, true);
-	glEndList();
+	RotateProfile(mProfPoints, mNPoints, 0, 0, mNSlices / 2, true, &mHToolShape);
 
 	// unit path
 	int nFullPoints = PROFILE_BUFFER_POINTS(mNPoints);
-	mPathDisplayId = glGenLists(1);
-	glNewList(mPathDisplayId, GL_COMPILE);
-	ExtrudeProfileLinear(mProfPoints, nFullPoints, 0, 1, 0, 0, true, false);
-	glEndList();
+	ExtrudeProfileLinear(mProfPoints, nFullPoints, 0, 1, 0, 0, true, false, &mPathShape);
 }
 
-unsigned int EndMill::GenerateArcSegmentDL(float radius, float angleRad, float zShift)
+unsigned int EndMill::GenerateArcSegmentDL(float radius, float angleRad, float zShift, Shape *retShape)
 {
 	int nFullPoints = PROFILE_BUFFER_POINTS(mNPoints);
 	unsigned int dispId = glGenLists(1);
 	glNewList(dispId, GL_COMPILE);
-	ExtrudeProfileRadial(mProfPoints, PROFILE_BUFFER_POINTS(mNPoints), radius, angleRad, zShift, true, true);
+	ExtrudeProfileRadial(mProfPoints, PROFILE_BUFFER_POINTS(mNPoints), radius, angleRad, zShift, true, true, retShape);
 	glEndList();
 	return dispId;
 }

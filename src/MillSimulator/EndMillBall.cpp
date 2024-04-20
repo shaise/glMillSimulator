@@ -1,5 +1,6 @@
 #include "EndMillBall.h"
 #include "SimShapes.h"
+#include "GlUtils.h"
 #include <math.h>
 #include <malloc.h>
 

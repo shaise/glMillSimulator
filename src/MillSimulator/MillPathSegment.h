@@ -4,6 +4,7 @@
 
 #include "MillOperation.h"
 #include "EndMill.h"
+#include "linmath.h"
 
 namespace MillSim {
 
@@ -42,24 +43,22 @@ namespace MillSim {
         int numSimSteps;
 
     protected:
-        float mShearMat[16];
+        mat4x4 mShearMat;
 
 
     protected:
-         unsigned int mDisplayListId;
+         Shape mShape;
          float mXYDistance;
          float mXYZDistance;
          float mZDistance;
          float mXYAngle;
          float mStartAngRad;
          float mStepAngRad;
-         float mStartAngDeg;
-         float mStepAngDeg;
-         float mStepDistance;
-         float mRadius;
-         float mArcDir;
-         bool mSmallRad;
-         int mStepNumber;
+         float mStepDistance = 0;
+         float mRadius = 0;
+         float mArcDir = 0;
+         bool mSmallRad = false;
+         int mStepNumber = 0;
          Vector3 mDiff;
          Vector3 mStepLength;
          Vector3 mCenter;

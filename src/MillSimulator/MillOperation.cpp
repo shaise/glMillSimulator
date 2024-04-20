@@ -1,9 +1,8 @@
 #include "MillOperation.h"
 #include "SimShapes.h"
-#include <cmath>
 
 
-void MillOperation::RenderTool()
+void MillOperation::RenderTool(mat4x4 transformMat, mat4x4 normalMat)
 {
-	RotateProfile(endmill->mProfPoints, endmill->mNPoints, 0, 0, endmill->mNSlices, false);
+	endmill->mToolShape.Render(transformMat, normalMat);
 }

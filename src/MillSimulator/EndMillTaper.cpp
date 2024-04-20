@@ -1,5 +1,6 @@
 #include "EndMillTaper.h"
 #include "SimShapes.h"
+#include "GlUtils.h"
 #include <math.h>
 
 EndMillTaper::EndMillTaper(float radius, int nslices, float taperAngle, float flatRadius):

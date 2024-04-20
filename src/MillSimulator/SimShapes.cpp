@@ -1,9 +1,11 @@
+#include <GL/glew.h>
 #include "SimShapes.h"
+#include "Shader.h"
+#include "GlUtils.h"
 #include <math.h>
 #include <malloc.h>
 #include <string.h>
-
-#define PI 3.14159265 
+#include <cstddef>
 
 float* sinTable = nullptr;
 float* cosTable = nullptr;
@@ -14,7 +16,7 @@ GLshort quadIndicesReversed[] = { 0, 3, 2, 0, 1, 3 };
 GLshort* sectionIndicesQuad = nullptr;
 GLshort* sectionIndicesTri = nullptr;
 
-bool GenerateSinTable(int nSlices)
+static bool GenerateSinTable(int nSlices)
 {
     if (nSlices == lastNumSlices)
         return true;
@@ -45,32 +47,40 @@ bool GenerateSinTable(int nSlices)
     return true;
 }
 
-bool GenerateSliceIndices(int nPoints)
+static void GenerateModel(float* vbuffer, GLushort* ibuffer, int numVerts, int numIndices, Shape* retShape)
 {
-    int numSectionIndices = nPoints * 3 * 3;
-    if (numSectionIndices == lastNumSectionIndices)
-        return sectionIndicesQuad;
-    if (numSectionIndices > lastNumSectionIndices)
+    GLuint vbo, ibo, vao;
+
+    // vertex buffer
+    glGenBuffers(1, &vbo);
+    glBindBuffer(GL_ARRAY_BUFFER, vbo);
+    glBufferData(GL_ARRAY_BUFFER, numVerts * sizeof(Vertex), vbuffer, GL_STATIC_DRAW);
+
+    // index buffer
+    glGenBuffers(1, &ibo);
+    glBindBuffer(GL_ELEMENT_ARRAY_BUFFER, ibo);
+    glBufferData(GL_ELEMENT_ARRAY_BUFFER, numIndices * sizeof(GLushort), ibuffer, GL_STATIC_DRAW);
+
+    //glDrawElements(GL_TRIANGLES, numIndices, GL_UNSIGNED_SHORT, nullptr);
+    // vertex array
+    glGenVertexArrays(1, &vao);
+    glBindVertexArray(vao);
+    glEnableVertexAttribArray(0);
+    glVertexAttribPointer(0, 3, GL_FLOAT, GL_FALSE, sizeof(Vertex), (void*)offsetof(Vertex, x));
+    glEnableVertexAttribArray(1);
+    glVertexAttribPointer(1, 3, GL_FLOAT, GL_FALSE, sizeof(Vertex), (void*)offsetof(Vertex, nx));
+
+
+    if (retShape)
     {
-        sectionIndicesQuad = (GLshort*)malloc(numSectionIndices * sizeof(GLshort));
-        if (sectionIndicesQuad == nullptr)
-            return false;
-        sectionIndicesTri = &sectionIndicesQuad[nPoints * 2 * 3];
+        retShape->vao = vao;
+        retShape->ibo = ibo;
+        retShape->vbo = vbo;
+        retShape->numIndices = numIndices;
     }
-    int qidx = 0;
-    int tidx = 0;
-    for (int i = 0; i < nPoints; i++)
-    {
-        int j = i + nPoints + 1;
-        SET_TRIPLE(sectionIndicesQuad, qidx, i, j, j + 1);
-        SET_TRIPLE(sectionIndicesQuad, qidx, i, j + 1, i + 1);
-        SET_TRIPLE(sectionIndicesTri, tidx, i, j, j + 1);
-    }
-    return true;
 }
 
-
-void RotateProfile(float* profPoints, int nPoints, float distance, float deltaHeight, int nSlices, bool isHalfTurn)
+void RotateProfile(float* profPoints, int nPoints, float distance, float deltaHeight, int nSlices, bool isHalfTurn, Shape* retShape)
 {
     int vidx = 0;
     int iidx = 0;
@@ -80,7 +90,7 @@ void RotateProfile(float* profPoints, int nPoints, float distance, float deltaHe
     numVerts = nPoints * 2 * (nSlices + 1);
     numIndices = (nPoints - 1) * nSlices * 6;
 
-    float* vbuffer = (float*)malloc(numVerts * 6 * sizeof(float));
+    float* vbuffer = (float*)malloc(numVerts * sizeof(Vertex));
     if (vbuffer == nullptr)
         return;
     GLushort* ibuffer = (GLushort*)malloc(numIndices * sizeof(GLushort));
@@ -146,13 +156,7 @@ void RotateProfile(float* profPoints, int nPoints, float distance, float deltaHe
         }
     }
 
-    glEnableClientState(GL_VERTEX_ARRAY);
-    glEnableClientState(GL_NORMAL_ARRAY);
-    glVertexPointer(3, GL_FLOAT, 24, vbuffer);
-    glNormalPointer(GL_FLOAT, 24, vbuffer + 3);
-    glDrawElements(GL_TRIANGLES, numIndices, GL_UNSIGNED_SHORT, ibuffer);
-    glDisableClientState(GL_NORMAL_ARRAY);
-    glDisableClientState(GL_VERTEX_ARRAY);
+    GenerateModel(vbuffer, ibuffer, numVerts, numIndices, retShape);
 
     free(vbuffer);
     free(ibuffer);
@@ -179,7 +183,7 @@ void CalculateExtrudeBufferSizes(int nProfilePoints, bool capStart, bool capEnd,
     }
 }
 
-void ExtrudeProfileRadial(float* profPoints, int nPoints, float radius, float angleRad, float deltaHeight, bool capStart, bool capEnd)
+void ExtrudeProfileRadial(float* profPoints, int nPoints, float radius, float angleRad, float deltaHeight, bool capStart, bool capEnd, Shape* retShape)
 {
     int vidx = 0, vc1idx, vc2idx;
     int iidx = 0, ic1idx, ic2idx;
@@ -189,7 +193,7 @@ void ExtrudeProfileRadial(float* profPoints, int nPoints, float radius, float an
     int vc1start = vc1idx / 6;
     int vc2start = vc2idx / 6;
 
-    float* vbuffer = (float*)malloc(numVerts * 6 * sizeof(float));
+    float* vbuffer = (float*)malloc(numVerts * sizeof(Vertex));
     if (!vbuffer)
         return;
     GLushort* ibuffer = (GLushort*)malloc(numIndices * sizeof(GLushort));
@@ -251,8 +255,16 @@ void ExtrudeProfileRadial(float* profPoints, int nPoints, float radius, float an
 
         // face have 2 triangles { 0, 2, 3, 0, 3, 1 };
         GLushort vistart = i * 4;
-        SET_TRIPLE(ibuffer, iidx, vistart, vistart + 2, vistart + 3);
-        SET_TRIPLE(ibuffer, iidx, vistart, vistart + 3, vistart + 1);
+        if (is_clockwise)
+        {
+            SET_TRIPLE(ibuffer, iidx, vistart, vistart + 2, vistart + 3);
+            SET_TRIPLE(ibuffer, iidx, vistart, vistart + 3, vistart + 1);
+        }
+        else
+        {
+            SET_TRIPLE(ibuffer, iidx, vistart, vistart + 3, vistart + 2);
+            SET_TRIPLE(ibuffer, iidx, vistart, vistart + 1, vistart + 3);
+        }
 
         if (capEnd)
         {
@@ -263,19 +275,13 @@ void ExtrudeProfileRadial(float* profPoints, int nPoints, float radius, float an
         }
     }
 
-    glEnableClientState(GL_VERTEX_ARRAY);
-    glEnableClientState(GL_NORMAL_ARRAY);
-    glVertexPointer(3, GL_FLOAT, 24, vbuffer);
-    glNormalPointer(GL_FLOAT, 24, vbuffer + 3);
-    glDrawElements(GL_TRIANGLES, numIndices, GL_UNSIGNED_SHORT, ibuffer);
-    glDisableClientState(GL_NORMAL_ARRAY);
-    glDisableClientState(GL_VERTEX_ARRAY);
+    GenerateModel(vbuffer, ibuffer, numVerts, numIndices, retShape);
 
     free(vbuffer);
     free(ibuffer);
 }
 
-void ExtrudeProfileLinear(float* profPoints, int nPoints, float fromX, float toX, float fromZ, float toZ, bool capStart, bool capEnd)
+void ExtrudeProfileLinear(float* profPoints, int nPoints, float fromX, float toX, float fromZ, float toZ, bool capStart, bool capEnd, Shape* retShape)
 {
     int vidx = 0, vc1idx, vc2idx;
     int iidx = 0, ic1idx, ic2idx;
@@ -285,7 +291,7 @@ void ExtrudeProfileLinear(float* profPoints, int nPoints, float fromX, float toX
     int vc1start = vc1idx / 6;
     int vc2start = vc2idx / 6;
 
-    float* vbuffer = (float*)malloc(numVerts * 6 * sizeof(float));
+    float* vbuffer = (float*)malloc(numVerts * sizeof(Vertex));
     if (!vbuffer)
         return;
     GLushort* ibuffer = (GLushort*)malloc(numIndices * sizeof(GLushort));
@@ -342,15 +348,32 @@ void ExtrudeProfileLinear(float* profPoints, int nPoints, float fromX, float toX
         }
     }
 
-    glEnableClientState(GL_VERTEX_ARRAY);
-    glEnableClientState(GL_NORMAL_ARRAY);
-    glVertexPointer(3, GL_FLOAT, 24, vbuffer);
-    glNormalPointer(GL_FLOAT, 24, vbuffer + 3);
-    glDrawElements(GL_TRIANGLES, numIndices, GL_UNSIGNED_SHORT, ibuffer);
-    glDisableClientState(GL_NORMAL_ARRAY);
-    glDisableClientState(GL_VERTEX_ARRAY);
+    GenerateModel(vbuffer, ibuffer, numVerts, numIndices, retShape);
 
     free(vbuffer);
     free(ibuffer);
 }
 
+void Shape::Render()
+{
+    glBindVertexArray(vao);
+    glBindBuffer(GL_ELEMENT_ARRAY_BUFFER, ibo);
+    glDrawElements(GL_TRIANGLES, numIndices, GL_UNSIGNED_SHORT, nullptr);
+}
+
+void Shape::Render(mat4x4 modelMat, mat4x4 normallMat) // normals are rotated only
+{
+    CurrentShader->UpdateModelMat(modelMat, normallMat);
+    Render();
+}
+
+void Shape::FreeResources()
+{
+    if (vao > 0)
+    {
+        glBindVertexArray(vao);
+        if (vbo > 0) glDeleteBuffers(1, &vbo);
+        if (ibo > 0) glDeleteBuffers(1, &ibo);
+        glDeleteVertexArrays(1, &vao);
+    }
+}

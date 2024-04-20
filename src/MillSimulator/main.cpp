@@ -6,7 +6,7 @@
 //
 
 
-#include <GL/glew.h>
+#include "GlUtils.h"
 #include <GLFW/glfw3.h>
 #include "linmath.h"
 #include "MillPathSegment.h"
@@ -16,6 +16,7 @@
 #include "EndMillFlat.h"
 #include "EndMillTaper.h"
 #include "EndMillBall.h"
+#include "Shader.h"
 #include <iostream>
 #include <sstream>
 #include <string>
@@ -36,25 +37,25 @@ int gcurstep = 0;
 int gnsteps = 0;
 int gPathStep = 0;
 bool gIsInStock;
-int gToolId = -1;
+//int gToolId = -1;
 int curMillOpIx = 0;
 float eyeHeight = 30;
 #define STOCK_HEIGHT 2.0f
 GLFWwindow* glwind;
+CSShader shader3D, shaderInv3D, shaderFlat;
 
 std::vector<MillSim::MillPathSegment*> MillPathSegments;
 
 MillMotion flatMillMotions[] = {
-    //{-4, -4, 10},
-    //{-4, -4, 2},
-    //{-4, -4, 0, 4, 4, -1},
-    //{-4, -4, 10},
+    {-0.7f, -0.7f, 10},
+    {-0.7f, -0.7f, 1},
+    {0.7f, 0.7f, 1, 0.7f, 0.7f, 0},
+    {0.7f, 0.7f, 10},
 
-    {-0.7, -0.7, 10},
-    //{-4, -4, 0},
-    {-0.7, -0.7, 1},
-    {0.7, 0.7, 1, 0.7, 0.7, 0},
-    {0.7, 0.7, 10},
+    {-3, -3, 10},
+    {-3, -3, 0.5},
+    {3, 3, 0.5, 3, 3, -1},
+    {3, 3, 10},
 
     {15, 15, 10},
     { 15, 15, 1.5f},
@@ -148,8 +149,26 @@ MillOperation millOperations[] = {
     {nullptr}
 };
 
-MillOperation* curMillOperation;
+
+vec3 lightColor = { 1.0, 1.0, 0.9 };
+vec3 lightPos = { 20.0, 20.0, 10.0 };
+vec3 ambientCol = { 0.3, 0.3, 0.1 };
+
+vec3 eye = { 0, 60, 30 };
+vec3 target = { 0, 0, 0 };
+vec3 upvec = { 0, 0, 1 };
+
+vec3 stockColor = { 0.7, 0.7, 0.7 };
+vec3 cutColor = { 0.4, 0.7, 0.4 };
+vec3 toolColor = { 0.4, 0.4, 0.7 };
+
+
+MillOperation* curMillOperation = nullptr;
 MillSim::StockObject* gStockObject;
+MillSim::StockObject* glightObject;
+
+// test section - remove!
+GLuint tprogram, tmodel, tview, tprojection, tarray;
 
 void clearMillPathSegments() {
     for (std::vector<MillSim::MillPathSegment*>::const_iterator i = MillPathSegments.begin(); i != MillPathSegments.end(); ++i) {
@@ -182,7 +201,7 @@ void setMill(bool isClear) {
     gPathStep = 0;
 }
 
-void GenetateTool(MillOperation* op)
+/*void GenetateTool(MillOperation* op)
 {
     if (gToolId >= 0)
         glDeleteLists(gToolId, 1);
@@ -190,7 +209,7 @@ void GenetateTool(MillOperation* op)
     glNewList(gToolId, GL_COMPILE);
     op->RenderTool();
     glEndList();
-}
+}*/
 
 void SimNext()
 {
@@ -216,8 +235,8 @@ void SimNext()
             return;
         }
 
-        if (gPathStep == 0)
-            GenetateTool(curMillOperation);
+        //if (gPathStep == 0)
+        //    GenetateTool(curMillOperation);
 
         gCurPos = gDestPos;
         gDestPos = curMillOperation->path[gPathStep];
@@ -225,25 +244,7 @@ void SimNext()
         gnsteps = segment->numSimSteps;
         gcurstep = 0;
         MillPathSegments.push_back(segment);
-        /*
-        float diffx = curMotion->x - gCurPos.x;
-        float diffy = curMotion->y - gCurPos.y;
-        float diffz = curMotion->z - gCurPos.z;
-        float dist = sqrtf(diffx * diffx + diffy * diffy + diffz * diffz);
-        gnsteps = (int)(dist / 0.1);
-        if (gnsteps == 0)
-            gnsteps = 1;
-        gcurstep = 1;
-        gMotionStep.x = diffx / gnsteps;
-        gMotionStep.y = diffy / gnsteps;
-        gMotionStep.z = diffz / gnsteps;
-        gDestPos.x = gCurPos.x + gMotionStep.x;
-        gDestPos.y = gCurPos.y + gMotionStep.y;
-        gDestPos.z = gCurPos.z + gMotionStep.z;
-        gIsInStock = !((curMotion->z > STOCK_HEIGHT && gCurPos.z > STOCK_HEIGHT) || ((gDestPos.z > gCurPos.z) && MillSim::IsVerticalMotion(&gCurPos , &gDestPos)));
-        if (gIsInStock)
-            MillPathSegments.push_back(new MillSim::MillPathSegment(curMillOperation->endmill, &gCurPos, &gDestPos));
-        */
+
         gPathStep++;
     }
     gcurstep++;
@@ -254,7 +255,7 @@ void ShowStats() {
     glDisable(GL_DEPTH_TEST);
     glLoadIdentity();
     glMatrixMode(GL_PROJECTION);
-    glPushMatrix();
+    //glPushMatrix();
     glLoadIdentity();
     glColor3f(0.0f, 0.0f, 0.0f);
     glRasterPos2f(-1.0f, -1.0f);
@@ -264,7 +265,7 @@ void ShowStats() {
         //glutBitmapCharacter(GLUT_BITMAP_8_BY_13, s[i]);
     }
     glEnable(GL_LIGHTING);
-    glPopMatrix();
+    //glPopMatrix();
     glMatrixMode(GL_MODELVIEW);
     glEnable(GL_DEPTH_TEST);
 }
@@ -276,6 +277,7 @@ float vMillProfile[] = { 0.1f, 1, 0.1f, 0.1f, 0, 0, -0.1f, 0.1f, -0.1f, 1 };
 void GlsimStart()
 {
     glEnable(GL_CULL_FACE);
+    glEnable(GL_DEPTH_TEST);
     glEnable(GL_STENCIL_TEST);
     glColorMask(GL_FALSE, GL_FALSE, GL_FALSE, GL_FALSE);
 }
@@ -367,28 +369,24 @@ void renderSegmentReversed(int iSeg)
     }
 }
 
-vec3 eye = { 0, 60, 30 };
-vec3 target = { 0, 0, 0 };
-vec3 upvec = { 0, 0, 1 };
 
 void display()
 {
-    glMatrixMode(GL_MODELVIEW);
-    mat4x4 mat;
-    //glLoadIdentity();
-    /*gluLookAt(0.0, 45, 30,  // eye
-              0.0, 0.0, 0.0,  // taeget
-              0.0, 0.0, 1.0); // up vector*/
-    //glGetFloatv(GL_MODELVIEW_MATRIX, (GLfloat*)&mat);
-    //mat4x4_identity(mat);
+    mat4x4 matLookAt, model;
+    mat4x4_identity(model);
     eye[2] = eyeHeight;
-    mat4x4_look_at(mat, eye, target, upvec);
-    glLoadMatrixf((const GLfloat*)&mat);
-    if (isRotate)
-        glRotatef(rot, 0.0f, 0.0f, 1.0f);
+    mat4x4_look_at(matLookAt, eye, target, upvec);
 
     glClear(GL_COLOR_BUFFER_BIT | GL_DEPTH_BUFFER_BIT | GL_STENCIL_BUFFER_BIT);
+
+    
     unsigned int msec = glfwGetTime() * 1000;
+
+    if (isRotate)
+        mat4x4_rotate_Z(matLookAt, matLookAt, rot);
+
+    shaderFlat.Activate();
+    shaderFlat.UpdateViewMat(matLookAt);
     
     GlsimStart();
     gStockObject->render();
@@ -411,9 +409,20 @@ void display()
 
     GlsimClipBack();
     gStockObject->render();
+
+    // start coloring
+    shader3D.Activate();
+    shader3D.UpdateViewMat(matLookAt);
+    shader3D.UpdateObjColor(stockColor);
     GlsimRenderStock();
     gStockObject->render();
     GlsimRenderTools();
+
+    // render cuts (back faces of tools)
+
+    shaderInv3D.Activate();
+    shaderInv3D.UpdateViewMat(matLookAt);
+    shaderInv3D.UpdateObjColor(cutColor);
     for (int i = 0; i < len; i++)
     {
         MillSim::MillPathSegment* p = MillPathSegments.at(i);
@@ -427,7 +436,7 @@ void display()
         
     glEnable(GL_CULL_FACE);
 
-    if (gToolId >= 0)
+    if (curMillOperation && curMillOperation->endmill)
     {
         Vector3 toolPos;
         toolPos.FromMillMotion(&gDestPos);
@@ -436,14 +445,26 @@ void display()
             MillSim::MillPathSegment* p = MillPathSegments.at(len - 1);
             toolPos = *p->GetHeadPosition();
         }
-        glPushMatrix();
-        glTranslatef(toolPos.x, toolPos.y, toolPos.z);
-        glCallList(gToolId);
-        glPopMatrix();
+        mat4x4 tmat;
+        mat4x4_translate(tmat, toolPos.x, toolPos.y, toolPos.z);
+        shader3D.Activate();
+        shader3D.UpdateObjColor(toolColor);
+        curMillOperation->RenderTool(tmat, identityMat);
     }
 
-    if (len > 2 && debug > 0)
+    shaderFlat.Activate();
+    shaderFlat.UpdateObjColor(lightColor);
+    glightObject->render();
+
+
+    if (/*len > 2 &&*/ debug > 0)
     {
+        mat4x4 test;
+        mat4x4_dup(test, model);
+        mat4x4_translate_in_place(test, 20, 20, 3);
+        mat4x4_rotate_Z(test, test, 30.f * 3.14f / 180.f);
+        if (debug >= MillPathSegments.size())
+            debug = 1;
         MillSim::MillPathSegment* p = MillPathSegments.at(debug);
         p->render(1);
     }
@@ -465,9 +486,9 @@ void idle() {
     last = msec;
     msec = (glfwGetTime() * 1000);
     if (spin) {
-        rot += (msec-last)/80.0f; 
-        while (rot >= 360.0f)
-			rot -= 360.0f;
+        rot += (msec-last)/4600.0f; 
+        while (rot >= PI2)
+			rot -= PI2;
     }
 
     if (last / 1000 != msec / 1000) {
@@ -545,38 +566,35 @@ const char* fragmentShaderSource = "#version 330 core\n"
 
 void init()
 {
-   // gray background
-    glClearColor(0.9f, 0.9f, 0.5f, 1.0f);
+    // gray background
+    GL(glClearColor(0.7f, 0.7f, 0.4f, 1.0f));
 
-    // Enable two OpenGL lights
-    GLfloat light_diffuse[] = { 1.0f,  1.0f,  1.0f,  1.0f };  // white diffuse light
-    GLfloat light_diffuse2[] = { 0.6f,  0.6f,  0.9f,  1.0f };  // purple diffuse light
-    GLfloat light_position0[] = {-20, -20,  -20,  0};  // Infinite light location
-    GLfloat light_position1[] = { 20,  20,  20,  0};  // Infinite light location
-
-    glLightfv(GL_LIGHT0, GL_DIFFUSE, light_diffuse2);
-    glLightfv(GL_LIGHT0, GL_POSITION, light_position0);
-    glEnable(GL_LIGHT0);  
-    glLightfv(GL_LIGHT1, GL_DIFFUSE, light_diffuse);
-    glLightfv(GL_LIGHT1, GL_POSITION, light_position1);
-    glEnable(GL_LIGHT1);
-    glEnable(GL_LIGHTING);
-    glEnable(GL_NORMALIZE);
-
-    // Use depth buffering for hidden surface elimination
-    glEnable(GL_DEPTH_TEST);
-
-    // Setup the view of the CSG shape
-    glMatrixMode(GL_PROJECTION);
+    // Setup projection
     mat4x4 projmat;
     mat4x4_perspective(projmat, 0.7, 4.0 / 3.0, 1.0, 200.0);
-    //gluPerspective(40.0, 4.0/3.0, 1.0, 200.0);
-    glLoadMatrixf((const GLfloat*)&projmat);
+
+    // use shaders
+    //   standard diffuse shader
+    shader3D.CompileShader((char*)VertShader3DNorm, (char*)FragShaderNorm);
+    shader3D.UpdateEnvColor(lightPos, lightColor, ambientCol);
+    shader3D.UpdateProjectionMat(projmat);
+
+    //   invarted normal diffuse shader for inner mesh
+    shaderInv3D.CompileShader((char*)VertShader3DInvNorm, (char*)FragShaderNorm);
+    shaderInv3D.UpdateEnvColor(lightPos, lightColor, ambientCol);
+    shaderInv3D.UpdateProjectionMat(projmat);
+
+    //   null shader to calculate meshes only (simulation stage)
+    shaderFlat.CompileShader((char*)VertShader3DNorm, (char*)FragShaderFlat);
+    shaderFlat.UpdateProjectionMat(projmat);
+
     glMatrixMode(GL_MODELVIEW);
     
     // setup tools ans stock
     //MillSim::resolution = 0.1;
     gStockObject = new MillSim::StockObject(-20, -20, 0.001f, 40, 40, 2);
+    glightObject = new MillSim::StockObject(-0.5f, -0.5f, -0.5f, 1, 1, 1);
+    glightObject->SetPosition(lightPos);
     endMillFlat01.GenerateDisplayLists();
     endMillTaper02.GenerateDisplayLists();
     endMillBall03.GenerateDisplayLists();

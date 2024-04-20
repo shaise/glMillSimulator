@@ -1,7 +1,8 @@
 #ifndef __mill_operation_h__
 #define __mill_operation_h__
-#include <math.h>
+//#include <math.h>
 #include "EndMill.h"
+#include "linmath.h"
 
 enum eEndMillType
 {
@@ -28,7 +29,7 @@ public:
 	int nPathSections;
 
 public:
-	void RenderTool();
+	void RenderTool(mat4x4 transformMat, mat4x4 normalMat);
 };
 
 class Vector3

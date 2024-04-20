@@ -1,5 +1,8 @@
 #ifndef __stock_object_h__
 #define __stock_object_h__
+#include "SimShapes.h"
+#include "linmath.h"
+
 namespace MillSim {
 
     class StockObject
@@ -20,10 +23,12 @@ namespace MillSim {
 
         /// Calls the display list.
         virtual void render();
+        Shape mShape;
+        void SetPosition(vec3 position);
 
     private:
-        unsigned int mDisplayListId;
         float mProfile[8];
+        mat4x4 modelMat;
 
     };
 }

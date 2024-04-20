@@ -1,8 +1,10 @@
-#include "MillPathSegment.h"
+#include <GL/glew.h>
 #include <GLFW/glfw3.h>
+#include "MillPathSegment.h"
 #include "SimShapes.h"
+#include "linmath.h"
+#include "GlUtils.h"
 
-#define PI 3.1415926
 #define N_MILL_SLICES 8
 #define SET_TRIPLE(var, idx, x, y, z) {var[idx] = x; var[idx+1] = y; var[idx+2] = z;}
 #define SET_TRIPLE_OFFS(var, idx, offs, x, y, z) {var[idx] = x + offs; var[idx+1] = y + offs; var[idx+2] = z + offs;}
@@ -41,9 +43,8 @@ namespace MillSim {
         mXYDistance = sqrtf(mDiff.x * mDiff.x+ mDiff.y * mDiff.y);
         mZDistance = fabs(mDiff.z);
         mXYZDistance = sqrtf(mXYDistance * mXYDistance + mDiff.z * mDiff.z);
-        mXYAngle = atan2f(mDiff.y, mDiff.x) * 180.0f / PI;
+        mXYAngle = atan2f(mDiff.y, mDiff.x);
         mEndmill = endmill;
-        mDisplayListId = 0;
         mStartPos.FromMillMotion(from);
         mStartAngRad = mStepAngRad = 0;
         if (IsArcMotion(to))
@@ -69,11 +70,9 @@ namespace MillSim {
             mStepAngRad = mArcDir * sweepAng / numSimSteps;
             if (mSmallRad)
                 // when the radius is too small, we just use the tool itself to carve the stock
-                mDisplayListId = mEndmill->mToolDisplayId;
+                mShape = mEndmill->mToolShape;
             else
-                mDisplayListId = mEndmill->GenerateArcSegmentDL(mRadius, mStepAngRad * SWEEP_ARC_PAD, mDiff.z / numSimSteps);
-            mStartAngDeg = mStartAngRad * 180.0f / PI;
-            mStepAngDeg = mStepAngRad * 180.0f / PI;
+                mEndmill->GenerateArcSegmentDL(mRadius, mStepAngRad * SWEEP_ARC_PAD, mDiff.z / numSimSteps, &mShape);
             isMultyPart = true;
         }
         else
@@ -91,57 +90,57 @@ namespace MillSim {
             }
             else {
                 mMotionType = MTHorizontal;
-                mShearMat[2] = mDiff.z / mXYDistance;
+                mShearMat[0][2] = mDiff.z / mXYDistance;
             }
         }
     }
 
     MillPathSegment::~MillPathSegment()
     {
-        if (mDisplayListId > 0)
-            glDeleteLists(mDisplayListId, 1);
+        mShape.FreeResources();
     }
 
 
     void MillPathSegment::render(int step) 
     {
         mStepNumber = step;
-        glPushMatrix();
+        mat4x4 mat, mat2, rmat;
+        mat4x4_identity(mat);
+        mat4x4_identity(rmat);
         if (mMotionType == MTCurved)
         {
-            glTranslatef(mCenter.x, mCenter.y, mCenter.z + mDiff.z * (step - 1) / numSimSteps);
-            glRotatef(mStartAngDeg - (step - 1) * mStepAngDeg, 0, 0, 1);
+            mat4x4_translate_in_place(mat, mCenter.x, mCenter.y, mCenter.z + mDiff.z * (step - 1) / numSimSteps);
+            mat4x4_rotate_Z(mat, mat, mStartAngRad - (step - 1) * mStepAngRad);
+            mat4x4_rotate_Z(rmat, rmat, mStartAngRad - (step - 1) * mStepAngRad);
             if (mSmallRad)
-                glTranslatef(0, mRadius, 0);
-            glCallList(mDisplayListId);
-            glPopMatrix();
+                mat4x4_translate_in_place(mat, 0, mRadius, 0);
+            mShape.Render(mat, rmat);
         }
         else
         {
             if (mMotionType == MTVertical) {
                 if (mStepLength.z > 0)
-                    glTranslatef(mStartPos.x, mStartPos.y, mStartPos.z);
+                    mat4x4_translate_in_place(mat, mStartPos.x, mStartPos.y, mStartPos.z);
                 else
-                    glTranslatef(mStartPos.x, mStartPos.y, mStartPos.z + mStepNumber * mStepLength.z);
-                glCallList(mEndmill->mToolDisplayId);
+                    mat4x4_translate_in_place(mat, mStartPos.x, mStartPos.y, mStartPos.z + mStepNumber * mStepLength.z);
+                mEndmill->mToolShape.Render(mat, rmat);
             }
             else
             {
                 float renderDist = step * mStepDistance;
-                glTranslatef(mStartPos.x, mStartPos.y, mStartPos.z);
-                glRotatef(mXYAngle, 0, 0, 1);
-                glPushMatrix();
+                mat4x4_translate_in_place(mat, mStartPos.x, mStartPos.y, mStartPos.z);
+                mat4x4_rotate_Z(mat, mat, mXYAngle);
+                mat4x4_rotate_Z(rmat, rmat, mXYAngle);
+                mat4x4_dup(mat2, mat);
                 if (mDiff.z != 0.0)
-                    glMultMatrixf(mShearMat);
-                glScalef(renderDist, 1, 1);
-                glCallList(mEndmill->mPathDisplayId);
-                glPopMatrix();
-                glTranslatef(renderDist, 0, mDiff.z);
-                glCallList(mEndmill->mHToolDisplayId);
+                    mat4x4_mul(mat2, mat2, mShearMat);
+                mat4x4_scale_aniso(mat2, mat2, renderDist, 1, 1);
+                mEndmill->mPathShape.Render(mat2, rmat);
+                mat4x4_translate_in_place(mat, renderDist, 0, mDiff.z);
+                mEndmill->mHToolShape.Render(mat, rmat);
+
             }
         }
-        //glCallList(mDisplayListId);
-        glPopMatrix();
     }
 
     Vector3* MillPathSegment::GetHeadPosition()

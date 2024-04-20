@@ -135,9 +135,11 @@
     <ClCompile Include="EndMillBall.cpp" />
     <ClCompile Include="EndMillFlat.cpp" />
     <ClCompile Include="EndMillTaper.cpp" />
+    <ClCompile Include="GlUtils.cpp" />
     <ClCompile Include="MillPathSegment.cpp" />
     <ClCompile Include="main.cpp" />
     <ClCompile Include="MillOperation.cpp" />
+    <ClCompile Include="Shaders.cpp" />
     <ClCompile Include="SimShapes.cpp" />
     <ClCompile Include="StockObject.cpp" />
   </ItemGroup>
@@ -146,8 +148,10 @@
     <ClInclude Include="EndMillBall.h" />
     <ClInclude Include="EndMillFlat.h" />
     <ClInclude Include="EndMillTaper.h" />
+    <ClInclude Include="GlUtils.h" />
     <ClInclude Include="linmath.h" />
     <ClInclude Include="MillPathSegment.h" />
+    <ClInclude Include="Shader.h" />
     <ClInclude Include="SimShapes.h" />
     <ClInclude Include="MillOperation.h" />
     <ClInclude Include="StockObject.h" />
