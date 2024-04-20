@@ -23,6 +23,8 @@ namespace MillSim {
 
     bool IsArcMotion(MillMotion* m)
     {
+        if (m->cmd != eRotateCCW && m->cmd != eRotateCW)
+            return false;
         return fabs(m->i > EPSILON) || fabs(m->j) > EPSILON;
     }
 
@@ -56,7 +58,7 @@ namespace MillSim {
             mCenter.FromMillMotion(from);
             mCenter.x += to->i;
             mCenter.y += to->j;
-            mArcDir = to->k < 0 ? -1 : 1;
+            mArcDir = to->cmd == eRotateCCW ? -1 : 1;
             if (mStepAngRad > MAX_SEG_DEG)
                 mStepAngRad = MAX_SEG_DEG;
             else if (mStepAngRad < NIN_SEG_DEG)

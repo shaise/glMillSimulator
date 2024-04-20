@@ -3,17 +3,17 @@
 #include "GlUtils.h"
 #include <math.h>
 
-EndMillTaper::EndMillTaper(float radius, int nslices, float taperAngle, float flatRadius):
-	EndMill(radius, nslices)
+EndMillTaper::EndMillTaper(float diameter, int nslices, float taperAngle, float flatRadius):
+	EndMill(diameter, nslices)
 {
 	float ta = (float)tanf((float)(taperAngle * PI / 360));
 	float l1 = flatRadius / ta;
 	if (l1 < 0.0001)
 		l1 = 0;
-	float l = radius / ta - l1;
+	float l = mRadius / ta - l1;
 	int idx = 0;
-	SET_DUAL(_profVerts, idx, radius, MILL_HEIGHT);
-	SET_DUAL(_profVerts, idx, radius, l);
+	SET_DUAL(_profVerts, idx, mRadius, MILL_HEIGHT);
+	SET_DUAL(_profVerts, idx, mRadius, l);
 	SET_DUAL(_profVerts, idx, flatRadius, 0);
 	mNPoints = 3;
 	if (l1 > 0)

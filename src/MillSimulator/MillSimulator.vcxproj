@@ -131,6 +131,7 @@
     </Link>
   </ItemDefinitionGroup>
   <ItemGroup>
+    <ClCompile Include="GCodeParser.cpp" />
     <ClCompile Include="EndMill.cpp" />
     <ClCompile Include="EndMillBall.cpp" />
     <ClCompile Include="EndMillFlat.cpp" />
@@ -144,6 +145,7 @@
     <ClCompile Include="StockObject.cpp" />
   </ItemGroup>
   <ItemGroup>
+    <ClInclude Include="GCodeParser.h" />
     <ClInclude Include="EndMill.h" />
     <ClInclude Include="EndMillBall.h" />
     <ClInclude Include="EndMillFlat.h" />
@@ -158,6 +160,9 @@
   </ItemGroup>
   <ItemGroup>
     <None Include="packages.config" />
+  </ItemGroup>
+  <ItemGroup>
+    <CopyFileToFolders Include="test_files\cam_test1.txt" />
   </ItemGroup>
   <Import Project="$(VCTargetsPath)\Microsoft.Cpp.targets" />
   <ImportGroup Label="ExtensionTargets">

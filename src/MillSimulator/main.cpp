@@ -17,6 +17,7 @@
 #include "EndMillTaper.h"
 #include "EndMillBall.h"
 #include "Shader.h"
+#include "GCodeParser.h"
 #include <iostream>
 #include <sstream>
 #include <string>
@@ -31,20 +32,22 @@ float rot = 0.0f;
 std::ostringstream fpsStream;
 
 MillMotion gZeroPos = { 0, 0,  10 };
-MillMotion gCurPos;
-MillMotion gDestPos;
+MillMotion gCurMotion;
+MillMotion gDestMotion;
+int gLastToolId = -1;
 int gcurstep = 0;
 int gnsteps = 0;
 int gPathStep = 0;
+int gnPathSteps = 0;
 bool gIsInStock;
 //int gToolId = -1;
-int curMillOpIx = 0;
 float eyeHeight = 30;
 #define STOCK_HEIGHT 2.0f
 GLFWwindow* glwind;
 CSShader shader3D, shaderInv3D, shaderFlat;
 
 std::vector<MillSim::MillPathSegment*> MillPathSegments;
+MillSim::GCodeParser gcodeParser;
 
 MillMotion flatMillMotions[] = {
     {-0.7f, -0.7f, 10},
@@ -138,23 +141,25 @@ MillMotion ballMillMotions[] = {
 #define NUM_TAPER_MOTIONS (sizeof(taperMillMotions) / sizeof(MillMotion))
 #define NUM_BALL_MOTIONS (sizeof(ballMillMotions) / sizeof(MillMotion))
 
-EndMillFlat endMillFlat01(1, 16);
+EndMillFlat endMillFlat01(3.175, 16);
+EndMillFlat endMillFlat02(1.5, 16);
 EndMillTaper endMillTaper02(1, 16, 90, 0.2f);
 EndMillBall endMillBall03(1, 16, 4, 0.2f);
 
 MillOperation millOperations[] = {
     {&endMillFlat01, {0, 0, 10}, flatMillMotions, NUM_FLAT_MOTIONS },
+    {&endMillFlat02, {0, 0, 10}, flatMillMotions, NUM_FLAT_MOTIONS },
     {&endMillBall03, {0, 0, 10}, ballMillMotions, NUM_BALL_MOTIONS },
     {&endMillTaper02, {0, 0, 10}, taperMillMotions, NUM_TAPER_MOTIONS },
-    {nullptr}
 };
 
+#define TOOL_TABLE_SIZE (sizeof(millOperations) / sizeof(MillOperation))
 
 vec3 lightColor = { 1.0, 1.0, 0.9 };
 vec3 lightPos = { 20.0, 20.0, 10.0 };
 vec3 ambientCol = { 0.3, 0.3, 0.1 };
 
-vec3 eye = { 0, 60, 30 };
+vec3 eye = { 0, 100, 50 };
 vec3 target = { 0, 0, 0 };
 vec3 upvec = { 0, 0, 1 };
 
@@ -186,19 +191,27 @@ float random(float from, float to)
     return (float)(from + frand);
 }
 
-void setMill(bool isClear) {
-    if (isClear)
-    {
-        clearMillPathSegments();
-        curMillOpIx = 0;
-        curMillOperation = &millOperations[curMillOpIx];
-    }
+void InitSimulation()
+{
+    clearMillPathSegments();
+    curMillOperation = nullptr;
 
-    gCurPos = gZeroPos;
-    gDestPos = curMillOperation->startPos;
+    gDestMotion = gZeroPos;
+    //gDestPos = curMillOperation->startPos;
     gcurstep = 0;
-    gnsteps = 0;
+    gnsteps = -1;
+    gLastToolId = -1;
+    gnPathSteps = gcodeParser.Operations.size();;
     gPathStep = 0;
+}
+
+void SetTool(int tool) {
+    //curMillOpIx = 0;
+    if (tool <= TOOL_TABLE_SIZE)
+        curMillOperation = &millOperations[tool - 1];
+    else
+        curMillOperation = nullptr;
+    gLastToolId = tool;
 }
 
 /*void GenetateTool(MillOperation* op)
@@ -221,29 +234,28 @@ void SimNext()
 
     simDecim = 0;
 
-    if (gcurstep >= gnsteps)
+    if (gcurstep > gnsteps)
     {
-        if (gPathStep >= curMillOperation->nPathSections)
-        {
-            if (curMillOperation->endmill == nullptr)
-                return;
-            curMillOpIx++;
-            curMillOperation = &millOperations[curMillOpIx];
-            if (curMillOperation->endmill == nullptr)
-                return;
-            setMill(false);
+        if (gPathStep >= gnPathSteps)
             return;
-        }
 
         //if (gPathStep == 0)
         //    GenetateTool(curMillOperation);
 
-        gCurPos = gDestPos;
-        gDestPos = curMillOperation->path[gPathStep];
-        MillSim::MillPathSegment* segment = new MillSim::MillPathSegment(curMillOperation->endmill, &gCurPos, &gDestPos);
-        gnsteps = segment->numSimSteps;
-        gcurstep = 0;
-        MillPathSegments.push_back(segment);
+        gCurMotion = gDestMotion;
+        gDestMotion = gcodeParser.Operations[gPathStep];
+        if (gDestMotion.tool != gLastToolId)
+        {
+            SetTool(gDestMotion.tool);
+        }
+
+        if (curMillOperation != nullptr)
+        {
+            MillSim::MillPathSegment* segment = new MillSim::MillPathSegment(curMillOperation->endmill, &gCurMotion, &gDestMotion);
+            gnsteps = segment->numSimSteps;
+            gcurstep = 0;
+            MillPathSegments.push_back(segment);
+        }
 
         gPathStep++;
     }
@@ -439,7 +451,7 @@ void display()
     if (curMillOperation && curMillOperation->endmill)
     {
         Vector3 toolPos;
-        toolPos.FromMillMotion(&gDestPos);
+        toolPos.FromMillMotion(&gDestMotion);
         if (len > 0)
         {
             MillSim::MillPathSegment* p = MillPathSegments.at(len - 1);
@@ -495,7 +507,7 @@ void idle() {
         
         float calcFps = 1000.0f * fps / (msec - ancient);
         fpsStream.str("");
-        fpsStream << "fps: " << calcFps << "    rendertime:" << renderTime << "    zpos:" << gDestPos.z << std::ends;
+        fpsStream << "fps: " << calcFps << "    rendertime:" << renderTime << "    zpos:" << gDestMotion.z << std::ends;
 
         ancient = msec;
         fps = 0;  
@@ -564,7 +576,7 @@ const char* fragmentShaderSource = "#version 330 core\n"
     "}\n\0";
 
 
-void init()
+void InitOpengl()
 {
     // gray background
     GL(glClearColor(0.7f, 0.7f, 0.4f, 1.0f));
@@ -592,14 +604,13 @@ void init()
     
     // setup tools ans stock
     //MillSim::resolution = 0.1;
-    gStockObject = new MillSim::StockObject(-20, -20, 0.001f, 40, 40, 2);
+    gStockObject = new MillSim::StockObject(-40, -40, -20, 80, 80, 20);
     glightObject = new MillSim::StockObject(-0.5f, -0.5f, -0.5f, 1, 1, 1);
     glightObject->SetPosition(lightPos);
     endMillFlat01.GenerateDisplayLists();
+    endMillFlat02.GenerateDisplayLists();
     endMillTaper02.GenerateDisplayLists();
     endMillBall03.GenerateDisplayLists();
-
-    setMill(true);
 }
 
 static void error_callback(int error, const char* description)
@@ -634,7 +645,12 @@ int main(int argc, char **argv)
     glfwSwapInterval(1);
 
     std::cout << glGetString(GL_VERSION) << std::endl;
-    init();
+
+    if (gcodeParser.Parse("cam_test1.txt"))
+        std::cout << "GCode file loaded successfuly" << std::endl;
+
+    InitSimulation();
+    InitOpengl();
     while (!glfwWindowShouldClose(glwind))
     {
         idle();

@@ -12,10 +12,21 @@ enum eEndMillType
 	eEndmillFillet
 };
 
+enum eCmdType
+{
+	eNop,
+	eMoveLiner,
+	eRotateCW,
+	eRotateCCW,
+	eChangeTool
+};
+
 struct MillMotion
 {
 	float x, y, z;
 	float i, j, k;
+	eCmdType cmd;
+	int tool;
 };
 constexpr auto EPSILON = 0.00001f;
 #define EQ_FLOAT(x,y) (fabs((x) - (y)) < EPSILON)
@@ -62,18 +73,18 @@ public:
 		z -= other->z;
 	}
 
-	void Div(float val)
+	void Div(float fval)
 	{
-		x /= val;
-		y /= val;
-		z /= val;
+		x /= fval;
+		y /= fval;
+		z /= fval;
 	}
 
-	void Mul(float val)
+	void Mul(float fval)
 	{
-		x *= val;
-		y *= val;
-		z *= val;
+		x *= fval;
+		y *= fval;
+		z *= fval;
 	}
 
 	void Set(float _x, float _y, float _z)

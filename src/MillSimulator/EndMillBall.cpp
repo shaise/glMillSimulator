@@ -4,8 +4,8 @@
 #include <math.h>
 #include <malloc.h>
 
-EndMillBall::EndMillBall(float radius, int nslices, int nSections, float flatRadius):
-	EndMill(radius, nslices)
+EndMillBall::EndMillBall(float diameter, int nslices, int nSections, float flatRadius):
+	EndMill(diameter, nslices)
 {
 	mNPoints = nSections + 2;
 	if (flatRadius < 0.0001)
@@ -16,13 +16,13 @@ EndMillBall::EndMillBall(float radius, int nslices, int nSections, float flatRad
 	if (mProfPoints == nullptr)
 		return;
 
-	float r2 = radius - flatRadius;
+	float r2 = mRadius - flatRadius;
 	if (r2 < 0.0001)
 		r2 = 0.0001f;
 	float astep =  (float)(PI / (2 * nSections));
 	int idx = 0;
-	SET_DUAL(mProfPoints, idx, radius, MILL_HEIGHT);
-	SET_DUAL(mProfPoints, idx, radius, r2);
+	SET_DUAL(mProfPoints, idx, mRadius, MILL_HEIGHT);
+	SET_DUAL(mProfPoints, idx, mRadius, r2);
 	float ang = astep;
 	for (int i = 1; i <nSections; i++, ang += astep)
 		SET_DUAL(mProfPoints, idx, flatRadius + r2 * cosf(ang), r2 - r2 * sinf(ang));
