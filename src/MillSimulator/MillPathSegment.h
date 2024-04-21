@@ -5,7 +5,6 @@
 #include "MillMotion.h"
 #include "EndMill.h"
 #include "linmath.h"
-#include "MSVectors.h"
 
 namespace MillSim {
 
@@ -36,7 +35,8 @@ namespace MillSim {
 
         /// Calls the display list.
         virtual void render(int substep);
-        virtual Vector3* GetHeadPosition();
+        //virtual Vector3* GetHeadPosition();
+        virtual void GetHeadPosition(vec3 headPos);
 
     public:
         EndMill* mEndmill = nullptr;
@@ -60,11 +60,11 @@ namespace MillSim {
          float mArcDir = 0;
          bool mSmallRad = false;
          int mStepNumber = 0;
-         Vector3 mDiff;
-         Vector3 mStepLength;
-         Vector3 mCenter;
-         Vector3 mStartPos;
-         Vector3 mHeadPos;
+         vec3 mDiff;
+         vec3 mStepLength = { 0 };
+         vec3 mCenter = { 0 };
+         vec3 mStartPos;
+         vec3 mHeadPos = { 0 };
          MotionType mMotionType;
     };
 }

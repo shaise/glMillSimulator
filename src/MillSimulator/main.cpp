@@ -447,18 +447,19 @@ void display()
 
     if (curTool)
     {
-        Vector3 toolPos;
-        //MotionPosToVec(toolPos, &gDestMotion);
-        toolPos.FromMillMotion(&gDestMotion);
+        vec3 toolPos;
+        //Vector3 toolPos;
+        MotionPosToVec(toolPos, &gDestMotion);
+        //toolPos.FromMillMotion(&gDestMotion);
         if (len > 0)
         {
             MillSim::MillPathSegment* p = MillPathSegments.at(len - 1);
-            //p->GetHeadPosition(toolPos);
-            toolPos = *p->GetHeadPosition();
+            p->GetHeadPosition(toolPos);
+            //toolPos = *p->GetHeadPosition();
         }
         mat4x4 tmat;
-        //mat4x4_translate(tmat, toolPos[0], toolPos[1], toolPos[2]);
-        mat4x4_translate(tmat, toolPos.x, toolPos.y, toolPos.z);
+        mat4x4_translate(tmat, toolPos[0], toolPos[1], toolPos[2]);
+        //mat4x4_translate(tmat, toolPos.x, toolPos.y, toolPos.z);
         shader3D.Activate();
         shader3D.UpdateObjColor(toolColor);
         curTool->mToolShape.Render(tmat, identityMat);

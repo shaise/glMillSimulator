@@ -6,11 +6,12 @@
 #include "GlUtils.h"
 
 #define N_MILL_SLICES 8
-#define SET_TRIPLE(var, idx, x, y, z) {var[idx] = x; var[idx+1] = y; var[idx+2] = z;}
-#define SET_TRIPLE_OFFS(var, idx, offs, x, y, z) {var[idx] = x + offs; var[idx+1] = y + offs; var[idx+2] = z + offs;}
 #define MAX_SEG_DEG (PI / 8.0f)   // 22.5 deg
 #define NIN_SEG_DEG (PI / 90.0f)  // 2 deg
 #define SWEEP_ARC_PAD 1.05f
+#define PX 0
+#define PY 1
+#define PZ 2
 
 
 
@@ -39,15 +40,14 @@ namespace MillSim {
         }
     {
         
-        mDiff.x = to->x - from->x;
-        mDiff.y = to->y - from->y;
-        mDiff.z = to->z - from->z;
-        mXYDistance = sqrtf(mDiff.x * mDiff.x+ mDiff.y * mDiff.y);
-        mZDistance = fabs(mDiff.z);
-        mXYZDistance = sqrtf(mXYDistance * mXYDistance + mDiff.z * mDiff.z);
-        mXYAngle = atan2f(mDiff.y, mDiff.x);
+        MotionPosToVec(mStartPos, from);
+        MotionPosToVec(mDiff, to);
+        vec3_sub(mDiff, mDiff, mStartPos);
+        mXYDistance = sqrtf(mDiff[PX] * mDiff[PX] + mDiff[PY] * mDiff[PY]);
+        mZDistance = fabsf(mDiff[PY]);
+        mXYZDistance = sqrtf(mXYDistance * mXYDistance + mDiff[PZ] * mDiff[PZ]);
+        mXYAngle = atan2f(mDiff[PY], mDiff[PX]);
         mEndmill = endmill;
-        mStartPos.FromMillMotion(from);
         mStartAngRad = mStepAngRad = 0;
         if (IsArcMotion(to))
         {
@@ -55,16 +55,16 @@ namespace MillSim {
             mRadius = sqrtf(to->j * to->j + to->i * to->i);
             mSmallRad = mRadius <= mEndmill->mRadius;
             mStepAngRad = mSmallRad ? MAX_SEG_DEG : asinf(resolution / mRadius);
-            mCenter.FromMillMotion(from);
-            mCenter.x += to->i;
-            mCenter.y += to->j;
-            mArcDir = to->cmd == eRotateCCW ? -1 : 1;
+            MotionPosToVec(mCenter, from);
+            mCenter[PX] += to->i;
+            mCenter[PY] += to->j;
+            mArcDir = to->cmd == eRotateCCW ? -1.f : 1.f;
             if (mStepAngRad > MAX_SEG_DEG)
                 mStepAngRad = MAX_SEG_DEG;
             else if (mStepAngRad < NIN_SEG_DEG)
                 mStepAngRad = NIN_SEG_DEG;
-            mStartAngRad = atan2f(mCenter.x - from->x, from->y - mCenter.y);
-            float endAng = atan2f(mCenter.x - to->x, to->y - mCenter.y);
+            mStartAngRad = atan2f(mCenter[PX] - from->x, from->y - mCenter[PY]);
+            float endAng = atan2f(mCenter[PX] - to->x, to->y - mCenter[PY]);
             float sweepAng = (mStartAngRad - endAng) * mArcDir;
             if (sweepAng < EPSILON)
                 sweepAng += PI * 2;
@@ -75,7 +75,7 @@ namespace MillSim {
                 mShape = mEndmill->mToolShape;
             else
             {
-                mEndmill->GenerateArcSegmentDL(mRadius, mStepAngRad * SWEEP_ARC_PAD, mDiff.z / numSimSteps, &mShape);
+                mEndmill->GenerateArcSegmentDL(mRadius, mStepAngRad * SWEEP_ARC_PAD, mDiff[PZ] / numSimSteps, &mShape);
                 numSimSteps++;
             }
             
@@ -88,15 +88,15 @@ namespace MillSim {
                 numSimSteps = 1;
             isMultyPart = false;
             mStepDistance = mXYDistance / numSimSteps;
-            mStepLength = mDiff;
-            mStepLength.Div(numSimSteps);
+            mStepLength[PX] = mDiff[PX]; mStepLength[PY] = mDiff[PY]; mStepLength[PZ] = mDiff[PZ];
+            vec3_scale(mStepLength, mStepLength, 1.f / (float)numSimSteps);
 
             if (IsVerticalMotion(from, to)) {
                 mMotionType = MTVertical;
             }
             else {
                 mMotionType = MTHorizontal;
-                mShearMat[0][2] = mDiff.z / mXYDistance;
+                mShearMat[0][2] = mDiff[PZ] / mXYDistance;
             }
         }
     }
@@ -115,7 +115,7 @@ namespace MillSim {
         mat4x4_identity(rmat);
         if (mMotionType == MTCurved)
         {
-            mat4x4_translate_in_place(mat, mCenter.x, mCenter.y, mCenter.z + mDiff.z * (step - 1) / numSimSteps);
+            mat4x4_translate_in_place(mat, mCenter[PX], mCenter[PY], mCenter[PZ] + mDiff[PZ] * (step - 1) / numSimSteps);
             mat4x4_rotate_Z(mat, mat, mStartAngRad - (step - 1) * mStepAngRad);
             mat4x4_rotate_Z(rmat, rmat, mStartAngRad - (step - 1) * mStepAngRad);
             if (mSmallRad || step == (numSimSteps - 1))
@@ -129,45 +129,44 @@ namespace MillSim {
         else
         {
             if (mMotionType == MTVertical) {
-                if (mStepLength.z > 0)
-                    mat4x4_translate_in_place(mat, mStartPos.x, mStartPos.y, mStartPos.z);
+                if (mStepLength[PZ] > 0)
+                    mat4x4_translate_in_place_v(mat, mStartPos);
                 else
-                    mat4x4_translate_in_place(mat, mStartPos.x, mStartPos.y, mStartPos.z + mStepNumber * mStepLength.z);
+                    mat4x4_translate_in_place(mat, mStartPos[PX], mStartPos[PY], mStartPos[PZ] + mStepNumber * mStepLength[PZ]);
                 mEndmill->mToolShape.Render(mat, rmat);
             }
             else
             {
                 float renderDist = step * mStepDistance;
-                mat4x4_translate_in_place(mat, mStartPos.x, mStartPos.y, mStartPos.z);
+                mat4x4_translate_in_place_v(mat, mStartPos);
                 mat4x4_rotate_Z(mat, mat, mXYAngle);
                 mat4x4_rotate_Z(rmat, rmat, mXYAngle);
                 mat4x4_dup(mat2, mat);
-                if (mDiff.z != 0.0)
+                if (mDiff[PZ] != 0.0)
                     mat4x4_mul(mat2, mat2, mShearMat);
                 mat4x4_scale_aniso(mat2, mat2, renderDist, 1, 1);
                 mEndmill->mPathShape.Render(mat2, rmat);
-                mat4x4_translate_in_place(mat, renderDist, 0, mDiff.z);
+                mat4x4_translate_in_place(mat, renderDist, 0, mDiff[PZ]);
                 mEndmill->mHToolShape.Render(mat, rmat);
 
             }
         }
     }
 
-    Vector3* MillPathSegment::GetHeadPosition()
+    void MillPathSegment::GetHeadPosition(vec3 headPos)
     {
         if (mMotionType == MTCurved)
         {
             float angRad = mStartAngRad - mStepNumber * mStepAngRad;
-            mHeadPos.Set(-mRadius * sinf(angRad), mRadius * cosf(angRad), 0);
-            mHeadPos.Add(&mCenter);
+            vec3_set(mHeadPos, -mRadius * sinf(angRad), mRadius * cosf(angRad), 0);
+            vec3_add(mHeadPos, mHeadPos, mCenter);
         }
         else
         {
-            mHeadPos = mStepLength;
-            mHeadPos.Mul(mStepNumber);
-            mHeadPos.Add(&mStartPos);
+            vec3_dup(mHeadPos, mStepLength);
+            vec3_scale(mHeadPos, mHeadPos, (float)mStepNumber);
+            vec3_add(mHeadPos, mHeadPos, mStartPos);
         }
-        return &mHeadPos;
+        vec3_dup(headPos, mHeadPos);
     }
-
 }
