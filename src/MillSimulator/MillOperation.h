@@ -23,10 +23,10 @@ enum eCmdType
 
 struct MillMotion
 {
-	float x, y, z;
-	float i, j, k;
 	eCmdType cmd;
 	int tool;
+	float x, y, z;
+	float i, j, k;
 };
 constexpr auto EPSILON = 0.00001f;
 #define EQ_FLOAT(x,y) (fabs((x) - (y)) < EPSILON)
@@ -35,9 +35,6 @@ class MillOperation
 {
 public:
 	EndMill *endmill;
-	MillMotion startPos;
-	MillMotion* path;
-	int nPathSections;
 
 public:
 	void RenderTool(mat4x4 transformMat, mat4x4 normalMat);

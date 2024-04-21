@@ -74,7 +74,11 @@ namespace MillSim {
                 // when the radius is too small, we just use the tool itself to carve the stock
                 mShape = mEndmill->mToolShape;
             else
+            {
                 mEndmill->GenerateArcSegmentDL(mRadius, mStepAngRad * SWEEP_ARC_PAD, mDiff.z / numSimSteps, &mShape);
+                numSimSteps++;
+            }
+            
             isMultyPart = true;
         }
         else
@@ -114,9 +118,13 @@ namespace MillSim {
             mat4x4_translate_in_place(mat, mCenter.x, mCenter.y, mCenter.z + mDiff.z * (step - 1) / numSimSteps);
             mat4x4_rotate_Z(mat, mat, mStartAngRad - (step - 1) * mStepAngRad);
             mat4x4_rotate_Z(rmat, rmat, mStartAngRad - (step - 1) * mStepAngRad);
-            if (mSmallRad)
+            if (mSmallRad || step == (numSimSteps - 1))
+            {
                 mat4x4_translate_in_place(mat, 0, mRadius, 0);
-            mShape.Render(mat, rmat);
+                mEndmill->mToolShape.Render(mat, rmat);
+            }
+            else
+                mShape.Render(mat, rmat);
         }
         else
         {

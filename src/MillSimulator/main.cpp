@@ -31,7 +31,7 @@ bool isRotate = true;
 float rot = 0.0f;
 std::ostringstream fpsStream;
 
-MillMotion gZeroPos = { 0, 0,  10 };
+MillMotion gZeroPos = { eNop, -1, 0, 0,  10 };
 MillMotion gCurMotion;
 MillMotion gDestMotion;
 int gLastToolId = -1;
@@ -49,97 +49,93 @@ CSShader shader3D, shaderInv3D, shaderFlat;
 std::vector<MillSim::MillPathSegment*> MillPathSegments;
 MillSim::GCodeParser gcodeParser;
 
-MillMotion flatMillMotions[] = {
-    {-0.7f, -0.7f, 10},
-    {-0.7f, -0.7f, 1},
-    {0.7f, 0.7f, 1, 0.7f, 0.7f, 0},
-    {0.7f, 0.7f, 10},
+MillMotion DemoSimulation[] = {
+    {eMoveLiner,  1, -0.7f, -0.7f, 10},
+    {eMoveLiner,  1, -0.7f, -0.7f, 1},
+    {eMoveLiner,  1, 0.7f, 0.7f, 1, 0.7f, 0.7f, 0},
+    {eMoveLiner,  1, 0.7f, 0.7f, 10},
 
-    {-3, -3, 10},
-    {-3, -3, 0.5},
-    {3, 3, 0.5, 3, 3, -1},
-    {3, 3, 10},
+    {eMoveLiner,  1, -3, -3, 10},
+    {eMoveLiner,  1, -3, -3, 0.5},
+    {eMoveLiner,  1, 3, 3, 0.5, 3, 3, -1},
+    {eMoveLiner,  1, 3, 3, 10},
 
-    {15, 15, 10},
-    { 15, 15, 1.5f},
-    {15, -15, 1.5f},
-    {-15, -15, 1.5f},
-    {-15, 15, 1.5f},
-    {15, 15, 1.5f},
+    {eMoveLiner,  1, 15, 15, 10},
+    {eMoveLiner,  1,  15, 15, 1.5f},
+    {eMoveLiner,  1, 15, -15, 1.5f},
+    {eMoveLiner,  1, -15, -15, 1.5f},
+    {eMoveLiner,  1, -15, 15, 1.5f},
+    {eMoveLiner,  1, 15, 15, 1.5f},
 
-    {15, 15, 1},
-    {15, -15, 1},
-    {-15, -15, 1},
-    {-15, 15, 1},
-    {15, 15, 1},
+    {eMoveLiner,  1, 15, 15, 1},
+    {eMoveLiner,  1, 15, -15, 1},
+    {eMoveLiner,  1, -15, -15, 1},
+    {eMoveLiner,  1, -15, 15, 1},
+    {eMoveLiner,  1, 15, 15, 1},
 
-    {15, 15, 0.5f},
-    {15, -15, 0.5f},
-    {-15, -15, 0.5f},
-    {-15, 15, 0.5f},
-    {15, 15, 0.5f},
+    {eMoveLiner,  1, 15, 15, 0.5f},
+    {eMoveLiner,  1, 15, -15, 0.5f},
+    {eMoveLiner,  1, -15, -15, 0.5f},
+    {eMoveLiner,  1, -15, 15, 0.5f},
+    {eMoveLiner,  1, 15, 15, 0.5f},
 
-    {15, 15, 0},
-    {15, -15, 0},
-    {-15, -15, 0},
-    {-15, 15, 0},
-    {15, 15, 0},
+    {eMoveLiner,  1, 15, 15, 0},
+    {eMoveLiner,  1, 15, -15, 0},
+    {eMoveLiner,  1, -15, -15, 0},
+    {eMoveLiner,  1, -15, 15, 0},
+    {eMoveLiner,  1, 15, 15, 0},
 
-    {15, 15, 10},
+    {eMoveLiner,  1, 15, 15, 10},
 
-    {8, 8, 10},
-    {8, 8, 1.5f},
-    {8, -8, 1.5f},
-    {6.1f, -8, 1.5f},
-    {6.1f, 8, 1.5f},
-    {4.2f, 8, 1.5f},
-    {4.2f, -8, 1.5f},
-    {2.3f, -8, 1.5f},
-    {2.3f, 8, 1.5f},
-    {0.4f, 8, 1.5f},
-    {0.4f, -8, 1.5f},
-    {-1.5f, -8, 1.5f},
-    {-1.5f, 8, 1.5f},
-    {-3.4f, 8, 1.5f},
-    {-3.4f, -8, 1.5f},
-    {-5.3f, -8, 1.5f},
-    {-5.3f, 8, 1.5f},
-    {-7.2f, 8, 1.5f},
-    {-7.2f, -8, 1.5f},
-    {-8,  -8, 1.5f},
-    {-8,  8, 1.5f},
-    { 8,  8, 1.5f},
-    { 8,  -8, 1.5f},
-    {-8,  -8, 1.5f},
+    {eMoveLiner,  1, 8, 8, 10},
+    {eMoveLiner,  1, 8, 8, 1.5f},
+    {eMoveLiner,  1, 8, -8, 1.5f},
+    {eMoveLiner,  1, 6.1f, -8, 1.5f},
+    {eMoveLiner,  1, 6.1f, 8, 1.5f},
+    {eMoveLiner,  1, 4.2f, 8, 1.5f},
+    {eMoveLiner,  1, 4.2f, -8, 1.5f},
+    {eMoveLiner,  1, 2.3f, -8, 1.5f},
+    {eMoveLiner,  1, 2.3f, 8, 1.5f},
+    {eMoveLiner,  1, 0.4f, 8, 1.5f},
+    {eMoveLiner,  1, 0.4f, -8, 1.5f},
+    {eMoveLiner,  1, -1.5f, -8, 1.5f},
+    {eMoveLiner,  1, -1.5f, 8, 1.5f},
+    {eMoveLiner,  1, -3.4f, 8, 1.5f},
+    {eMoveLiner,  1, -3.4f, -8, 1.5f},
+    {eMoveLiner,  1, -5.3f, -8, 1.5f},
+    {eMoveLiner,  1, -5.3f, 8, 1.5f},
+    {eMoveLiner,  1, -7.2f, 8, 1.5f},
+    {eMoveLiner,  1, -7.2f, -8, 1.5f},
+    {eMoveLiner,  1, -8,  -8, 1.5f},
+    {eMoveLiner,  1, -8,  8, 1.5f},
+    {eMoveLiner,  1,  8,  8, 1.5f},
+    {eMoveLiner,  1,  8,  -8, 1.5f},
+    {eMoveLiner,  1, -8,  -8, 1.5f},
 
-    {-8,  -8, 10},
+    {eMoveLiner,  1, -8,  -8, 10},
+
+    // taper mill motion
+    {eMoveLiner,  3, 14.2f, 14.2f, 10},
+    {eMoveLiner,  3, 14.2f, 14.2f, 1.5f},
+    {eMoveLiner,  3, 14.2f, -14.2f, 1.5f},
+    {eMoveLiner,  3, -14.2f, -14.2f, 1.5f},
+    {eMoveLiner,  3, -14.2f, 14.2f, 1.5f},
+    {eMoveLiner,  3, 14.2f, 14.2f, 1.5f},
+    {eMoveLiner,  3, 14.2f, 14.2f, 10},
+    {eMoveLiner,  3, 0, 0, 10},
+
+    // ball mill motion
+    {eMoveLiner,  2, 12, 12, 10},
+    {eMoveLiner,  2, 12, 12, 1.5f},
+    {eMoveLiner,  2, 12, -12, 2.5f},
+    {eMoveLiner,  2, -12, -12, 1.5f},
+    {eMoveLiner,  2, -12, 12, 2.5f},
+    {eMoveLiner,  2, 12, 12, 1.5f},
+    {eMoveLiner,  2, 12, 12, 10},
+    {eMoveLiner,  2, 0, 0, 10},
 };
 
-MillMotion taperMillMotions[] = {
-    {14.2f, 14.2f, 10},
-    {14.2f, 14.2f, 1.5f},
-    {14.2f, -14.2f, 1.5f},
-    {-14.2f, -14.2f, 1.5f},
-    {-14.2f, 14.2f, 1.5f},
-    {14.2f, 14.2f, 1.5f},
-    {14.2f, 14.2f, 10},
-    {0, 0, 10},
-};
-
-MillMotion ballMillMotions[] = {
-    {12, 12, 10},
-    {12, 12, 1.5f},
-    {12, -12, 2.5f},
-    {-12, -12, 1.5f},
-    {-12, 12, 2.5f},
-    {12, 12, 1.5f},
-    {12, 12, 10},
-    {0, 0, 10},
-};
-
-#define NUM_FLAT_MOTIONS (sizeof(flatMillMotions) / sizeof(MillMotion))
-#define NUM_TAPER_MOTIONS (sizeof(taperMillMotions) / sizeof(MillMotion))
-#define NUM_BALL_MOTIONS (sizeof(ballMillMotions) / sizeof(MillMotion))
+#define NUM_DEMO_MOTIONS (sizeof(DemoSimulation) / sizeof(MillMotion))
 
 EndMillFlat endMillFlat01(3.175, 16);
 EndMillFlat endMillFlat02(1.5, 16);
@@ -147,10 +143,10 @@ EndMillTaper endMillTaper02(1, 16, 90, 0.2f);
 EndMillBall endMillBall03(1, 16, 4, 0.2f);
 
 MillOperation millOperations[] = {
-    {&endMillFlat01, {0, 0, 10}, flatMillMotions, NUM_FLAT_MOTIONS },
-    {&endMillFlat02, {0, 0, 10}, flatMillMotions, NUM_FLAT_MOTIONS },
-    {&endMillBall03, {0, 0, 10}, ballMillMotions, NUM_BALL_MOTIONS },
-    {&endMillTaper02, {0, 0, 10}, taperMillMotions, NUM_TAPER_MOTIONS },
+    {&endMillFlat01 },
+    {&endMillFlat02 },
+    {&endMillBall03 },
+    {&endMillTaper02 },
 };
 
 #define TOOL_TABLE_SIZE (sizeof(millOperations) / sizeof(MillOperation))
@@ -604,7 +600,7 @@ void InitOpengl()
     
     // setup tools ans stock
     //MillSim::resolution = 0.1;
-    gStockObject = new MillSim::StockObject(-40, -40, -20, 80, 80, 20);
+    gStockObject = new MillSim::StockObject(0, 0, -8.7, 50, 50, 8.7);
     glightObject = new MillSim::StockObject(-0.5f, -0.5f, -0.5f, 1, 1, 1);
     glightObject->SetPosition(lightPos);
     endMillFlat01.GenerateDisplayLists();
