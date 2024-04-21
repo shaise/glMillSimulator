@@ -1,6 +1,6 @@
 #ifndef __csgcodeparser_h__
 #define __csgcodeparser_h__
-#include "MillOperation.h"
+#include "MillMotion.h"
 #include <vector>
 
 namespace MillSim
@@ -15,14 +15,13 @@ namespace MillSim
 	class GCodeParser
 	{
 	public:
-		GCodeParser() {
-		}
+		GCodeParser() {}
 		virtual ~GCodeParser();
 		bool Parse(const char* filename);
 
 	public:
 		std::vector<MillMotion> Operations;
-		MillMotion lastState;
+		MillMotion lastState = { eNop };
 
 	protected:
 		char* GetNextToken(char* ptr, GCToken* token);

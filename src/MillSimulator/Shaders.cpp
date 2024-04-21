@@ -8,7 +8,6 @@ CSShader* CurrentShader = nullptr;
 
 void CSShader::UpdateModelMat(mat4x4 tmat, mat4x4 nmat)
 {
-	mat4x4 matBuff;
 	if (modelPos >= 0)
 		glUniformMatrix4fv(modelPos, 1, GL_FALSE, (GLfloat*)tmat);
 	if (normalRotPos >= 0)
@@ -17,14 +16,13 @@ void CSShader::UpdateModelMat(mat4x4 tmat, mat4x4 nmat)
 
 void CSShader::UpdateProjectionMat(mat4x4 mat)
 {
-	mat4x4 matBuff;
 	if (projectionPos >= 0)
 		glUniformMatrix4fv(projectionPos, 1, GL_FALSE, (GLfloat*)mat);
 }
 
 void CSShader::UpdateViewMat(mat4x4 mat)
 {
-	mat4x4 matBuff;
+	if (viewPos >= 0)
 	if (viewPos >= 0)
 		glUniformMatrix4fv(viewPos, 1, GL_FALSE, (GLfloat*)mat);
 }

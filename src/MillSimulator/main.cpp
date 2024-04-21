@@ -11,7 +11,6 @@
 #include "linmath.h"
 #include "MillPathSegment.h"
 #include "StockObject.h"
-#include "MillOperation.h"
 #include "SimShapes.h"
 #include "EndMillFlat.h"
 #include "EndMillTaper.h"
@@ -30,6 +29,8 @@ int debug = 0;
 bool isRotate = true;
 float rot = 0.0f;
 std::ostringstream fpsStream;
+
+using namespace MillSim;
 
 MillMotion gZeroPos = { eNop, -1, 0, 0,  10 };
 MillMotion gCurMotion;
@@ -56,8 +57,8 @@ MillMotion DemoSimulation[] = {
     {eMoveLiner,  1, 0.7f, 0.7f, 10},
 
     {eMoveLiner,  1, -3, -3, 10},
-    {eMoveLiner,  1, -3, -3, 0.5},
-    {eMoveLiner,  1, 3, 3, 0.5, 3, 3, -1},
+    {eMoveLiner,  1, -3, -3, 0.5f},
+    {eMoveLiner,  1, 3, 3, 0.5f, 3, 3, -1},
     {eMoveLiner,  1, 3, 3, 10},
 
     {eMoveLiner,  1, 15, 15, 10},
@@ -137,34 +138,34 @@ MillMotion DemoSimulation[] = {
 
 #define NUM_DEMO_MOTIONS (sizeof(DemoSimulation) / sizeof(MillMotion))
 
-EndMillFlat endMillFlat01(3.175, 16);
-EndMillFlat endMillFlat02(1.5, 16);
+EndMillFlat endMillFlat01(3.175f, 16);
+EndMillFlat endMillFlat02(1.5f, 16);
 EndMillTaper endMillTaper02(1, 16, 90, 0.2f);
 EndMillBall endMillBall03(1, 16, 4, 0.2f);
 
-MillOperation millOperations[] = {
-    {&endMillFlat01 },
-    {&endMillFlat02 },
-    {&endMillBall03 },
-    {&endMillTaper02 },
+EndMill* gToolTable[] = {
+    &endMillFlat01,
+    &endMillFlat02,
+    &endMillBall03,
+    &endMillTaper02
 };
 
-#define TOOL_TABLE_SIZE (sizeof(millOperations) / sizeof(MillOperation))
+#define TOOL_TABLE_SIZE (sizeof(gToolTable) / sizeof(EndMill*))
 
-vec3 lightColor = { 1.0, 1.0, 0.9 };
-vec3 lightPos = { 20.0, 20.0, 10.0 };
-vec3 ambientCol = { 0.3, 0.3, 0.1 };
+vec3 lightColor = { 1.0f, 1.0f, 0.9f };
+vec3 lightPos = { 20.0f, 20.0f, 10.0f };
+vec3 ambientCol = { 0.3f, 0.3f, 0.1f };
 
 vec3 eye = { 0, 100, 50 };
 vec3 target = { 0, 0, 0 };
 vec3 upvec = { 0, 0, 1 };
 
-vec3 stockColor = { 0.7, 0.7, 0.7 };
-vec3 cutColor = { 0.4, 0.7, 0.4 };
-vec3 toolColor = { 0.4, 0.4, 0.7 };
+vec3 stockColor = { 0.7f, 0.7f, 0.7f };
+vec3 cutColor = { 0.4f, 0.7f, 0.4f };
+vec3 toolColor = { 0.4f, 0.4f, 0.7f };
 
 
-MillOperation* curMillOperation = nullptr;
+EndMill* curTool = nullptr;
 MillSim::StockObject* gStockObject;
 MillSim::StockObject* glightObject;
 
@@ -190,23 +191,23 @@ float random(float from, float to)
 void InitSimulation()
 {
     clearMillPathSegments();
-    curMillOperation = nullptr;
+    curTool = nullptr;
 
     gDestMotion = gZeroPos;
     //gDestPos = curMillOperation->startPos;
     gcurstep = 0;
     gnsteps = -1;
     gLastToolId = -1;
-    gnPathSteps = gcodeParser.Operations.size();;
+    gnPathSteps = (int)gcodeParser.Operations.size();;
     gPathStep = 0;
 }
 
 void SetTool(int tool) {
     //curMillOpIx = 0;
     if (tool <= TOOL_TABLE_SIZE)
-        curMillOperation = &millOperations[tool - 1];
+        curTool = gToolTable[tool - 1];
     else
-        curMillOperation = nullptr;
+        curTool = nullptr;
     gLastToolId = tool;
 }
 
@@ -245,9 +246,9 @@ void SimNext()
             SetTool(gDestMotion.tool);
         }
 
-        if (curMillOperation != nullptr)
+        if (curTool != nullptr)
         {
-            MillSim::MillPathSegment* segment = new MillSim::MillPathSegment(curMillOperation->endmill, &gCurMotion, &gDestMotion);
+            MillSim::MillPathSegment* segment = new MillSim::MillPathSegment(curTool, &gCurMotion, &gDestMotion);
             gnsteps = segment->numSimSteps;
             gcurstep = 0;
             MillPathSegments.push_back(segment);
@@ -388,7 +389,7 @@ void display()
     glClear(GL_COLOR_BUFFER_BIT | GL_DEPTH_BUFFER_BIT | GL_STENCIL_BUFFER_BIT);
 
     
-    unsigned int msec = glfwGetTime() * 1000;
+    unsigned int msec = (unsigned int)(glfwGetTime() * 1000);
 
     if (isRotate)
         mat4x4_rotate_Z(matLookAt, matLookAt, rot);
@@ -444,20 +445,23 @@ void display()
         
     glEnable(GL_CULL_FACE);
 
-    if (curMillOperation && curMillOperation->endmill)
+    if (curTool)
     {
         Vector3 toolPos;
+        //MotionPosToVec(toolPos, &gDestMotion);
         toolPos.FromMillMotion(&gDestMotion);
         if (len > 0)
         {
             MillSim::MillPathSegment* p = MillPathSegments.at(len - 1);
+            //p->GetHeadPosition(toolPos);
             toolPos = *p->GetHeadPosition();
         }
         mat4x4 tmat;
+        //mat4x4_translate(tmat, toolPos[0], toolPos[1], toolPos[2]);
         mat4x4_translate(tmat, toolPos.x, toolPos.y, toolPos.z);
         shader3D.Activate();
         shader3D.UpdateObjColor(toolColor);
-        curMillOperation->RenderTool(tmat, identityMat);
+        curTool->mToolShape.Render(tmat, identityMat);
     }
 
     shaderFlat.Activate();
@@ -478,7 +482,7 @@ void display()
     }
 
 
-    renderTime = (glfwGetTime() * 1000) - msec;
+    renderTime = (int)(glfwGetTime() * 1000) - msec;
 
     //ShowStats();
 }
@@ -492,7 +496,7 @@ void idle() {
     static int msec = 0;        
     static int fps = 0;
     last = msec;
-    msec = (glfwGetTime() * 1000);
+    msec = (int)(glfwGetTime() * 1000);
     if (spin) {
         rot += (msec-last)/4600.0f; 
         while (rot >= PI2)
@@ -579,7 +583,7 @@ void InitOpengl()
 
     // Setup projection
     mat4x4 projmat;
-    mat4x4_perspective(projmat, 0.7, 4.0 / 3.0, 1.0, 200.0);
+    mat4x4_perspective(projmat, 0.7f, 4.0f / 3.0f, 1.0f, 200.0f);
 
     // use shaders
     //   standard diffuse shader
@@ -600,7 +604,7 @@ void InitOpengl()
     
     // setup tools ans stock
     //MillSim::resolution = 0.1;
-    gStockObject = new MillSim::StockObject(0, 0, -8.7, 50, 50, 8.7);
+    gStockObject = new MillSim::StockObject(0, 0, -8.7f, 50, 50, 8.7f);
     glightObject = new MillSim::StockObject(-0.5f, -0.5f, -0.5f, 1, 1, 1);
     glightObject->SetPosition(lightPos);
     endMillFlat01.GenerateDisplayLists();

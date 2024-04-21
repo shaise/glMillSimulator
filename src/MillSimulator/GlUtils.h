@@ -6,6 +6,8 @@
 #define PI 3.14159265f
 #define PI2 (PI*2)
 
+constexpr auto EPSILON = 0.00001f;
+#define EQ_FLOAT(x,y) (fabs((x) - (y)) < EPSILON)
 
 void GLClearError();
 bool GLLogError();

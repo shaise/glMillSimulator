@@ -2,9 +2,10 @@
 #define __mill_path_segment_h__
 
 
-#include "MillOperation.h"
+#include "MillMotion.h"
 #include "EndMill.h"
 #include "linmath.h"
+#include "MSVectors.h"
 
 namespace MillSim {
 

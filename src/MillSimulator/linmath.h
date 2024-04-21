@@ -71,6 +71,13 @@ LINMATH_H_DEFINE_VEC(2)
 LINMATH_H_DEFINE_VEC(3)
 LINMATH_H_DEFINE_VEC(4)
 
+LINMATH_H_FUNC void vec3_set(vec3 r, float x, float y, float z)
+{
+	r[0] = x;
+	r[1] = y;
+	r[2] = z;
+}
+
 LINMATH_H_FUNC void vec3_mul_cross(vec3 r, vec3 const a, vec3 const b)
 {
 	r[0] = a[1]*b[2] - a[2]*b[1];
@@ -191,7 +198,17 @@ LINMATH_H_FUNC void mat4x4_translate(mat4x4 T, float x, float y, float z)
 }
 LINMATH_H_FUNC void mat4x4_translate_in_place(mat4x4 M, float x, float y, float z)
 {
-	vec4 t = {x, y, z, 0};
+	vec4 t = { x, y, z, 0 };
+	vec4 r;
+	int i;
+	for (i = 0; i < 4; ++i) {
+		mat4x4_row(r, M, i);
+		M[3][i] += vec4_mul_inner(r, t);
+	}
+}
+LINMATH_H_FUNC void mat4x4_translate_in_place_v(mat4x4 M, vec3 v)
+{
+	vec4 t = { v[0], v[1], v[2], 0};
 	vec4 r;
 	int i;
 	for (i = 0; i < 4; ++i) {
@@ -582,13 +599,13 @@ LINMATH_H_FUNC void mat4x4_arcball(mat4x4 R, mat4x4 const M, vec2 const _a, vec2
 	float z_b = 0.;
 
 	if(vec2_len(a) < 1.) {
-		z_a = sqrtf(1. - vec2_mul_inner(a, a));
+		z_a = sqrtf(1.f - vec2_mul_inner(a, a));
 	} else {
 		vec2_norm(a, a);
 	}
 
-	if(vec2_len(b) < 1.) {
-		z_b = sqrtf(1. - vec2_mul_inner(b, b));
+	if(vec2_len(b) < 1.f) {
+		z_b = sqrtf(1.f - vec2_mul_inner(b, b));
 	} else {
 		vec2_norm(b, b);
 	}
@@ -599,7 +616,7 @@ LINMATH_H_FUNC void mat4x4_arcball(mat4x4 R, mat4x4 const M, vec2 const _a, vec2
 	vec3 c_;
 	vec3_mul_cross(c_, a_, b_);
 
-	float const angle = acos(vec3_mul_inner(a_, b_)) * s;
+	float const angle = acosf(vec3_mul_inner(a_, b_)) * s;
 	mat4x4_rotate(R, M, c_[0], c_[1], c_[2], angle);
 }
 #endif

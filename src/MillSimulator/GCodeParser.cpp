@@ -15,7 +15,7 @@ namespace MillSim {
 	bool GCodeParser::Parse(const char* filename)
 	{
 		Operations.clear();
-		lastState = { 0, 0, 0, 0, 0, 0, eNop, -1 };
+		lastState = { eNop, -1, 0, 0, 0, 0, 0, 0 };
 		lastTool = -1;
 
 		FILE* fl;
@@ -63,7 +63,7 @@ namespace MillSim {
 
 	bool GCodeParser::IsValidTok(char tok)
 	{
-		int len = strlen(TokTypes);
+		int len = (int)strlen(TokTypes);
 		for (int i = 0; i < len; i++)
 			if (tok == TokTypes[i])
 				return true;
@@ -90,7 +90,7 @@ namespace MillSim {
 				decimalPointFound = true;
 			else if (letter >= '0' && letter <= '9')
 			{
-				float digitVal = (letter - '0');
+				float digitVal = (float)(letter - '0');
 				if (decimalPointFound)
 				{
 					res = res + digitVal / decPos;
