@@ -3,8 +3,8 @@
 #include "GlUtils.h"
 #include <math.h>
 
-EndMillTaper::EndMillTaper(float diameter, int nslices, float taperAngle, float flatRadius):
-	EndMill(diameter, nslices)
+EndMillTaper::EndMillTaper(int toolid, float diameter, int nslices, float taperAngle, float flatRadius):
+	EndMill(toolid, diameter, nslices)
 {
 	float ta = (float)tanf((float)(taperAngle * PI / 360));
 	float l1 = flatRadius / ta;

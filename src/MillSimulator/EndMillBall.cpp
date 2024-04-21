@@ -4,8 +4,8 @@
 #include <math.h>
 #include <malloc.h>
 
-EndMillBall::EndMillBall(float diameter, int nslices, int nSections, float flatRadius):
-	EndMill(diameter, nslices)
+EndMillBall::EndMillBall(int toolid, float diameter, int nslices, int nSections, float flatRadius):
+	EndMill(toolid, diameter, nslices)
 {
 	mNPoints = nSections + 2;
 	if (flatRadius < 0.0001)

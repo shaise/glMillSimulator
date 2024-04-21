@@ -2,10 +2,11 @@
 #include <GLFW/glfw3.h>
 #include "SimShapes.h"
 
-EndMill::EndMill(float diameter, int nslices)
+EndMill::EndMill(int toolid, float diameter, int nslices)
 {
 	mRadius = diameter / 2;
 	mNSlices = nslices;
+	mToolId = toolid;
 	//mToolDisplayId = mHToolDisplayId = mPathDisplayId = 0;
 }
 

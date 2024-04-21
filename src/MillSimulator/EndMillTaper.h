@@ -8,7 +8,7 @@ class EndMillTaper :
     public EndMill
 {
 public:
-    EndMillTaper(float radius, int nslices, float TaperAngle, float flatRadius);
+    EndMillTaper(int toolid, float radius, int nslices, float TaperAngle, float flatRadius);
 
 private:
     float _profVerts[PROFILE_BUFFER_SIZE(TAPER_MILL_PROFILE_VERTS)];

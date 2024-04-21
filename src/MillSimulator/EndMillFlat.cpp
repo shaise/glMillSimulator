@@ -1,7 +1,7 @@
 #include "EndMillFlat.h"
 #include "SimShapes.h"
 
-EndMillFlat::EndMillFlat(float diameter, int nslices) : EndMill(diameter, nslices)
+EndMillFlat::EndMillFlat(int toolid, float diameter, int nslices) : EndMill(toolid, diameter, nslices)
 {
 	int idx = 0;
 	SET_DUAL(_profVerts, idx, mRadius, MILL_HEIGHT);

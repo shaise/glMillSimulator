@@ -8,7 +8,7 @@ class EndMillFlat :
     public EndMill
 {
 public:
-    EndMillFlat(float radius, int nslices);
+    EndMillFlat(int toolid, float radius, int nslices);
 
 private:
     float _profVerts[PROFILE_BUFFER_SIZE(FLAT_MILL_PROFILE_VERTS)];

@@ -14,6 +14,7 @@ public:
 	float mRadius;
 	int mNPoints = 0;
 	int mNSlices;
+	int mToolId = -1;
 	//unsigned int mPathDisplayId;
 	//unsigned int mHToolDisplayId;
 	//unsigned int mToolDisplayId;
@@ -23,7 +24,7 @@ public:
 	Shape mToolShape;
 
 public:
-	EndMill(float radius, int nslices);
+	EndMill(int toolid, float radius, int nslices);
 	virtual ~EndMill();
 	void GenerateDisplayLists();
 	unsigned int GenerateArcSegmentDL(float radius, float angleRad, float zShift, Shape *retShape);

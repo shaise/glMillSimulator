@@ -7,7 +7,7 @@ class EndMillBall :
     public EndMill
 {
 public:
-    EndMillBall(float radius, int nslices, int nSections, float flatRadius);
+    EndMillBall(int toolid, float radius, int nslices, int nSections, float flatRadius);
     virtual ~EndMillBall();
 
 };
