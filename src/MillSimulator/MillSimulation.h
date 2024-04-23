@@ -5,6 +5,7 @@
 #include "GCodeParser.h"
 #include "Shader.h"
 #include "linmath.h"
+#include "GlUtils.h"
 #include "StockObject.h"
 #include "MillPathSegment.h"
 #include "EndMillFlat.h"
@@ -27,10 +28,9 @@ namespace MillSim {
 		void ProcessSim(unsigned int time_ms);
 		void HandleKeyPress(int key);
 		void TiltEye(float tiltStep);
-
 		void InitDisplay();
-
 		bool LoadGCodeFile(const char* fileName);
+		void SetBoxStock(float x, float y, float z, float l, float w, float h);
 
 
 	protected:
@@ -57,8 +57,8 @@ namespace MillSim {
 		MillMotion mCurMotion;
 		MillMotion mDestMotion;
 
-		StockObject* gStockObject;
-		StockObject* glightObject;
+		StockObject mStockObject;
+		StockObject mlightObject;
 
 		vec3 lightColor = { 1.0f, 1.0f, 0.9f };
 		vec3 lightPos = { 20.0f, 20.0f, 10.0f };
@@ -72,8 +72,10 @@ namespace MillSim {
 		vec3 cutColor = { 0.4f, 0.7f, 0.4f };
 		vec3 toolColor = { 0.4f, 0.4f, 0.7f };
 
-		float mEyeHeight = 30;
+		float mEyeDistance = 30;
 		float mEyeRoration = 0;
+		float mEyeInclination = PI / 6; // 30 degree
+		float mEyeStep = PI / 36;  // 5 degree
 
 
 		int mLastToolId = -1;
@@ -82,6 +84,8 @@ namespace MillSim {
 		int mPathStep = 0;
 		int mNPathSteps = 0;
 		int mDebug = 0;
+		int mDebug1 = 0;
+		int mDebug2 = 12;
 		int mSimSpeed = 1;
 
 		bool mIsInStock = false;

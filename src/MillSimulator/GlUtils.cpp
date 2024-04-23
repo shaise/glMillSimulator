@@ -3,6 +3,8 @@
 
 #define ASSERT(X) if (!(X)) __debugbreak()
 
+int gDebug = -1;
+
 mat4x4 identityMat = { {1,0,0,0},{0,1,0,0},{0,0,1,0},{0,0,0,1} };
 
 void GLClearError()

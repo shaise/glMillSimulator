@@ -4,6 +4,7 @@
 #include "SimShapes.h"
 #include "linmath.h"
 #include "GlUtils.h"
+#include <iostream>
 
 #define N_MILL_SLICES 8
 #define MAX_SEG_DEG (PI / 8.0f)   // 22.5 deg
@@ -65,11 +66,11 @@ namespace MillSim {
                 mStepAngRad = NIN_SEG_DEG;
             mStartAngRad = atan2f(mCenter[PX] - from->x, from->y - mCenter[PY]);
             float endAng = atan2f(mCenter[PX] - to->x, to->y - mCenter[PY]);
-            float sweepAng = (mStartAngRad - endAng) * mArcDir;
-            if (sweepAng < EPSILON)
-                sweepAng += PI * 2;
-            numSimSteps = (int)(sweepAng / mStepAngRad) + 1;
-            mStepAngRad = mArcDir * sweepAng / numSimSteps;
+            mSweepAng = (mStartAngRad - endAng) * mArcDir;
+            if (mSweepAng < EPSILON)
+                mSweepAng += PI * 2;
+            numSimSteps = (int)(mSweepAng / mStepAngRad) + 1;
+            mStepAngRad = mArcDir * mSweepAng / numSimSteps;
             if (mSmallRad)
                 // when the radius is too small, we just use the tool itself to carve the stock
                 mShape = mEndmill->mToolShape;
@@ -118,7 +119,8 @@ namespace MillSim {
             mat4x4_translate_in_place(mat, mCenter[PX], mCenter[PY], mCenter[PZ] + mDiff[PZ] * (step - 1) / numSimSteps);
             mat4x4_rotate_Z(mat, mat, mStartAngRad - (step - 1) * mStepAngRad);
             mat4x4_rotate_Z(rmat, rmat, mStartAngRad - (step - 1) * mStepAngRad);
-            if (mSmallRad || step == (numSimSteps - 1))
+
+            if (mSmallRad || step == numSimSteps)
             {
                 mat4x4_translate_in_place(mat, 0, mRadius, 0);
                 mEndmill->mToolShape.Render(mat, rmat);

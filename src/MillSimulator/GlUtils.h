@@ -12,6 +12,9 @@ constexpr auto EPSILON = 0.00001f;
 void GLClearError();
 bool GLLogError();
 #define GL(x) { GLClearError(); x; if (!GLLogError()) __debugbreak(); }
+#define  RadToDeg(x) (x * 180.0f / PI)
 extern mat4x4 identityMat;
+extern int gDebug;
+
 #endif // !__glutils_h__
 

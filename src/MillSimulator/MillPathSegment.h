@@ -42,6 +42,7 @@ namespace MillSim {
         EndMill* mEndmill = nullptr;
         bool isMultyPart;
         int numSimSteps;
+        int indexInArray;
 
     protected:
         mat4x4 mShearMat;
@@ -56,6 +57,7 @@ namespace MillSim {
          float mStartAngRad;
          float mStepAngRad;
          float mStepDistance = 0;
+         float mSweepAng;
          float mRadius = 0;
          float mArcDir = 0;
          bool mSmallRad = false;

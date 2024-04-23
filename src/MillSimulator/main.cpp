@@ -15,6 +15,7 @@
 #include <string>
 #include <vector>
 
+#define gEyeStep (PI / 36)
 
 MillSim::MillSimulation gMillSimulator;
 
@@ -27,6 +28,8 @@ EndMillTaper endMillTaper04(3, 1, 16, 90, 0.2f);
 
 // test section - remove!
 GLuint tprogram, tmodel, tview, tprojection, tarray;
+
+
 
 
 void ShowStats() {
@@ -60,10 +63,10 @@ void key_callback(GLFWwindow* window, int key, int scancode, int action, int mod
         glfwSetWindowShouldClose(window, GLFW_TRUE);
         break;
     case GLFW_KEY_UP:
-        gMillSimulator.TiltEye(5);
+        gMillSimulator.TiltEye(gEyeStep);
         break;
     case GLFW_KEY_DOWN:
-        gMillSimulator.TiltEye(-5);
+        gMillSimulator.TiltEye(- gEyeStep);
         break;
     default:
         gMillSimulator.HandleKeyPress(key);
@@ -109,6 +112,7 @@ int main(int argc, char **argv)
     gMillSimulator.AddTool(&endMillFlat02);
     gMillSimulator.AddTool(&endMillBall03);
     gMillSimulator.AddTool(&endMillTaper04);
+    gMillSimulator.SetBoxStock(0, 0, -8.7f, 50, 50, 8.7f);
     gMillSimulator.InitDisplay();
     
     while (!glfwWindowShouldClose(glwind))

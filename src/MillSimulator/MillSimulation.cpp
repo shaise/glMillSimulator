@@ -1,6 +1,5 @@
 #include "MillSimulation.h"
 #include "GL/glew.h"
-#include "GlUtils.h"
 #include <vector>
 #include <iostream>
 
@@ -47,6 +46,7 @@ namespace MillSim {
             if (curTool != nullptr)
             {
                 MillSim::MillPathSegment* segment = new MillSim::MillPathSegment(curTool, &mCurMotion, &mDestMotion);
+                segment->indexInArray = mPathStep;
                 mCurStep -= mNSteps;
                 mNSteps = segment->numSimSteps;
                 MillPathSegments.push_back(segment);
@@ -182,18 +182,19 @@ namespace MillSim {
     {
         mat4x4 matLookAt, model;
         mat4x4_identity(model);
-        eye[2] = mEyeHeight;
         mat4x4_look_at(matLookAt, eye, target, upvec);
 
         glClear(GL_COLOR_BUFFER_BIT | GL_DEPTH_BUFFER_BIT | GL_STENCIL_BUFFER_BIT);
 
+        mat4x4_rotate_X(matLookAt, matLookAt, mEyeInclination);
         mat4x4_rotate_Z(matLookAt, matLookAt, mEyeRoration);
+        mat4x4_translate_in_place(matLookAt, -mStockObject.mCenter[0], -mStockObject.mCenter[1], -mStockObject.mCenter[2]);
 
         shaderFlat.Activate();
         shaderFlat.UpdateViewMat(matLookAt);
 
         GlsimStart();
-        gStockObject->render();
+        mStockObject.render();
 
         int len = (int)MillPathSegments.size();
 
@@ -212,14 +213,14 @@ namespace MillSim {
             renderSegmentReversed(i);
 
         GlsimClipBack();
-        gStockObject->render();
+        mStockObject.render();
 
         // start coloring
         shader3D.Activate();
         shader3D.UpdateViewMat(matLookAt);
         shader3D.UpdateObjColor(stockColor);
         GlsimRenderStock();
-        gStockObject->render();
+        mStockObject.render();
         GlsimRenderTools();
 
         // render cuts (back faces of tools)
@@ -262,7 +263,7 @@ namespace MillSim {
 
         shaderFlat.Activate();
         shaderFlat.UpdateObjColor(lightColor);
-        glightObject->render();
+        mlightObject.render();
 
         if (mDebug > 0)
         {
@@ -270,10 +271,11 @@ namespace MillSim {
             mat4x4_dup(test, model);
             mat4x4_translate_in_place(test, 20, 20, 3);
             mat4x4_rotate_Z(test, test, 30.f * 3.14f / 180.f);
-            if (mDebug >= MillPathSegments.size())
+            int dpos = MillPathSegments.size() - mDebug2;
+            MillSim::MillPathSegment* p = MillPathSegments.at(dpos);
+            if (mDebug > p->numSimSteps)
                 mDebug = 1;
-            MillSim::MillPathSegment* p = MillPathSegments.at(mDebug);
-            p->render(1);
+            p->render(mDebug);
         }
     }
 
@@ -328,6 +330,10 @@ namespace MillSim {
         case'D':
             mDebug++;
             break;
+        case'K':
+            mDebug2++;
+            gDebug = MillPathSegments.size() - mDebug2;
+            break;
         default:
             if (key >= '1' && key <= '9')
                 mSimSpeed = key - '0';
@@ -337,7 +343,11 @@ namespace MillSim {
 
     void MillSimulation::TiltEye(float tiltStep)
     {
-        mEyeHeight += tiltStep;
+        mEyeInclination += tiltStep;
+        if (mEyeInclination > PI / 2)
+            mEyeInclination = PI / 2;
+        else if (mEyeInclination < -PI / 2)
+            mEyeInclination = -PI / 2;
     }
 
     void MillSimulation::InitDisplay()
@@ -368,12 +378,21 @@ namespace MillSim {
 
         // setup tools ans stock
         //MillSim::resolution = 0.1;
-        gStockObject = new MillSim::StockObject(0, 0, -8.7f, 50, 50, 8.7f);
-        glightObject = new MillSim::StockObject(-0.5f, -0.5f, -0.5f, 1, 1, 1);
-        glightObject->SetPosition(lightPos);
+        //mStockObject = new MillSim::StockObject(0, 0, -8.7f, 50, 50, 8.7f);
+        mlightObject.GenerateBoxStock(-0.5f, -0.5f, -0.5f, 1, 1, 1);
         for (int i = 0; i < mToolTable.size(); i++)
             mToolTable[i]->GenerateDisplayLists();
     }
+
+    void MillSimulation::SetBoxStock(float x, float y, float z, float l, float w, float h)
+    {
+        mStockObject.GenerateBoxStock(x, y, z, l, w, h);
+        float maxw = fmaxf(w, l);
+        vec3_set(eye, 0, -2.0f * maxw, 0);
+        vec3_set(lightPos, maxw, maxw, h * 1.7f);
+        mlightObject.SetPosition(lightPos);
+    }
+
 
     bool MillSimulation::LoadGCodeFile(const char* fileName)
     {

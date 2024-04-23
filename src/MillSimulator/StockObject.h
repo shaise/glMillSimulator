@@ -17,7 +17,7 @@ namespace MillSim {
         /// <param name="l">Stock's length (along x)</param>
         /// <param name="w">Stock's width (along y)</param>
         /// <param name="h">Stock's height (along z)</param>
-        StockObject(float x, float y, float z, float l, float w, float h);
+        StockObject();
         virtual ~StockObject();
 
 
@@ -25,6 +25,9 @@ namespace MillSim {
         virtual void render();
         Shape mShape;
         void SetPosition(vec3 position);
+        void GenerateBoxStock(float x, float y, float z, float l, float w, float h);
+        vec3 mCenter;
+        vec3 mSize;
 
     private:
         float mProfile[8];
