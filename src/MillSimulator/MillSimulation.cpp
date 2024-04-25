@@ -27,60 +27,49 @@ namespace MillSim {
 
         simDecim = 0;
 
-        mCurStep += mSimSpeed;
-        while (mCurStep > mNSteps)
+        if (mCurStep < mNTotalSteps)
         {
-            if (mPathStep >= mNPathSteps)
-            {
-                mCurStep = mNSteps;
-                return;
-            }
-
-            mCurMotion = mDestMotion;
-            mDestMotion = mCodeParser.Operations[mPathStep];
-            if (mDestMotion.tool != mLastToolId)
-            {
-                SetTool(mDestMotion.tool);
-            }
-
-            if (curTool != nullptr)
-            {
-                MillSim::MillPathSegment* segment = new MillSim::MillPathSegment(curTool, &mCurMotion, &mDestMotion);
-                segment->indexInArray = mPathStep;
-                mCurStep -= mNSteps;
-                mNSteps = segment->numSimSteps;
-                MillPathSegments.push_back(segment);
-            }
-
-            mPathStep++;
+            mCurStep += mSimSpeed;
+            CalcSegmentPositions();
         }
     }
 
     void MillSimulation::InitSimulation()
     {
         ClearMillPathSegments();
-        curTool = nullptr;
 
         mDestMotion = mZeroPos;
         //gDestPos = curMillOperation->startPos;
         mCurStep = 0;
-        mNSteps = -1;
-        mLastToolId = -1;
-        mNPathSteps = (int)mCodeParser.Operations.size();;
-        mPathStep = 0;
+        mPathStep = -1;
+        mNTotalSteps = 0;
+        int nOperations = (int)mCodeParser.Operations.size();;
+        for (int i = 0; i < nOperations; i++)
+        {
+            mCurMotion = mDestMotion;
+            mDestMotion = mCodeParser.Operations[i];
+            EndMill *tool = GetTool(mDestMotion.tool);
+            if (tool != nullptr)
+            {
+                MillSim::MillPathSegment* segment = new MillSim::MillPathSegment(tool, &mCurMotion, &mDestMotion);
+                segment->indexInArray = i;
+                mNTotalSteps += segment->numSimSteps;
+                MillPathSegments.push_back(segment);
+            }
+        }
+        mNPathSteps = MillPathSegments.size();
     }
 
-    void MillSimulation::SetTool(int tool) {
-        //curMillOpIx = 0;
-        curTool = nullptr;
+    EndMill* MillSimulation::GetTool(int toolId) 
+    {
         for (int i = 0; i < mToolTable.size(); i++)
         {
-            if (mToolTable[i]->mToolId == tool)
+            if (mToolTable[i]->mToolId == toolId)
             {
-                curTool = mToolTable[i];
+                return mToolTable[i];
             }
         }            
-        mLastToolId = tool;
+       return nullptr;
     }
 
     void MillSimulation::AddTool(EndMill* tool)
@@ -153,7 +142,7 @@ namespace MillSim {
     void MillSimulation::renderSegmentForward(int iSeg)
     {
         MillSim::MillPathSegment* p = MillPathSegments.at(iSeg);
-        int step = iSeg == (MillPathSegments.size() - 1) ? mCurStep : p->numSimSteps;
+        int step = iSeg == mPathStep ? mSubStep : p->numSimSteps;
         int start = p->isMultyPart ? 1 : step;
         for (int i = start; i <= step; i++)
         {
@@ -167,7 +156,7 @@ namespace MillSim {
     void MillSimulation::renderSegmentReversed(int iSeg)
     {
         MillSim::MillPathSegment* p = MillPathSegments.at(iSeg);
-        int step = iSeg == (MillPathSegments.size() - 1) ? mCurStep : p->numSimSteps;
+        int step = iSeg == mPathStep ? mSubStep : p->numSimSteps;
         int end = p->isMultyPart ? 1 : step;
         for (int i = step; i >= end; i--)
         {
@@ -176,6 +165,25 @@ namespace MillSim {
             GlsimToolStep2();
             p->render(i);
         }
+    }
+
+    void MillSimulation::CalcSegmentPositions()
+    {
+        mSubStep = mCurStep;
+        for (mPathStep = 0; mPathStep < mNPathSteps; mPathStep++)
+        {
+            MillSim::MillPathSegment* p = MillPathSegments[mPathStep];
+            if (mSubStep < p->numSimSteps)
+                break;
+            mSubStep -= p->numSimSteps;
+        }
+        if (mPathStep >= mNPathSteps)
+        {
+            mPathStep = mNPathSteps - 1;
+            mSubStep = MillPathSegments[mPathStep]->numSimSteps;
+        }
+        else
+            mSubStep++;
     }
 
     void MillSimulation::Render()
@@ -196,20 +204,18 @@ namespace MillSim {
         GlsimStart();
         mStockObject.render();
 
-        int len = (int)MillPathSegments.size();
-
         GlsimToolStep2();
 
-        for (int i = 0; i < len; i++)
+        for (int i = 0; i <= mPathStep; i++)
             renderSegmentForward(i);
 
-        for (int i = len - 1; i >= 0; i--)
-            renderSegmentForward(i);
+        //for (int i = mPathStep; i >= 0; i--)
+        //    renderSegmentForward(i);
 
-        for (int i = 0; i < len; i++)
-            renderSegmentReversed(i);
+        //for (int i = 0; i < mPathStep; i++)
+        //    renderSegmentReversed(i);
 
-        for (int i = len - 1; i >= 0; i--)
+        for (int i = mPathStep; i >= 0; i--)
             renderSegmentReversed(i);
 
         GlsimClipBack();
@@ -228,10 +234,10 @@ namespace MillSim {
         shaderInv3D.Activate();
         shaderInv3D.UpdateViewMat(matLookAt);
         shaderInv3D.UpdateObjColor(cutColor);
-        for (int i = 0; i < len; i++)
+        for (int i = 0; i <= mPathStep; i++)
         {
             MillSim::MillPathSegment* p = MillPathSegments.at(i);
-            int step = (i == (len - 1)) ? mCurStep : p->numSimSteps;
+            int step = (i == mPathStep) ? mSubStep : p->numSimSteps;
             int start = p->isMultyPart ? 1 : step;
             for (int j = start; j <= step; j++)
                 MillPathSegments.at(i)->render(j);
@@ -241,24 +247,18 @@ namespace MillSim {
 
         glEnable(GL_CULL_FACE);
 
-        if (curTool)
+        if (mPathStep >= 0)
         {
             vec3 toolPos;
-            //Vector3 toolPos;
             MotionPosToVec(toolPos, &mDestMotion);
-            //toolPos.FromMillMotion(&gDestMotion);
-            if (len > 0)
-            {
-                MillSim::MillPathSegment* p = MillPathSegments.at(len - 1);
-                p->GetHeadPosition(toolPos);
-                //toolPos = *p->GetHeadPosition();
-            }
+            MillSim::MillPathSegment* p = MillPathSegments.at(mPathStep);
+            p->GetHeadPosition(toolPos);
             mat4x4 tmat;
             mat4x4_translate(tmat, toolPos[0], toolPos[1], toolPos[2]);
             //mat4x4_translate(tmat, toolPos.x, toolPos.y, toolPos.z);
             shader3D.Activate();
             shader3D.UpdateObjColor(toolColor);
-            curTool->mToolShape.Render(tmat, identityMat);
+            p->mEndmill->mToolShape.Render(tmat, identityMat);
         }
 
         shaderFlat.Activate();
@@ -271,12 +271,13 @@ namespace MillSim {
             mat4x4_dup(test, model);
             mat4x4_translate_in_place(test, 20, 20, 3);
             mat4x4_rotate_Z(test, test, 30.f * 3.14f / 180.f);
-            int dpos = MillPathSegments.size() - mDebug2;
+            int dpos = mNPathSteps - mDebug2;
             MillSim::MillPathSegment* p = MillPathSegments.at(dpos);
             if (mDebug > p->numSimSteps)
                 mDebug = 1;
             p->render(mDebug);
         }
+        guiDisplay.Render();
     }
 
     void MillSimulation::ProcessSim(unsigned int time_ms) {
@@ -332,7 +333,7 @@ namespace MillSim {
             break;
         case'K':
             mDebug2++;
-            gDebug = MillPathSegments.size() - mDebug2;
+            gDebug = mNPathSteps - mDebug2;
             break;
         default:
             if (key >= '1' && key <= '9')
@@ -348,6 +349,15 @@ namespace MillSim {
             mEyeInclination = PI / 2;
         else if (mEyeInclination < -PI / 2)
             mEyeInclination = -PI / 2;
+    }
+
+    void MillSimulation::RotateEye(float rotStep)
+    {
+        mEyeRoration += rotStep;
+        if (mEyeRoration > PI2)
+            mEyeRoration = PI2;
+        else if (mEyeRoration < 0)
+            mEyeRoration = 0;
     }
 
     void MillSimulation::InitDisplay()
@@ -376,12 +386,14 @@ namespace MillSim {
 
         glMatrixMode(GL_MODELVIEW);
 
-        // setup tools ans stock
-        //MillSim::resolution = 0.1;
-        //mStockObject = new MillSim::StockObject(0, 0, -8.7f, 50, 50, 8.7f);
+        // setup light object and generate tools
         mlightObject.GenerateBoxStock(-0.5f, -0.5f, -0.5f, 1, 1, 1);
         for (int i = 0; i < mToolTable.size(); i++)
             mToolTable[i]->GenerateDisplayLists();
+
+        // init gui elements
+        guiDisplay.InutGui();
+
     }
 
     void MillSimulation::SetBoxStock(float x, float y, float z, float l, float w, float h)
@@ -391,6 +403,12 @@ namespace MillSim {
         vec3_set(eye, 0, -2.0f * maxw, 0);
         vec3_set(lightPos, maxw, maxw, h * 1.7f);
         mlightObject.SetPosition(lightPos);
+    }
+
+    void MillSimulation::DragView(int dx, int dy)
+    {
+        TiltEye((float)dy / 100.0f);
+        RotateEye((float)dx / 100.0f);
     }
 
 

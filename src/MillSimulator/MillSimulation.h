@@ -11,6 +11,7 @@
 #include "EndMillFlat.h"
 #include "EndMillBall.h"
 #include "EndMillTaper.h"
+#include "GuiDisplay.h"
 #include <sstream>
 
 namespace MillSim {
@@ -22,15 +23,16 @@ namespace MillSim {
 		void ClearMillPathSegments();
 		void SimNext();
 		void InitSimulation();
-		void SetTool(int tool);
 		void AddTool(EndMill* tool);
 		void Render();
 		void ProcessSim(unsigned int time_ms);
 		void HandleKeyPress(int key);
 		void TiltEye(float tiltStep);
+		void RotateEye(float rotStep);
 		void InitDisplay();
 		bool LoadGCodeFile(const char* fileName);
 		void SetBoxStock(float x, float y, float z, float l, float w, float h);
+		void DragView(int dx, int dy);
 
 
 	protected:
@@ -43,13 +45,15 @@ namespace MillSim {
 		void GlsimEnd(void);
 		void renderSegmentForward(int iSeg);
 		void renderSegmentReversed(int iSeg);
+		void CalcSegmentPositions();
+		EndMill* GetTool(int tool);
 
 
 	protected:
-		EndMill* curTool = nullptr;
 		std::vector<EndMill*> mToolTable;
 		CSShader shader3D, shaderInv3D, shaderFlat;
 		GCodeParser mCodeParser;
+		GuiDisplay guiDisplay;
 		std::vector<MillPathSegment*> MillPathSegments;
 		std::ostringstream mFpsStream;
 
@@ -78,10 +82,10 @@ namespace MillSim {
 		float mEyeStep = PI / 36;  // 5 degree
 
 
-		int mLastToolId = -1;
 		int mCurStep = 0;
-		int mNSteps = 0;
+		int mNTotalSteps = 0;
 		int mPathStep = 0;
+		int mSubStep = 0;
 		int mNPathSteps = 0;
 		int mDebug = 0;
 		int mDebug1 = 0;

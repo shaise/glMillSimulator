@@ -22,6 +22,7 @@ class Shape
 {
 public:
 	Shape() {}
+	~Shape();
 
 public:
 	uint vao = 0;

@@ -354,6 +354,11 @@ void ExtrudeProfileLinear(float* profPoints, int nPoints, float fromX, float toX
     free(ibuffer);
 }
 
+Shape::~Shape()
+{
+    FreeResources();
+}
+
 void Shape::Render()
 {
     glBindVertexArray(vao);
@@ -375,5 +380,6 @@ void Shape::FreeResources()
         if (vbo > 0) glDeleteBuffers(1, &vbo);
         if (ibo > 0) glDeleteBuffers(1, &ibo);
         glDeleteVertexArrays(1, &vao);
+        vbo = ibo = vao = 0;
     }
 }

@@ -29,7 +29,8 @@ EndMillTaper endMillTaper04(3, 1, 16, 90, 0.2f);
 // test section - remove!
 GLuint tprogram, tmodel, tview, tprojection, tarray;
 
-
+int gLastX = 0, gLastY = 0;
+bool gIsDragging;
 
 
 void ShowStats() {
@@ -74,6 +75,43 @@ void key_callback(GLFWwindow* window, int key, int scancode, int action, int mod
     }
 }
 
+void mouse_callback(GLFWwindow* window, int button, int action, int mods)
+{
+    double x, y;
+    glfwGetCursorPos(window, &x, &y);
+    std::cout << "Button:" << button << ", state:" << action << ", pos:" << x << "," << y << std::endl;
+    if (button == GLFW_MOUSE_BUTTON_MIDDLE)
+    {
+        gIsDragging = action == GLFW_PRESS;
+        if (gIsDragging)
+        {
+            gLastX = (int)x;
+            gLastY = (int)y;
+        }
+    }
+}
+
+
+void check_drag(GLFWwindow* window)
+{
+    double fx, fy;
+    int x, y, dx, dy;
+    if (gIsDragging)
+    {
+        glfwGetCursorPos(window, &fx, &fy);
+        int x = (int)fx;
+        int y = (int)fy;
+        int dx = x - gLastX;
+        int dy = y - gLastY;
+        if (dx != 0 || dy != 0)
+        {
+            gMillSimulator.DragView(dx, dy);
+            gLastX = x;
+            gLastY = y;
+        }
+    }
+}
+
 static void error_callback(int error, const char* description)
 {
     fprintf(stderr, "Error: %s\n", description);
@@ -100,6 +138,7 @@ int main(int argc, char **argv)
     }
 
     glfwSetKeyCallback(glwind, key_callback);
+    glfwSetMouseButtonCallback(glwind, mouse_callback);
 
     glfwMakeContextCurrent(glwind);
     glewInit();
@@ -107,11 +146,11 @@ int main(int argc, char **argv)
 
     std::cout << glGetString(GL_VERSION) << std::endl;
     gMillSimulator.LoadGCodeFile("cam_test1.txt");
-    gMillSimulator.InitSimulation();
     gMillSimulator.AddTool(&endMillFlat01);
     gMillSimulator.AddTool(&endMillFlat02);
     gMillSimulator.AddTool(&endMillBall03);
     gMillSimulator.AddTool(&endMillTaper04);
+    gMillSimulator.InitSimulation();
     gMillSimulator.SetBoxStock(0, 0, -8.7f, 50, 50, 8.7f);
     gMillSimulator.InitDisplay();
     
@@ -121,6 +160,7 @@ int main(int argc, char **argv)
         display();
         glfwSwapBuffers(glwind);
         glfwPollEvents();
+        check_drag(glwind);
     }
 
     glfwDestroyWindow(glwind);
