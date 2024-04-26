@@ -30,8 +30,7 @@ EndMillTaper endMillTaper04(3, 1, 16, 90, 0.2f);
 GLuint tprogram, tmodel, tview, tprojection, tarray;
 
 int gLastX = 0, gLastY = 0;
-bool gIsDragging;
-
+int gMouseButtonState = 0;
 
 void ShowStats() {
     glDisable(GL_DEPTH_TEST);
@@ -79,37 +78,43 @@ void mouse_callback(GLFWwindow* window, int button, int action, int mods)
 {
     double x, y;
     glfwGetCursorPos(window, &x, &y);
-    std::cout << "Button:" << button << ", state:" << action << ", pos:" << x << "," << y << std::endl;
-    if (button == GLFW_MOUSE_BUTTON_MIDDLE)
+    if (button > 2)
+        return;
+    int buttMask = (1 << button);
+    if (action == GLFW_PRESS)
+        gMouseButtonState |= buttMask;
+    else
+        gMouseButtonState &= ~buttMask;
+
+    if (gMouseButtonState > 0)
     {
-        gIsDragging = action == GLFW_PRESS;
-        if (gIsDragging)
-        {
-            gLastX = (int)x;
-            gLastY = (int)y;
-        }
+        gLastX = (int)x;
+        gLastY = (int)y;
     }
+    gMillSimulator.MousePress(buttMask, action == GLFW_PRESS);
 }
 
 
-void check_drag(GLFWwindow* window)
+void handle_mouse_move(GLFWwindow* window)
 {
     double fx, fy;
     int x, y, dx, dy;
-    if (gIsDragging)
+    glfwGetCursorPos(window, &fx, &fy);
+    if (gMouseButtonState > 0)
     {
-        glfwGetCursorPos(window, &fx, &fy);
         int x = (int)fx;
         int y = (int)fy;
         int dx = x - gLastX;
         int dy = y - gLastY;
         if (dx != 0 || dy != 0)
         {
-            gMillSimulator.DragView(dx, dy);
+            gMillSimulator.MouseDrag(gMouseButtonState, dx, dy);
             gLastX = x;
             gLastY = y;
         }
     }
+    else
+        gMillSimulator.MouseHover(fx, fy);
 }
 
 static void error_callback(int error, const char* description)
@@ -160,7 +165,7 @@ int main(int argc, char **argv)
         display();
         glfwSwapBuffers(glwind);
         glfwPollEvents();
-        check_drag(glwind);
+        handle_mouse_move(glwind);
     }
 
     glfwDestroyWindow(glwind);

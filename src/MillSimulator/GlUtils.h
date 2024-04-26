@@ -9,6 +9,10 @@
 constexpr auto EPSILON = 0.00001f;
 #define EQ_FLOAT(x,y) (fabs((x) - (y)) < EPSILON)
 
+#define MS_MOUSE_LEFT  1
+#define MS_MOUSE_RIGHT 2
+#define MS_MOUSE_MID   4
+
 void GLClearError();
 bool GLLogError();
 #define GL(x) { GLClearError(); x; if (!GLLogError()) __debugbreak(); }

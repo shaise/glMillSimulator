@@ -31,8 +31,11 @@ namespace MillSim {
 		void RotateEye(float rotStep);
 		void InitDisplay();
 		bool LoadGCodeFile(const char* fileName);
+		void SetSimulationStage(float stage);
 		void SetBoxStock(float x, float y, float z, float l, float w, float h);
-		void DragView(int dx, int dy);
+		void MouseDrag(int buttons, int dx, int dy);
+		void MouseHover(int px, int py);
+		void MousePress(int button, bool isPressed);
 
 
 	protected:
@@ -64,12 +67,12 @@ namespace MillSim {
 		StockObject mStockObject;
 		StockObject mlightObject;
 
-		vec3 lightColor = { 1.0f, 1.0f, 0.9f };
+		vec3 lightColor = { 0.8f, 0.9f, 1.0f };
 		vec3 lightPos = { 20.0f, 20.0f, 10.0f };
-		vec3 ambientCol = { 0.3f, 0.3f, 0.1f };
+		vec3 ambientCol = { 0.3f, 0.3f, 0.5f };
 
-		vec3 eye = { 0, 100, 50 };
-		vec3 target = { 0, 0, 0 };
+		vec3 eye = { 0, 100, 40 };
+		vec3 target = { 0, 0, -10 };
 		vec3 upvec = { 0, 0, 1 };
 
 		vec3 stockColor = { 0.7f, 0.7f, 0.7f };

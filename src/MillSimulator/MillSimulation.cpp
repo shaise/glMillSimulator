@@ -15,6 +15,7 @@ namespace MillSim {
             delete p;
         }
         MillPathSegments.clear();
+        guiDisplay.SetMillSimulator(this);
     }
 
     void MillSimulation::SimNext()
@@ -277,7 +278,8 @@ namespace MillSim {
                 mDebug = 1;
             p->render(mDebug);
         }
-        guiDisplay.Render();
+        float progress = (float)mCurStep / mNTotalSteps;
+        guiDisplay.Render(progress);
     }
 
     void MillSimulation::ProcessSim(unsigned int time_ms) {
@@ -321,25 +323,41 @@ namespace MillSim {
         case ' ':
             mIsRotate = !mIsRotate;
             break;
+
         case 'S':
-            mSimPlaying = !mSimPlaying;
+            mSimPlaying = true;
             break;
+
+        case 'P':
+            mSimPlaying = false;
+            break;
+
         case 'T':
             mSimPlaying = false;
             mSingleStep = true;
             break;
+
         case'D':
             mDebug++;
             break;
+
         case'K':
             mDebug2++;
             gDebug = mNPathSteps - mDebug2;
             break;
+
+        case 'F':
+            if (mSimSpeed == 1) mSimSpeed = 10;
+            else if (mSimSpeed == 10) mSimSpeed = 40;
+            else mSimSpeed = 1;
+            break;
+
         default:
             if (key >= '1' && key <= '9')
                 mSimSpeed = key - '0';
             break;
         }
+        guiDisplay.UpdatePlayState(mSimPlaying);
     }
 
     void MillSimulation::TiltEye(float tiltStep)
@@ -363,7 +381,7 @@ namespace MillSim {
     void MillSimulation::InitDisplay()
     {
         // gray background
-        GL(glClearColor(0.7f, 0.7f, 0.4f, 1.0f));
+        GL(glClearColor(0.6f, 0.8f, 1.0f, 1.0f));
 
         // Setup projection
         mat4x4 projmat;
@@ -405,10 +423,24 @@ namespace MillSim {
         mlightObject.SetPosition(lightPos);
     }
 
-    void MillSimulation::DragView(int dx, int dy)
+    void MillSimulation::MouseDrag(int buttons, int dx, int dy)
     {
-        TiltEye((float)dy / 100.0f);
-        RotateEye((float)dx / 100.0f);
+        if (buttons & MS_MOUSE_MID)
+        {
+            TiltEye((float)dy / 100.0f);
+            RotateEye((float)dx / 100.0f);
+        }
+        guiDisplay.MouseDrag(buttons, dx, dy);
+    }
+
+    void MillSimulation::MouseHover(int px, int py)
+    {
+        guiDisplay.MouseCursorPos(px, py);
+    }
+
+    void MillSimulation::MousePress(int button, bool isPressed)
+    {
+        guiDisplay.MousePressed(button, isPressed, mSimPlaying);
     }
 
 
@@ -420,6 +452,12 @@ namespace MillSim {
             return true;
         }
         return false;
+    }
+
+    void MillSimulation::SetSimulationStage(float stage)
+    {
+        mCurStep = (int)((float)mNTotalSteps * stage);
+        CalcSegmentPositions();
     }
 
 
