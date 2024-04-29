@@ -141,7 +141,7 @@
     <ClCompile Include="MillPathSegment.cpp" />
     <ClCompile Include="main.cpp" />
     <ClCompile Include="MillSimulation.cpp" />
-    <ClCompile Include="Shaders.cpp" />
+    <ClCompile Include="Shader.cpp" />
     <ClCompile Include="SimShapes.cpp" />
     <ClCompile Include="StockObject.cpp" />
     <ClCompile Include="Texture.cpp" />
