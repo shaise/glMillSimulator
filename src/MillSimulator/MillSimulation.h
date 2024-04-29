@@ -31,6 +31,7 @@ namespace MillSim {
 		void RotateEye(float rotStep);
 		void InitDisplay();
 		bool LoadGCodeFile(const char* fileName);
+		bool AddGcodeLine(const char* line);
 		void SetSimulationStage(float stage);
 		void SetBoxStock(float x, float y, float z, float l, float w, float h);
 		void MouseDrag(int buttons, int dx, int dy);

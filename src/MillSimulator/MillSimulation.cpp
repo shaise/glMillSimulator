@@ -49,7 +49,7 @@ namespace MillSim {
         {
             mCurMotion = mDestMotion;
             mDestMotion = mCodeParser.Operations[i];
-            EndMill *tool = GetTool(mDestMotion.tool);
+            EndMill* tool = GetTool(mDestMotion.tool);
             if (tool != nullptr)
             {
                 MillSim::MillPathSegment* segment = new MillSim::MillPathSegment(tool, &mCurMotion, &mDestMotion);
@@ -61,7 +61,7 @@ namespace MillSim {
         mNPathSteps = MillPathSegments.size();
     }
 
-    EndMill* MillSimulation::GetTool(int toolId) 
+    EndMill* MillSimulation::GetTool(int toolId)
     {
         for (int i = 0; i < mToolTable.size(); i++)
         {
@@ -69,8 +69,8 @@ namespace MillSim {
             {
                 return mToolTable[i];
             }
-        }            
-       return nullptr;
+        }
+        return nullptr;
     }
 
     void MillSimulation::AddTool(EndMill* tool)
@@ -210,8 +210,8 @@ namespace MillSim {
         for (int i = 0; i <= mPathStep; i++)
             renderSegmentForward(i);
 
-        //for (int i = mPathStep; i >= 0; i--)
-        //    renderSegmentForward(i);
+        for (int i = mPathStep; i >= 0; i--)
+            renderSegmentForward(i);
 
         //for (int i = 0; i < mPathStep; i++)
         //    renderSegmentReversed(i);
@@ -419,7 +419,7 @@ namespace MillSim {
         mStockObject.GenerateBoxStock(x, y, z, l, w, h);
         float maxw = fmaxf(w, l);
         vec3_set(eye, 0, -2.0f * maxw, 0);
-        vec3_set(lightPos, maxw, maxw, h * 1.7f);
+        vec3_set(lightPos, x, y, h + maxw / 3);
         mlightObject.SetPosition(lightPos);
     }
 
@@ -454,106 +454,15 @@ namespace MillSim {
         return false;
     }
 
+    bool MillSimulation::AddGcodeLine(const char* line)
+    {
+        return mCodeParser.AddLine(line);
+    }
+
     void MillSimulation::SetSimulationStage(float stage)
     {
         mCurStep = (int)((float)mNTotalSteps * stage);
         CalcSegmentPositions();
     }
-
-
-
-
-
-
-
-
-    MillMotion DemoSimulation[] = {
-    {eMoveLiner,  1, -0.7f, -0.7f, 10},
-    {eMoveLiner,  1, -0.7f, -0.7f, 1},
-    {eMoveLiner,  1, 0.7f, 0.7f, 1, 0.7f, 0.7f, 0},
-    {eMoveLiner,  1, 0.7f, 0.7f, 10},
-
-    {eMoveLiner,  1, -3, -3, 10},
-    {eMoveLiner,  1, -3, -3, 0.5f},
-    {eMoveLiner,  1, 3, 3, 0.5f, 3, 3, -1},
-    {eMoveLiner,  1, 3, 3, 10},
-
-    {eMoveLiner,  1, 15, 15, 10},
-    {eMoveLiner,  1,  15, 15, 1.5f},
-    {eMoveLiner,  1, 15, -15, 1.5f},
-    {eMoveLiner,  1, -15, -15, 1.5f},
-    {eMoveLiner,  1, -15, 15, 1.5f},
-    {eMoveLiner,  1, 15, 15, 1.5f},
-
-    {eMoveLiner,  1, 15, 15, 1},
-    {eMoveLiner,  1, 15, -15, 1},
-    {eMoveLiner,  1, -15, -15, 1},
-    {eMoveLiner,  1, -15, 15, 1},
-    {eMoveLiner,  1, 15, 15, 1},
-
-    {eMoveLiner,  1, 15, 15, 0.5f},
-    {eMoveLiner,  1, 15, -15, 0.5f},
-    {eMoveLiner,  1, -15, -15, 0.5f},
-    {eMoveLiner,  1, -15, 15, 0.5f},
-    {eMoveLiner,  1, 15, 15, 0.5f},
-
-    {eMoveLiner,  1, 15, 15, 0},
-    {eMoveLiner,  1, 15, -15, 0},
-    {eMoveLiner,  1, -15, -15, 0},
-    {eMoveLiner,  1, -15, 15, 0},
-    {eMoveLiner,  1, 15, 15, 0},
-
-    {eMoveLiner,  1, 15, 15, 10},
-
-    {eMoveLiner,  1, 8, 8, 10},
-    {eMoveLiner,  1, 8, 8, 1.5f},
-    {eMoveLiner,  1, 8, -8, 1.5f},
-    {eMoveLiner,  1, 6.1f, -8, 1.5f},
-    {eMoveLiner,  1, 6.1f, 8, 1.5f},
-    {eMoveLiner,  1, 4.2f, 8, 1.5f},
-    {eMoveLiner,  1, 4.2f, -8, 1.5f},
-    {eMoveLiner,  1, 2.3f, -8, 1.5f},
-    {eMoveLiner,  1, 2.3f, 8, 1.5f},
-    {eMoveLiner,  1, 0.4f, 8, 1.5f},
-    {eMoveLiner,  1, 0.4f, -8, 1.5f},
-    {eMoveLiner,  1, -1.5f, -8, 1.5f},
-    {eMoveLiner,  1, -1.5f, 8, 1.5f},
-    {eMoveLiner,  1, -3.4f, 8, 1.5f},
-    {eMoveLiner,  1, -3.4f, -8, 1.5f},
-    {eMoveLiner,  1, -5.3f, -8, 1.5f},
-    {eMoveLiner,  1, -5.3f, 8, 1.5f},
-    {eMoveLiner,  1, -7.2f, 8, 1.5f},
-    {eMoveLiner,  1, -7.2f, -8, 1.5f},
-    {eMoveLiner,  1, -8,  -8, 1.5f},
-    {eMoveLiner,  1, -8,  8, 1.5f},
-    {eMoveLiner,  1,  8,  8, 1.5f},
-    {eMoveLiner,  1,  8,  -8, 1.5f},
-    {eMoveLiner,  1, -8,  -8, 1.5f},
-
-    {eMoveLiner,  1, -8,  -8, 10},
-
-    // taper mill motion
-    {eMoveLiner,  3, 14.2f, 14.2f, 10},
-    {eMoveLiner,  3, 14.2f, 14.2f, 1.5f},
-    {eMoveLiner,  3, 14.2f, -14.2f, 1.5f},
-    {eMoveLiner,  3, -14.2f, -14.2f, 1.5f},
-    {eMoveLiner,  3, -14.2f, 14.2f, 1.5f},
-    {eMoveLiner,  3, 14.2f, 14.2f, 1.5f},
-    {eMoveLiner,  3, 14.2f, 14.2f, 10},
-    {eMoveLiner,  3, 0, 0, 10},
-
-    // ball mill motion
-    {eMoveLiner,  2, 12, 12, 10},
-    {eMoveLiner,  2, 12, 12, 1.5f},
-    {eMoveLiner,  2, 12, -12, 2.5f},
-    {eMoveLiner,  2, -12, -12, 1.5f},
-    {eMoveLiner,  2, -12, 12, 2.5f},
-    {eMoveLiner,  2, 12, 12, 1.5f},
-    {eMoveLiner,  2, 12, 12, 10},
-    {eMoveLiner,  2, 0, 0, 10},
-    };
-
-#define NUM_DEMO_MOTIONS (sizeof(DemoSimulation) / sizeof(MillMotion))
-
 
 }

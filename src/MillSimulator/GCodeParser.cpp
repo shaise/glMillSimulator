@@ -35,7 +35,7 @@ namespace MillSim {
 		return false;
 	}
 
-	char* GCodeParser::GetNextToken(char* ptr, GCToken* token)
+	const char* GCodeParser::GetNextToken(const char* ptr, GCToken* token)
 	{
 		float tokval;
 		token->letter = '*';
@@ -70,7 +70,7 @@ namespace MillSim {
 		return false;
 	}
 
-	char* GCodeParser::ParseFloat(char* ptr, float* retFloat)
+	const char* GCodeParser::ParseFloat(const char* ptr, float* retFloat)
 	{
 		float decPos = 10;
 		float sign = 1;
@@ -109,7 +109,7 @@ namespace MillSim {
 		return ptr;
 	}
 
-	bool GCodeParser::ParseLine(char* ptr)
+	bool GCodeParser::ParseLine(const char* ptr)
 	{
 		GCToken token;
 		bool validMotion = false;
@@ -167,7 +167,7 @@ namespace MillSim {
 		return validMotion;
 	}
 
-	bool GCodeParser::AddLine(char* ptr)
+	bool GCodeParser::AddLine(const char* ptr)
 	{
 		bool res = ParseLine(ptr);
 		if (res)

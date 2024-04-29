@@ -18,17 +18,17 @@ namespace MillSim
 		GCodeParser() {}
 		virtual ~GCodeParser();
 		bool Parse(const char* filename);
+		bool AddLine(const char* ptr);
 
 	public:
 		std::vector<MillMotion> Operations;
 		MillMotion lastState = { eNop };
 
 	protected:
-		char* GetNextToken(char* ptr, GCToken* token);
+		const char* GetNextToken(const char* ptr, GCToken* token);
 		bool IsValidTok(char tok);
-		char* ParseFloat(char* ptr, float* retFloat);
-		bool ParseLine(char* ptr);
-		bool AddLine(char* ptr);
+		const char* ParseFloat(const char* ptr, float* retFloat);
+		bool ParseLine(const char* ptr);
 		int lastTool = -1;
 	};
 }
