@@ -1,4 +1,4 @@
-#include "GL/glew.h"
+#include "OpenGlWrapper.h"
 #include "GlUtils.h"
 #include "Shader.h"
 #include <iostream>

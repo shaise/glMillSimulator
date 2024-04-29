@@ -1,5 +1,5 @@
 #include "MillSimulation.h"
-#include "GL/glew.h"
+#include "OpenGlWrapper.h"
 #include <vector>
 #include <iostream>
 

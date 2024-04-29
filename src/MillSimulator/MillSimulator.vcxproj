@@ -158,6 +158,7 @@
     <ClInclude Include="MillMotion.h" />
     <ClInclude Include="MillPathSegment.h" />
     <ClInclude Include="MillSimulation.h" />
+    <ClInclude Include="OpenGlWrapper.h" />
     <ClInclude Include="Shader.h" />
     <ClInclude Include="SimShapes.h" />
     <ClInclude Include="StockObject.h" />
