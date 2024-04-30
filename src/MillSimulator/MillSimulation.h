@@ -43,6 +43,7 @@ namespace MillSim {
 	public:
 		MillSimulation();
 		void ClearMillPathSegments();
+		void Clear();
 		void SimNext();
 		void InitSimulation();
 		void AddTool(EndMill* tool);
@@ -51,6 +52,7 @@ namespace MillSim {
 		void HandleKeyPress(int key);
 		void TiltEye(float tiltStep);
 		void RotateEye(float rotStep);
+		void UpdateProjection();
 		void InitDisplay();
 		bool LoadGCodeFile(const char* fileName);
 		bool AddGcodeLine(const char* line);
@@ -107,6 +109,8 @@ namespace MillSim {
 		float mEyeRoration = 0;
 		float mEyeInclination = PI / 6; // 30 degree
 		float mEyeStep = PI / 36;  // 5 degree
+
+		float mMaxFar = 100;
 
 
 		int mCurStep = 0;
