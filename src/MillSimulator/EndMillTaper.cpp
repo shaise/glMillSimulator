@@ -3,6 +3,8 @@
 #include "GlUtils.h"
 #include <math.h>
 
+using namespace MillSim;
+
 EndMillTaper::EndMillTaper(int toolid, float diameter, int nslices, float taperAngle, float flatRadius):
 	EndMill(toolid, diameter, nslices)
 {

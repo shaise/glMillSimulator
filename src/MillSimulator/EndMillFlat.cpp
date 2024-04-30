@@ -1,6 +1,8 @@
 #include "EndMillFlat.h"
 #include "SimShapes.h"
 
+using namespace MillSim;
+
 EndMillFlat::EndMillFlat(int toolid, float diameter, int nslices) : EndMill(toolid, diameter, nslices)
 {
 	int idx = 0;

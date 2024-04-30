@@ -2,7 +2,9 @@
 #include "SimShapes.h"
 #include "GlUtils.h"
 #include <math.h>
-#include <malloc.h>
+#include <stdlib.h>
+
+using namespace MillSim;
 
 EndMillBall::EndMillBall(int toolid, float diameter, int nslices, int nSections, float flatRadius):
 	EndMill(toolid, diameter, nslices)

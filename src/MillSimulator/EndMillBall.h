@@ -2,14 +2,15 @@
 #define __end_mill_ball_h__
 
 #include "EndMill.h"
-
-class EndMillBall :
-    public EndMill
+namespace MillSim
 {
-public:
-    EndMillBall(int toolid, float radius, int nslices, int nSections, float flatRadius);
-    virtual ~EndMillBall();
+    class EndMillBall :
+        public EndMill
+    {
+    public:
+        EndMillBall(int toolid, float radius, int nslices, int nSections, float flatRadius);
+        virtual ~EndMillBall();
 
-};
-
+    };
+}
 #endif

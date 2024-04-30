@@ -1,6 +1,8 @@
 #include "EndMill.h"
-#include <GLFW/glfw3.h>
+#include "OpenGlWrapper.h"
 #include "SimShapes.h"
+
+using namespace MillSim;
 
 EndMill::EndMill(int toolid, float diameter, int nslices)
 {
@@ -20,24 +22,21 @@ EndMill::~EndMill()
 void EndMill::GenerateDisplayLists()
 {
 	// full tool
-	RotateProfile(mProfPoints, mNPoints, 0, 0, mNSlices, false, &mToolShape);
+	mToolShape.RotateProfile(mProfPoints, mNPoints, 0, 0, mNSlices, false);
 
 	// half tool
-	RotateProfile(mProfPoints, mNPoints, 0, 0, mNSlices / 2, true, &mHToolShape);
+	mHToolShape.RotateProfile(mProfPoints, mNPoints, 0, 0, mNSlices / 2, true);
 
 	// unit path
 	int nFullPoints = PROFILE_BUFFER_POINTS(mNPoints);
-	ExtrudeProfileLinear(mProfPoints, nFullPoints, 0, 1, 0, 0, true, false, &mPathShape);
+	mPathShape.ExtrudeProfileLinear(mProfPoints, nFullPoints, 0, 1, 0, 0, true, false);
 }
 
 unsigned int EndMill::GenerateArcSegmentDL(float radius, float angleRad, float zShift, Shape *retShape)
 {
 	int nFullPoints = PROFILE_BUFFER_POINTS(mNPoints);
-	unsigned int dispId = glGenLists(1);
-	glNewList(dispId, GL_COMPILE);
-	ExtrudeProfileRadial(mProfPoints, PROFILE_BUFFER_POINTS(mNPoints), radius, angleRad, zShift, true, true, retShape);
-	glEndList();
-	return dispId;
+	retShape->ExtrudeProfileRadial(mProfPoints, PROFILE_BUFFER_POINTS(mNPoints), radius, angleRad, zShift, true, true);
+	return 0;
 }
 
 void EndMill::MirrorPointBuffer()

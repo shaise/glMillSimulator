@@ -7,6 +7,7 @@ namespace MillSim {
 
     MillSimulation::MillSimulation()
     {
+        mCurMotion = { eNop, -1, 0, 0,  0, 0, 0, 0 };
     }
 
     void MillSimulation::ClearMillPathSegments() {
@@ -58,7 +59,7 @@ namespace MillSim {
                 MillPathSegments.push_back(segment);
             }
         }
-        mNPathSteps = MillPathSegments.size();
+        mNPathSteps = (int)MillPathSegments.size();
     }
 
     EndMill* MillSimulation::GetTool(int toolId)
@@ -381,7 +382,7 @@ namespace MillSim {
     void MillSimulation::InitDisplay()
     {
         // gray background
-        GL(glClearColor(0.6f, 0.8f, 1.0f, 1.0f));
+        glClearColor(0.6f, 0.8f, 1.0f, 1.0f);
 
         // Setup projection
         mat4x4 projmat;
@@ -401,8 +402,6 @@ namespace MillSim {
         //   null shader to calculate meshes only (simulation stage)
         shaderFlat.CompileShader((char*)VertShader3DNorm, (char*)FragShaderFlat);
         shaderFlat.UpdateProjectionMat(projmat);
-
-        glMatrixMode(GL_MODELVIEW);
 
         // setup light object and generate tools
         mlightObject.GenerateBoxStock(-0.5f, -0.5f, -0.5f, 1, 1, 1);
@@ -433,14 +432,42 @@ namespace MillSim {
         guiDisplay.MouseDrag(buttons, dx, dy);
     }
 
+    void MillSimulation::MouseMove(int px, int py)
+    {
+        if (mMouseButtonState > 0)
+        {
+            int dx = px - mLastMouseX;
+            int dy = py - mLastMouseY;
+            if (dx != 0 || dy != 0)
+            {
+                MouseDrag(mMouseButtonState, dx, dy);
+                mLastMouseX = px;
+                mLastMouseY = py;
+            }
+        }
+        else
+            MouseHover(px, py);
+    }
+
     void MillSimulation::MouseHover(int px, int py)
     {
         guiDisplay.MouseCursorPos(px, py);
     }
 
-    void MillSimulation::MousePress(int button, bool isPressed)
+    void MillSimulation::MousePress(int button, bool isPressed, int px, int py)
     {
-        guiDisplay.MousePressed(button, isPressed, mSimPlaying);
+        int buttMask = (1 << button);
+        if (isPressed)
+            mMouseButtonState |= buttMask;
+        else
+            mMouseButtonState &= ~buttMask;
+
+        if (mMouseButtonState > 0)
+        {
+            mLastMouseX = px;
+            mLastMouseY = py;
+        }
+        guiDisplay.MousePressed(buttMask, isPressed, mSimPlaying);
     }
 
 

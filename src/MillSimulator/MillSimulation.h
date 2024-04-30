@@ -35,8 +35,9 @@ namespace MillSim {
 		void SetSimulationStage(float stage);
 		void SetBoxStock(float x, float y, float z, float l, float w, float h);
 		void MouseDrag(int buttons, int dx, int dy);
+		void MouseMove(int px, int py);
 		void MouseHover(int px, int py);
-		void MousePress(int button, bool isPressed);
+		void MousePress(int button, bool isPressed, int px, int py);
 
 
 	protected:
@@ -55,15 +56,15 @@ namespace MillSim {
 
 	protected:
 		std::vector<EndMill*> mToolTable;
-		CSShader shader3D, shaderInv3D, shaderFlat;
+		Shader shader3D, shaderInv3D, shaderFlat;
 		GCodeParser mCodeParser;
 		GuiDisplay guiDisplay;
 		std::vector<MillPathSegment*> MillPathSegments;
 		std::ostringstream mFpsStream;
 
 		MillMotion mZeroPos = { eNop, -1, 0, 0,  10 };
-		MillMotion mCurMotion;
-		MillMotion mDestMotion;
+		MillMotion mCurMotion = { eNop, -1, 0, 0,  0, 0, 0, 0 };
+		MillMotion mDestMotion = { eNop, -1, 0, 0, 0, 0, 0, 0 };
 
 		StockObject mStockObject;
 		StockObject mlightObject;
@@ -95,6 +96,9 @@ namespace MillSim {
 		int mDebug1 = 0;
 		int mDebug2 = 12;
 		int mSimSpeed = 1;
+
+		int mLastMouseX = 0, mLastMouseY = 0;
+		int mMouseButtonState = 0;
 
 		bool mIsInStock = false;
 		bool mIsRotate = true;

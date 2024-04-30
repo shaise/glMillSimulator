@@ -4,14 +4,17 @@
 #include "EndMill.h"
 
 #define TAPER_MILL_PROFILE_VERTS 4
-class EndMillTaper :
-    public EndMill
+
+namespace MillSim
 {
-public:
-    EndMillTaper(int toolid, float radius, int nslices, float TaperAngle, float flatRadius);
+    class EndMillTaper :
+        public EndMill
+    {
+    public:
+        EndMillTaper(int toolid, float radius, int nslices, float TaperAngle, float flatRadius);
 
-private:
-    float _profVerts[PROFILE_BUFFER_SIZE(TAPER_MILL_PROFILE_VERTS)];
-};
-
+    private:
+        float _profVerts[PROFILE_BUFFER_SIZE(TAPER_MILL_PROFILE_VERTS)];
+    };
+}
 #endif

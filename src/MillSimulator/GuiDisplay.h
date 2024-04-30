@@ -1,5 +1,6 @@
 #ifndef __guidisplay_t__
 #define __guidisplay_t__
+#include "OpenGlWrapper.h"
 #include "Texture.h"
 #include "Shader.h"
 
@@ -63,7 +64,7 @@ namespace MillSim
 
 	private:
 		const char* mPixPos;
-		CSShader mShader;
+		Shader mShader;
 		Texture mTexture;
 		eGuiItems mPressedItem = eGuiItemMax;
 		MillSimulation* mMillSim = nullptr;

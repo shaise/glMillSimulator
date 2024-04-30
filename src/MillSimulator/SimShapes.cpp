@@ -1,20 +1,21 @@
-#include <GL/glew.h>
 #include "SimShapes.h"
 #include "Shader.h"
 #include "GlUtils.h"
 #include <math.h>
-#include <malloc.h>
+#include <stdlib.h>
 #include <string.h>
 #include <cstddef>
 
-float* sinTable = nullptr;
-float* cosTable = nullptr;
-int lastNumSlices = 0;
-int lastNumSectionIndices = 0;
-GLshort quadIndices[] = { 0, 2, 3, 0, 3, 1 };
-GLshort quadIndicesReversed[] = { 0, 3, 2, 0, 1, 3 };
-GLshort* sectionIndicesQuad = nullptr;
-GLshort* sectionIndicesTri = nullptr;
+using namespace MillSim;
+
+static float* sinTable = nullptr;
+static float* cosTable = nullptr;
+static int lastNumSlices = 0;
+static int lastNumSectionIndices = 0;
+static GLshort quadIndices[] = { 0, 2, 3, 0, 3, 1 };
+static GLshort quadIndicesReversed[] = { 0, 3, 2, 0, 1, 3 };
+static GLshort* sectionIndicesQuad = nullptr;
+static GLshort* sectionIndicesTri = nullptr;
 
 static bool GenerateSinTable(int nSlices)
 {
@@ -47,40 +48,8 @@ static bool GenerateSinTable(int nSlices)
     return true;
 }
 
-static void GenerateModel(float* vbuffer, GLushort* ibuffer, int numVerts, int numIndices, Shape* retShape)
-{
-    GLuint vbo, ibo, vao;
 
-    // vertex buffer
-    glGenBuffers(1, &vbo);
-    glBindBuffer(GL_ARRAY_BUFFER, vbo);
-    glBufferData(GL_ARRAY_BUFFER, numVerts * sizeof(Vertex), vbuffer, GL_STATIC_DRAW);
-
-    // index buffer
-    glGenBuffers(1, &ibo);
-    glBindBuffer(GL_ELEMENT_ARRAY_BUFFER, ibo);
-    glBufferData(GL_ELEMENT_ARRAY_BUFFER, numIndices * sizeof(GLushort), ibuffer, GL_STATIC_DRAW);
-
-    //glDrawElements(GL_TRIANGLES, numIndices, GL_UNSIGNED_SHORT, nullptr);
-    // vertex array
-    glGenVertexArrays(1, &vao);
-    glBindVertexArray(vao);
-    glEnableVertexAttribArray(0);
-    glVertexAttribPointer(0, 3, GL_FLOAT, GL_FALSE, sizeof(Vertex), (void*)offsetof(Vertex, x));
-    glEnableVertexAttribArray(1);
-    glVertexAttribPointer(1, 3, GL_FLOAT, GL_FALSE, sizeof(Vertex), (void*)offsetof(Vertex, nx));
-
-
-    if (retShape)
-    {
-        retShape->vao = vao;
-        retShape->ibo = ibo;
-        retShape->vbo = vbo;
-        retShape->numIndices = numIndices;
-    }
-}
-
-void RotateProfile(float* profPoints, int nPoints, float distance, float deltaHeight, int nSlices, bool isHalfTurn, Shape* retShape)
+void MillSim::Shape::RotateProfile(float* profPoints, int nPoints, float distance, float deltaHeight, int nSlices, bool isHalfTurn)
 {
     int vidx = 0;
     int iidx = 0;
@@ -156,13 +125,13 @@ void RotateProfile(float* profPoints, int nPoints, float distance, float deltaHe
         }
     }
 
-    GenerateModel(vbuffer, ibuffer, numVerts, numIndices, retShape);
+    GenerateModel(vbuffer, ibuffer, numVerts, numIndices);
 
     free(vbuffer);
     free(ibuffer);
 }
 
-void CalculateExtrudeBufferSizes(int nProfilePoints, bool capStart, bool capEnd,
+void MillSim::Shape::CalculateExtrudeBufferSizes(int nProfilePoints, bool capStart, bool capEnd,
     int* numVerts, int* numIndices, int* vc1idx, int* vc2idx, int* ic1idx, int* ic2idx)
 {
     *numVerts = nProfilePoints * 4; // one face per profile point times 4 vertex per face
@@ -183,7 +152,7 @@ void CalculateExtrudeBufferSizes(int nProfilePoints, bool capStart, bool capEnd,
     }
 }
 
-void ExtrudeProfileRadial(float* profPoints, int nPoints, float radius, float angleRad, float deltaHeight, bool capStart, bool capEnd, Shape* retShape)
+void MillSim::Shape::ExtrudeProfileRadial(float* profPoints, int nPoints, float radius, float angleRad, float deltaHeight, bool capStart, bool capEnd)
 {
     int vidx = 0, vc1idx, vc2idx;
     int iidx = 0, ic1idx, ic2idx;
@@ -275,13 +244,13 @@ void ExtrudeProfileRadial(float* profPoints, int nPoints, float radius, float an
         }
     }
 
-    GenerateModel(vbuffer, ibuffer, numVerts, numIndices, retShape);
+    GenerateModel(vbuffer, ibuffer, numVerts, numIndices);
 
     free(vbuffer);
     free(ibuffer);
 }
 
-void ExtrudeProfileLinear(float* profPoints, int nPoints, float fromX, float toX, float fromZ, float toZ, bool capStart, bool capEnd, Shape* retShape)
+void MillSim::Shape::ExtrudeProfileLinear(float* profPoints, int nPoints, float fromX, float toX, float fromZ, float toZ, bool capStart, bool capEnd)
 {
     int vidx = 0, vc1idx, vc2idx;
     int iidx = 0, ic1idx, ic2idx;
@@ -348,31 +317,53 @@ void ExtrudeProfileLinear(float* profPoints, int nPoints, float fromX, float toX
         }
     }
 
-    GenerateModel(vbuffer, ibuffer, numVerts, numIndices, retShape);
+    GenerateModel(vbuffer, ibuffer, numVerts, numIndices);
 
     free(vbuffer);
     free(ibuffer);
 }
 
-Shape::~Shape()
+void MillSim::Shape::GenerateModel(float* vbuffer, GLushort* ibuffer, int numVerts, int nIndices)
 {
-    FreeResources();
+    //GLuint vbo, ibo, vao;
+
+    // vertex buffer
+    glGenBuffers(1, &vbo);
+    GLClearError();
+    glBindBuffer(GL_ARRAY_BUFFER, vbo);
+    GLLogError();
+    glBufferData(GL_ARRAY_BUFFER, numVerts * sizeof(Vertex), vbuffer, GL_STATIC_DRAW);
+
+    // index buffer
+    glGenBuffers(1, &ibo);
+    glBindBuffer(GL_ELEMENT_ARRAY_BUFFER, ibo);
+    glBufferData(GL_ELEMENT_ARRAY_BUFFER, nIndices * sizeof(GLushort), ibuffer, GL_STATIC_DRAW);
+
+    // vertex array
+    glGenVertexArrays(1, &vao);
+    glBindVertexArray(vao);
+    glEnableVertexAttribArray(0);
+    glVertexAttribPointer(0, 3, GL_FLOAT, GL_FALSE, sizeof(Vertex), (void*)offsetof(Vertex, x));
+    glEnableVertexAttribArray(1);
+    glVertexAttribPointer(1, 3, GL_FLOAT, GL_FALSE, sizeof(Vertex), (void*)offsetof(Vertex, nx));
+    
+    numIndices = nIndices;
 }
 
-void Shape::Render()
+void MillSim::Shape::Render()
 {
     glBindVertexArray(vao);
     glBindBuffer(GL_ELEMENT_ARRAY_BUFFER, ibo);
     glDrawElements(GL_TRIANGLES, numIndices, GL_UNSIGNED_SHORT, nullptr);
 }
 
-void Shape::Render(mat4x4 modelMat, mat4x4 normallMat) // normals are rotated only
+void MillSim::Shape::Render(mat4x4 modelMat, mat4x4 normallMat) // normals are rotated only
 {
     CurrentShader->UpdateModelMat(modelMat, normallMat);
     Render();
 }
 
-void Shape::FreeResources()
+void MillSim::Shape::FreeResources()
 {
     if (vao > 0)
     {
@@ -382,4 +373,9 @@ void Shape::FreeResources()
         glDeleteVertexArrays(1, &vao);
         vbo = ibo = vao = 0;
     }
+}
+
+MillSim::Shape::~Shape()
+{
+    FreeResources();
 }

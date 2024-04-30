@@ -1,5 +1,4 @@
 #include "Texture.h"
-#include "OpenGlWrapper.h"
 #include "GlUtils.h"
 
 namespace MillSim
@@ -13,21 +12,21 @@ namespace MillSim
 	{
 		mWidth = width;
 		mHeight = height;
-		GL(glGenTextures(1, &mTextureId));
-		GL(glBindTexture(GL_TEXTURE_2D, mTextureId));
-		GL(glTextureParameteri(mTextureId, GL_TEXTURE_MAG_FILTER, GL_LINEAR));
-		GL(glTextureParameteri(mTextureId, GL_TEXTURE_MIN_FILTER, GL_LINEAR));
-		GL(glTextureParameteri(mTextureId, GL_TEXTURE_WRAP_S, GL_CLAMP_TO_EDGE));
-		GL(glTextureParameteri(mTextureId, GL_TEXTURE_WRAP_T, GL_CLAMP_TO_EDGE));
-		GL(glTexImage2D(GL_TEXTURE_2D, 0, GL_RGBA8, width, height, 0, GL_RGBA, GL_UNSIGNED_BYTE, image));
-		GL(glBindTexture(GL_TEXTURE_2D, 0));
+		glGenTextures(1, &mTextureId);
+		glBindTexture(GL_TEXTURE_2D, mTextureId);
+		glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_MAG_FILTER, GL_LINEAR);
+		glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_MIN_FILTER, GL_LINEAR);
+		glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_WRAP_S, GL_CLAMP_TO_EDGE);
+		glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_WRAP_T, GL_CLAMP_TO_EDGE);
+		glTexImage2D(GL_TEXTURE_2D, 0, GL_RGBA8, width, height, 0, GL_RGBA, GL_UNSIGNED_BYTE, image);
+		glBindTexture(GL_TEXTURE_2D, 0);
 		return true;
 	} 
 
 	bool Texture::Activate()
 	{
-		GL(glActiveTexture(GL_TEXTURE0));
-		GL(glBindTexture(GL_TEXTURE_2D, mTextureId));
+		glActiveTexture(GL_TEXTURE0);
+		glBindTexture(GL_TEXTURE_2D, mTextureId);
 		return true;
 	}
 

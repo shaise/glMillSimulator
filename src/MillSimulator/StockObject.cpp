@@ -1,13 +1,13 @@
 #include "StockObject.h"
 #include "Shader.h"
-#include <GLFW/glfw3.h>
-#include <malloc.h>
+#include <stdlib.h>
 
 #define NUM_PROFILE_POINTS 4
 
 MillSim::StockObject::StockObject()
 {
     mat4x4_identity(modelMat);
+    vec3_set(mCenter, 0, 0, 0);
 }
 
 MillSim::StockObject::~StockObject()
@@ -38,5 +38,5 @@ void MillSim::StockObject::GenerateBoxStock(float x, float y, float z, float l, 
     vec3_set(mCenter, x + l / 2, y + w / 2, z + h / 2);
     vec3_set(mSize, l, w, h);
 
-    ExtrudeProfileLinear(mProfile, NUM_PROFILE_POINTS, x, x + l, 0, 0, true, true, &mShape);
+    mShape.ExtrudeProfileLinear(mProfile, NUM_PROFILE_POINTS, x, x + l, 0, 0, true, true);
 }

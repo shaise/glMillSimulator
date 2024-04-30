@@ -1,5 +1,7 @@
 #ifndef __texture_h__
 #define __texture_h__
+#include "OpenGlWrapper.h"
+
 namespace MillSim
 {
 

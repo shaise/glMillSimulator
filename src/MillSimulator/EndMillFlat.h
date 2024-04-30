@@ -4,14 +4,17 @@
 #include "EndMill.h"
 
 #define FLAT_MILL_PROFILE_VERTS 3
-class EndMillFlat :
-    public EndMill
+
+namespace MillSim
 {
-public:
-    EndMillFlat(int toolid, float radius, int nslices);
+    class EndMillFlat :
+        public EndMill
+    {
+    public:
+        EndMillFlat(int toolid, float radius, int nslices);
 
-private:
-    float _profVerts[PROFILE_BUFFER_SIZE(FLAT_MILL_PROFILE_VERTS)];
-};
-
+    private:
+        float _profVerts[PROFILE_BUFFER_SIZE(FLAT_MILL_PROFILE_VERTS)];
+    };
+}
 #endif

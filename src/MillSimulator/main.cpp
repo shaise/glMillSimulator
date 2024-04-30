@@ -21,6 +21,8 @@ MillSim::MillSimulation gMillSimulator;
 
 GLFWwindow* glwind;
 
+using namespace MillSim;
+
 const char *demoCode[] = {
  "T2",
  "G0 X-0.7 Y-0.7 Z10",
@@ -124,9 +126,6 @@ EndMillTaper endMillTaper04(3, 1, 16, 90, 0.2f);
 // test section - remove!
 GLuint tprogram, tmodel, tview, tprojection, tarray;
 
-int gLastX = 0, gLastY = 0;
-int gMouseButtonState = 0;
-
 void ShowStats() {
     glDisable(GL_DEPTH_TEST);
     glLoadIdentity();
@@ -175,41 +174,15 @@ void mouse_callback(GLFWwindow* window, int button, int action, int mods)
     glfwGetCursorPos(window, &x, &y);
     if (button > 2)
         return;
-    int buttMask = (1 << button);
-    if (action == GLFW_PRESS)
-        gMouseButtonState |= buttMask;
-    else
-        gMouseButtonState &= ~buttMask;
-
-    if (gMouseButtonState > 0)
-    {
-        gLastX = (int)x;
-        gLastY = (int)y;
-    }
-    gMillSimulator.MousePress(buttMask, action == GLFW_PRESS);
+    gMillSimulator.MousePress(button, action == GLFW_PRESS, (int)x, (int)y);
 }
 
 
 void handle_mouse_move(GLFWwindow* window)
 {
     double fx, fy;
-    int x, y, dx, dy;
     glfwGetCursorPos(window, &fx, &fy);
-    if (gMouseButtonState > 0)
-    {
-        int x = (int)fx;
-        int y = (int)fy;
-        int dx = x - gLastX;
-        int dy = y - gLastY;
-        if (dx != 0 || dy != 0)
-        {
-            gMillSimulator.MouseDrag(gMouseButtonState, dx, dy);
-            gLastX = x;
-            gLastY = y;
-        }
-    }
-    else
-        gMillSimulator.MouseHover(fx, fy);
+    gMillSimulator.MouseMove((int)fx, (int)fy);
 }
 
 static void error_callback(int error, const char* description)
@@ -256,7 +229,7 @@ int main(int argc, char **argv)
     gMillSimulator.AddTool(&endMillTaper04);
     gMillSimulator.InitSimulation();
     //gMillSimulator.SetBoxStock(0, 0, -8.7f, 50, 50, 8.7f);
-    gMillSimulator.SetBoxStock(-20, -20, 0.001, 50, 50, 2);
+    gMillSimulator.SetBoxStock(-20, -20, 0.001f, 50, 50, 2);
     gMillSimulator.InitDisplay();
     
     while (!glfwWindowShouldClose(glwind))

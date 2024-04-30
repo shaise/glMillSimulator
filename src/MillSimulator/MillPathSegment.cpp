@@ -1,5 +1,4 @@
-#include <GL/glew.h>
-#include <GLFW/glfw3.h>
+#include "OpenGlWrapper.h"
 #include "MillPathSegment.h"
 #include "SimShapes.h"
 #include "linmath.h"
