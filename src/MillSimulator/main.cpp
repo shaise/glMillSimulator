@@ -174,7 +174,8 @@ void mouse_callback(GLFWwindow* window, int button, int action, int mods)
     glfwGetCursorPos(window, &x, &y);
     if (button > 2)
         return;
-    gMillSimulator.MousePress(button, action == GLFW_PRESS, (int)x, (int)y);
+    int buttMask = (1 << button);
+    gMillSimulator.MousePress(buttMask, action == GLFW_PRESS, (int)x, (int)y);
 }
 
 
