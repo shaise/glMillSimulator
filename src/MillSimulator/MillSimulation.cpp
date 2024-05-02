@@ -34,16 +34,20 @@ namespace MillSim {
     }
 
     void MillSimulation::ClearMillPathSegments() {
-        for (std::vector<MillPathSegment*>::const_iterator i = MillPathSegments.begin(); i != MillPathSegments.end(); ++i) {
-            MillSim::MillPathSegment* p = *i;
-            delete p;
-        }
+        //for (std::vector<MillPathSegment*>::const_iterator i = MillPathSegments.begin(); i != MillPathSegments.end(); ++i) {
+        //    MillSim::MillPathSegment* p = *i;
+        //    delete p;
+        //}
+        for (int i = 0; i < MillPathSegments.size(); i++)
+            delete MillPathSegments[i];
         MillPathSegments.clear();
     }
 
     void MillSimulation::Clear()
     {
         mCodeParser.Operations.clear();
+        for (int i = 0; i < mToolTable.size(); i++)
+            delete mToolTable[i];
         mToolTable.clear();
         mCurStep = 0;
         mPathStep = -1;
@@ -109,6 +113,12 @@ namespace MillSim {
 
     void MillSimulation::AddTool(EndMill* tool)
     {
+        mToolTable.push_back(tool);
+    }
+
+    void MillSimulation::AddTool(float* toolProfile, int numPoints, int toolid, float diameter, int nslices)
+    {
+        EndMill* tool = new EndMill(toolProfile, numPoints, toolid, diameter, nslices);
         mToolTable.push_back(tool);
     }
 

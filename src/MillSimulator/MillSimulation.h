@@ -47,6 +47,7 @@ namespace MillSim {
 		void SimNext();
 		void InitSimulation();
 		void AddTool(EndMill* tool);
+		void AddTool(float* toolProfile, int numPoints, int toolid, float diameter, int nslices);
 		void Render();
 		void ProcessSim(unsigned int time_ms);
 		void HandleKeyPress(int key);
