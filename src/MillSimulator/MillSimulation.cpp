@@ -73,7 +73,7 @@ namespace MillSim {
         }
     }
 
-    void MillSimulation::InitSimulation()
+    void MillSimulation::InitSimulation(float quality)
     {
         ClearMillPathSegments();
 
@@ -82,6 +82,7 @@ namespace MillSim {
         mCurStep = 0;
         mPathStep = -1;
         mNTotalSteps = 0;
+        MillPathSegment::SetQuality(quality, mMaxFar);
         int nOperations = (int)mCodeParser.Operations.size();;
         for (int i = 0; i < nOperations; i++)
         {
@@ -97,6 +98,7 @@ namespace MillSim {
             }
         }
         mNPathSteps = (int)MillPathSegments.size();
+        InitDisplay(quality);
     }
 
     EndMill* MillSimulation::GetTool(int toolId)
@@ -111,14 +113,30 @@ namespace MillSim {
         return nullptr;
     }
 
+    void MillSimulation::RemoveTool(int toolId)
+    {
+        EndMill* tool;
+        if ((tool = GetTool(toolId)) != nullptr) {
+            auto it = std::find(mToolTable.begin(), mToolTable.end(), tool);
+            if (it != mToolTable.end()) {
+                mToolTable.erase(it);
+            }
+            delete tool;
+        }
+    }
+
     void MillSimulation::AddTool(EndMill* tool)
     {
+        // if we have another tool with same id, remove it
+        RemoveTool(tool->mToolId);
         mToolTable.push_back(tool);
     }
 
-    void MillSimulation::AddTool(float* toolProfile, int numPoints, int toolid, float diameter, int nslices)
+    void MillSimulation::AddTool(const float* toolProfile, int numPoints, int toolid, float diameter)
     {
-        EndMill* tool = new EndMill(toolProfile, numPoints, toolid, diameter, nslices);
+        // if we have another tool with same id, remove it
+        RemoveTool(toolid);
+        EndMill* tool = new EndMill(toolProfile, numPoints, toolid, diameter);
         mToolTable.push_back(tool);
     }
 
@@ -239,6 +257,7 @@ namespace MillSim {
 
         glClear(GL_COLOR_BUFFER_BIT | GL_DEPTH_BUFFER_BIT | GL_STENCIL_BUFFER_BIT);
 
+        mat4x4_translate_in_place(matLookAt, mEyeX * mEyeXZFactor, 0, mEyeZ * mEyeXZFactor);
         mat4x4_rotate_X(matLookAt, matLookAt, mEyeInclination);
         mat4x4_rotate_Z(matLookAt, matLookAt, mEyeRoration);
         mat4x4_translate_in_place(matLookAt, -mStockObject.mCenter[0], -mStockObject.mCenter[1], -mStockObject.mCenter[2]);
@@ -257,8 +276,8 @@ namespace MillSim {
         for (int i = mPathStep; i >= 0; i--)
             renderSegmentForward(i);
 
-        //for (int i = 0; i < mPathStep; i++)
-        //    renderSegmentReversed(i);
+        for (int i = 0; i < mPathStep; i++)
+            renderSegmentReversed(i);
 
         for (int i = mPathStep; i >= 0; i--)
             renderSegmentReversed(i);
@@ -404,6 +423,13 @@ namespace MillSim {
         guiDisplay.UpdatePlayState(mSimPlaying);
     }
 
+    void MillSimulation::UpdateEyeFactor(float factor)
+    {
+        mEyeDistFactor = factor;
+        mEyeXZFactor = factor * mMaxFar * 0.005f;
+        eye[1] = -factor * mMaxFar;
+    }
+
     void MillSimulation::TiltEye(float tiltStep)
     {
         mEyeInclination += tiltStep;
@@ -422,6 +448,16 @@ namespace MillSim {
             mEyeRoration = 0;
     }
 
+    void MillSimulation::MoveEye(float x, float z)
+    {
+        mEyeX += x;
+        if (mEyeX > 100) mEyeX = 100;
+        else if (mEyeX < -100) mEyeX = -100;
+        mEyeZ += z;
+        if (mEyeZ > 100) mEyeZ = 100;
+        else if (mEyeZ < -100) mEyeZ = -100;
+    }
+
     void MillSimulation::UpdateProjection()
     {
         // Setup projection
@@ -436,7 +472,7 @@ namespace MillSim {
         shaderFlat.UpdateProjectionMat(projmat);
     }
 
-    void MillSimulation::InitDisplay()
+    void MillSimulation::InitDisplay(float quality)
     {
         // gray background
         glClearColor(0.6f, 0.8f, 1.0f, 1.0f);
@@ -458,7 +494,7 @@ namespace MillSim {
         // setup light object and generate tools
         mlightObject.GenerateBoxStock(-0.5f, -0.5f, -0.5f, 1, 1, 1);
         for (int i = 0; i < mToolTable.size(); i++)
-            mToolTable[i]->GenerateDisplayLists();
+            mToolTable[i]->GenerateDisplayLists(quality);
 
         // init gui elements
         guiDisplay.InutGui();
@@ -468,20 +504,25 @@ namespace MillSim {
     void MillSimulation::SetBoxStock(float x, float y, float z, float l, float w, float h)
     {
         mStockObject.GenerateBoxStock(x, y, z, l, w, h);
-        float maxw = fmaxf(w, l);
-        mMaxFar = maxw * 4;
+        mMaxStockDim = fmaxf(w, l);
+        mMaxFar = mMaxStockDim * 4;
         UpdateProjection();
-        vec3_set(eye, 0, -2.0f * maxw, 0);
-        vec3_set(lightPos, x, y, h + maxw / 3);
+        vec3_set(eye, 0, 0, 0);
+        UpdateEyeFactor(0.4f);
+        vec3_set(lightPos, x, y, h + mMaxStockDim / 3);
         mlightObject.SetPosition(lightPos);
     }
 
     void MillSimulation::MouseDrag(int buttons, int dx, int dy)
     {
-        if (buttons & MS_MOUSE_MID)
+        if (buttons == (MS_MOUSE_MID | MS_MOUSE_LEFT))
         {
             TiltEye((float)dy / 100.0f);
             RotateEye((float)dx / 100.0f);
+        }
+        else if (buttons == MS_MOUSE_MID)
+        {
+            MoveEye(dx, -dy);
         }
         guiDisplay.MouseDrag(buttons, dx, dy);
     }
@@ -502,6 +543,16 @@ namespace MillSim {
         else
             MouseHover(px, py);
     }
+
+    void MillSimulation::MouseScroll(float dy)
+    {
+        float f = mEyeDistFactor;
+        f += 0.05f * dy;
+        if (f > 0.6f) f = 0.6f;
+        else if (f < 0.05f) f = 0.05f;
+        UpdateEyeFactor(f);
+    }
+
 
     void MillSimulation::MouseHover(int px, int py)
     {

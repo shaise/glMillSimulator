@@ -27,8 +27,8 @@
 
 using namespace MillSim;
 
-EndMillTaper::EndMillTaper(int toolid, float diameter, int nslices, float taperAngle, float flatRadius):
-	EndMill(toolid, diameter, nslices)
+EndMillTaper::EndMillTaper(int toolid, float diameter, float taperAngle, float flatRadius):
+	EndMill(toolid, diameter)
 {
 	float ta = (float)tanf((float)(taperAngle * PI / 360));
 	float l1 = flatRadius / ta;

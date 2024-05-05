@@ -25,7 +25,7 @@
 
 using namespace MillSim;
 
-EndMillFlat::EndMillFlat(int toolid, float diameter, int nslices) : EndMill(toolid, diameter, nslices)
+EndMillFlat::EndMillFlat(int toolid, float diameter) : EndMill(toolid, diameter)
 {
 	int idx = 0;
 	SET_DUAL(_profVerts, idx, mRadius, MILL_HEIGHT);

@@ -30,9 +30,6 @@
 #include "GlUtils.h"
 #include "StockObject.h"
 #include "MillPathSegment.h"
-#include "EndMillFlat.h"
-#include "EndMillBall.h"
-#include "EndMillTaper.h"
 #include "GuiDisplay.h"
 #include <sstream>
 
@@ -45,27 +42,31 @@ namespace MillSim {
 		void ClearMillPathSegments();
 		void Clear();
 		void SimNext();
-		void InitSimulation();
+		void InitSimulation(float quality);
 		void AddTool(EndMill* tool);
-		void AddTool(float* toolProfile, int numPoints, int toolid, float diameter, int nslices);
+		void AddTool(const float* toolProfile, int numPoints, int toolid, float diameter);
+		bool ToolExists(int toolid) { return GetTool(toolid) != nullptr; }
 		void Render();
 		void ProcessSim(unsigned int time_ms);
 		void HandleKeyPress(int key);
+		void UpdateEyeFactor(float factor);
 		void TiltEye(float tiltStep);
 		void RotateEye(float rotStep);
+		void MoveEye(float x, float y);
 		void UpdateProjection();
-		void InitDisplay();
 		bool LoadGCodeFile(const char* fileName);
 		bool AddGcodeLine(const char* line);
 		void SetSimulationStage(float stage);
 		void SetBoxStock(float x, float y, float z, float l, float w, float h);
 		void MouseDrag(int buttons, int dx, int dy);
 		void MouseMove(int px, int py);
+		void MouseScroll(float dy);
 		void MouseHover(int px, int py);
 		void MousePress(int button, bool isPressed, int px, int py);
 
 
 	protected:
+		void InitDisplay(float quality);
 		void GlsimStart();
 		void GlsimToolStep1(void);
 		void GlsimToolStep2(void);
@@ -77,6 +78,8 @@ namespace MillSim {
 		void renderSegmentReversed(int iSeg);
 		void CalcSegmentPositions();
 		EndMill* GetTool(int tool);
+		void RemoveTool(int toolId);
+
 
 
 	protected:
@@ -111,7 +114,14 @@ namespace MillSim {
 		float mEyeInclination = PI / 6; // 30 degree
 		float mEyeStep = PI / 36;  // 5 degree
 
+		float mMaxStockDim = 100;
 		float mMaxFar = 100;
+		float mEyeDistFactor = 0.4f;
+		float mEyeXZFactor = 0.01f;
+		float mEyeXZScale = 0;
+		float mEyeX = 0.0f;
+		float mEyeZ = 0.0f;
+
 
 
 		int mCurStep = 0;

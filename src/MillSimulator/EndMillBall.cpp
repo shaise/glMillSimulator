@@ -28,8 +28,8 @@
 
 using namespace MillSim;
 
-EndMillBall::EndMillBall(int toolid, float diameter, int nslices, int nSections, float flatRadius):
-	EndMill(toolid, diameter, nslices)
+EndMillBall::EndMillBall(int toolid, float diameter, int nSections, float flatRadius):
+	EndMill(toolid, diameter)
 {
 	mNPoints = nSections + 2;
 	if (flatRadius < 0.0001)

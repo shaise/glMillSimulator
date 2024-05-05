@@ -30,7 +30,7 @@ namespace MillSim
         public EndMill
     {
     public:
-        EndMillBall(int toolid, float radius, int nslices, int nSections, float flatRadius);
+        EndMillBall(int toolid, float radius, int nSections, float flatRadius);
         virtual ~EndMillBall();
 
     };

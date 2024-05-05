@@ -33,7 +33,7 @@ namespace MillSim
         public EndMill
     {
     public:
-        EndMillFlat(int toolid, float radius, int nslices);
+        EndMillFlat(int toolid, float radius);
 
     private:
         float _profVerts[PROFILE_BUFFER_SIZE(FLAT_MILL_PROFILE_VERTS)];
