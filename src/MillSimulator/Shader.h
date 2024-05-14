@@ -42,7 +42,7 @@ public:
     void UpdateEnvColor(vec3 lightPos, vec3 lightColor, vec3 ambient);
     void UpdateObjColor(vec3 objColor);
     void UpdateTextureSlot(int slot);
-    unsigned int CompileShader(char* vertShader, char* fragShader);
+    unsigned int CompileShader(const char* vertShader, const char* fragShader);
     void Activate();
     bool IsValid()
     {
@@ -73,5 +73,7 @@ extern const char* VertShader3DNorm;
 extern const char* VertShader3DInvNorm;
 extern const char* VertShader2DTex;
 extern const char* FragShader2dTex;
+extern const char* VertShader2DFbo;
+extern const char* FragShader2dFbo;
 }  // namespace MillSim
 #endif  // !__shader_h__

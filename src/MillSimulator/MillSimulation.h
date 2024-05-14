@@ -40,6 +40,7 @@ class MillSimulation
 {
 public:
     MillSimulation();
+    ~MillSimulation();
     void ClearMillPathSegments();
     void Clear();
     void SimNext();
@@ -50,6 +51,7 @@ public:
     {
         return GetTool(toolid) != nullptr;
     }
+    void RenderSimulation();
     void Render();
     void ProcessSim(unsigned int time_ms);
     void HandleKeyPress(int key);
@@ -70,6 +72,8 @@ public:
 
 
 protected:
+    void CreateFboQuad();
+    void CreateSimulationFbo();
     void InitDisplay(float quality);
     void GlsimStart();
     void GlsimToolStep1(void);
@@ -87,7 +91,7 @@ protected:
 
 protected:
     std::vector<EndMill*> mToolTable;
-    Shader shader3D, shaderInv3D, shaderFlat;
+    Shader shader3D, shaderInv3D, shaderFlat, shaderSimFbo;
     GCodeParser mCodeParser;
     GuiDisplay guiDisplay;
     std::vector<MillPathSegment*> MillPathSegments;
@@ -111,6 +115,8 @@ protected:
     vec3 stockColor = {0.7f, 0.7f, 0.7f};
     vec3 cutColor = {0.4f, 0.7f, 0.4f};
     vec3 toolColor = {0.4f, 0.4f, 0.7f};
+
+    mat4x4 mMatLookAt;
 
     float mEyeDistance = 30;
     float mEyeRoration = 0;
@@ -143,6 +149,13 @@ protected:
     bool mIsRotate = true;
     bool mSimPlaying = false;
     bool mSingleStep = false;
+    bool mSimRefresh = true;
+
+    // frame buffer
+    unsigned int mFbo;
+    unsigned int mFboTexture;
+    unsigned int mRboDepthStencil;
+    unsigned int mFboQuadVAO, mFboQuadVBO;
 };
 }  // namespace MillSim
 #endif

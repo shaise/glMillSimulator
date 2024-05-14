@@ -278,7 +278,7 @@ bool GuiDisplay::InutGui()
     // shader
     mat4x4 projmat;
     // mat4x4 viewmat;
-    mat4x4_ortho(projmat, 0, 800, 600, 0, -1, 1);
+    mat4x4_ortho(projmat, 0, WINDSIZE_W, WINDSIZE_H, 0, -1, 1);
     mShader.CompileShader((char*)VertShader2DTex, (char*)FragShader2dTex);
     mShader.UpdateTextureSlot(0);
     mShader.UpdateProjectionMat(projmat);
@@ -387,6 +387,7 @@ void GuiDisplay::Render(float progress)
     }
     glDisable(GL_CULL_FACE);
     glDisable(GL_DEPTH_TEST);
+
     mTexture.Activate();
     mShader.Activate();
     mShader.UpdateTextureSlot(0);

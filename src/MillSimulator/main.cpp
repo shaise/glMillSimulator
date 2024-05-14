@@ -213,7 +213,7 @@ int main(int argc, char **argv)
     //glfwWindowHint(GLFW_CONTEXT_VERSION_MINOR, 3);
     //glfwWindowHint(GLFW_OPENGL_PROFILE, GLFW_OPENGL_CORE_PROFILE);
 
-    glwind = glfwCreateWindow(800, 600, "OpenGL Triangle", NULL, NULL);
+    glwind = glfwCreateWindow(WINDSIZE_W, WINDSIZE_H, "OpenGL Triangle", NULL, NULL);
     if (!glwind)
     {
         glfwTerminate();
