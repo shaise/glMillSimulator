@@ -49,6 +49,7 @@ public:
     Shape mShape;
     void SetPosition(vec3 position);
     void GenerateBoxStock(float x, float y, float z, float l, float w, float h);
+    vec3 mPos = {};
     vec3 mCenter = {};
     vec3 mSize = {};
 

@@ -26,117 +26,115 @@ GLFWwindow* glwind;
 
 using namespace MillSim;
 
-const char *demoCode[] = {
- "T2",
- 
- "G81 X0.5 Y0.5 Z0.5 R5",
- "X-0.5 Y-0.5 Z-0.5",
+const char* demoCode[] = {
+    "T2",
+
+    "G81 X0.5 Y0.5 Z0.5 R5",
+    "X-0.5 Y-0.5 Z-0.5",
 
 
- "G0 X-3 Y-3 Z10",
- "G0 X-3 Y-3 Z0.5",
- "G3 X3 Y3 Z0.5 I3 J3 K0",
- "G0 X3 Y3 Z10",
+    "G0 X-3 Y-3 Z10",
+    "G0 X-3 Y-3 Z0.5",
+    "G3 X3 Y3 Z0.5 I3 J3 K0",
+    "G0 X3 Y3 Z10",
 
- 
- "G0 X15 Y15 Z10",
- "G0 X 15 Y15 Z1.5",
- "G0 X15 Y-15 Z1.5",
- "G0 X-15 Y-15 Z1.5",
- "G0 X-15 Y15 Z1.5",
- "G0 X15 Y15 Z1.5",
 
- "G0 X15 Y15 Z1",
- "G0 X15 Y-15 Z1",
- "G0 X-15 Y-15 Z1",
- "G0 X-15 Y15 Z1",
- "G0 X15 Y15 Z1",
+    "G0 X15 Y15 Z10",
+    "G0 X 15 Y15 Z1.5",
+    "G0 X15 Y-15 Z1.5",
+    "G0 X-15 Y-15 Z1.5",
+    "G0 X-15 Y15 Z1.5",
+    "G0 X15 Y15 Z1.5",
 
- "G0 X15 Y15 Z0.5",
- "G0 X15 Y-15 Z0.5",
- "G0 X-15 Y-15 Z0.5",
- "G0 X-15 Y15 Z0.5",
- "G0 X15 Y15 Z0.5",
+    "G0 X15 Y15 Z1",
+    "G0 X15 Y-15 Z1",
+    "G0 X-15 Y-15 Z1",
+    "G0 X-15 Y15 Z1",
+    "G0 X15 Y15 Z1",
 
- "G0 X15 Y15 Z0",
- "G0 X15 Y-15 Z0",
- "G0 X-15 Y-15 Z0",
- "G0 X-15 Y15 Z0",
- "G0 X15 Y15 Z0",
+    "G0 X15 Y15 Z0.5",
+    "G0 X15 Y-15 Z0.5",
+    "G0 X-15 Y-15 Z0.5",
+    "G0 X-15 Y15 Z0.5",
+    "G0 X15 Y15 Z0.5",
 
- "G0 X15 Y15 Z10",
+    "G0 X15 Y15 Z0",
+    "G0 X15 Y-15 Z0",
+    "G0 X-15 Y-15 Z0",
+    "G0 X-15 Y15 Z0",
+    "G0 X15 Y15 Z0",
 
- "T1",
- "G0 X8 Y8 Z10",
- "G0 X8 Y8 Z1.5",
- "G0 X8 Y-8 Z1.5",
- "G0 X6.1 Y-8 Z1.5",
- "G0 X6.1 Y8 Z1.5",
- "G0 X4.2 Y8 Z1.5",
- "G0 X4.2 Y-8 Z1.5",
- "G0 X2.3 Y-8 Z1.5",
- "G0 X2.3 Y8 Z1.5",
- "G0 X0.4 Y8 Z1.5",
- "G0 X0.4 Y-8 Z1.5",
- "G0 X-1.5 Y-8 Z1.5",
- "G0 X-1.5 Y8 Z1.5",
- "G0 X-3.4 Y8 Z1.5",
- "G0 X-3.4 Y-8 Z1.5",
- "G0 X-5.3 Y-8 Z1.5",
- "G0 X-5.3 Y8 Z1.5",
- "G0 X-7.2 Y8 Z1.5",
- "G0 X-7.2 Y-8 Z1.5",
- "G0 X-8 Y-8 Z1.5",
- "G0 X-8 Y8 Z1.5",
- "G0 X 8 Y8 Z1.5",
- "G0 X 8 Y-8 Z1.5",
- "G0 X-8 Y-8 Z1.5",
+    "G0 X15 Y15 Z10",
 
- "G0 X-8 Y-8 Z10",
+    "T1",
+    "G0 X8 Y8 Z10",
+    "G0 X8 Y8 Z1.5",
+    "G0 X8 Y-8 Z1.5",
+    "G0 X6.1 Y-8 Z1.5",
+    "G0 X6.1 Y8 Z1.5",
+    "G0 X4.2 Y8 Z1.5",
+    "G0 X4.2 Y-8 Z1.5",
+    "G0 X2.3 Y-8 Z1.5",
+    "G0 X2.3 Y8 Z1.5",
+    "G0 X0.4 Y8 Z1.5",
+    "G0 X0.4 Y-8 Z1.5",
+    "G0 X-1.5 Y-8 Z1.5",
+    "G0 X-1.5 Y8 Z1.5",
+    "G0 X-3.4 Y8 Z1.5",
+    "G0 X-3.4 Y-8 Z1.5",
+    "G0 X-5.3 Y-8 Z1.5",
+    "G0 X-5.3 Y8 Z1.5",
+    "G0 X-7.2 Y8 Z1.5",
+    "G0 X-7.2 Y-8 Z1.5",
+    "G0 X-8 Y-8 Z1.5",
+    "G0 X-8 Y8 Z1.5",
+    "G0 X 8 Y8 Z1.5",
+    "G0 X 8 Y-8 Z1.5",
+    "G0 X-8 Y-8 Z1.5",
 
- // taper mill motion
- "T3",
- "G0 X14.2 Y14.2 Z10",
- "G0 X14.2 Y14.2 Z1.5",
- "G0 X14.2 Y-14.2 Z1.5",
- "G0 X-14.2 Y-14.2 Z1.5",
- "G0 X-14.2 Y14.2 Z1.5",
- "G0 X14.2 Y14.2 Z1.5",
- "G0 X14.2 Y14.2 Z10",
- "G0 X0 Y0 Z10",
+    "G0 X-8 Y-8 Z10",
 
- // ball mill motion
+    // taper mill motion
+    "T3",
+    "G0 X14.2 Y14.2 Z10",
+    "G0 X14.2 Y14.2 Z1.5",
+    "G0 X14.2 Y-14.2 Z1.5",
+    "G0 X-14.2 Y-14.2 Z1.5",
+    "G0 X-14.2 Y14.2 Z1.5",
+    "G0 X14.2 Y14.2 Z1.5",
+    "G0 X14.2 Y14.2 Z10",
+    "G0 X0 Y0 Z10",
+
+    // ball mill motion
     "T4",
- "G0 X12 Y12 Z10",
- "G0 X12 Y12 Z1.5",
- "G0 X12 Y-12 Z2.5",
- "G0 X-12 Y-12 Z1.5",
- "G0 X-12 Y12 Z2.5",
- "G0 X12 Y12 Z1.5",
- "G0 X12 Y12 Z10",
- "G0 X0 Y0 Z10",
+    "G0 X12 Y12 Z10",
+    "G0 X12 Y12 Z1.5",
+    "G0 X12 Y-12 Z2.5",
+    "G0 X-12 Y-12 Z1.5",
+    "G0 X-12 Y12 Z2.5",
+    "G0 X12 Y12 Z1.5",
+    "G0 X12 Y12 Z10",
+    "G0 X0 Y0 Z10",
 };
 
-#define NUM_DEMO_MOTIONS (sizeof(demoCode) / sizeof(char *))
-
-
-
+#define NUM_DEMO_MOTIONS (sizeof(demoCode) / sizeof(char*))
 
 
 // test section - remove!
 GLuint tprogram, tmodel, tview, tprojection, tarray;
 
-void ShowStats() {
+void ShowStats()
+{
     glDisable(GL_DEPTH_TEST);
     glLoadIdentity();
     glMatrixMode(GL_PROJECTION);
-    //glPushMatrix();
+    // glPushMatrix();
     glLoadIdentity();
     glColor3f(0.0f, 0.0f, 0.0f);
     glRasterPos2f(-1.0f, -1.0f);
     glDisable(GL_LIGHTING);
     glEnable(GL_LIGHTING);
-    //glPopMatrix();
+    // glPopMatrix();
     glMatrixMode(GL_MODELVIEW);
     glEnable(GL_DEPTH_TEST);
 }
@@ -144,27 +142,21 @@ void ShowStats() {
 // add stuff here to show over simulation
 void display()
 {
-    //ShowStats();
+    // ShowStats();
 }
 
-void key_callback(GLFWwindow* window, int key, int scancode, int action, int mods) 
+void key_callback(GLFWwindow* window, int key, int scancode, int action, int mods)
 {
-    if (action != GLFW_PRESS)
+    if (action != GLFW_PRESS) {
         return;
-    switch (key)
-    {
-    case GLFW_KEY_ESCAPE:
-        glfwSetWindowShouldClose(window, GLFW_TRUE);
-        break;
-    case GLFW_KEY_UP:
-        gMillSimulator.TiltEye(gEyeStep);
-        break;
-    case GLFW_KEY_DOWN:
-        gMillSimulator.TiltEye(- gEyeStep);
-        break;
-    default:
-        gMillSimulator.HandleKeyPress(key);
-        break;
+    }
+    switch (key) {
+        case GLFW_KEY_ESCAPE:
+            glfwSetWindowShouldClose(window, GLFW_TRUE);
+            break;
+        default:
+            gMillSimulator.HandleKeyPress(key);
+            break;
     }
 }
 
@@ -172,8 +164,9 @@ void mouse_callback(GLFWwindow* window, int button, int action, int mods)
 {
     double x, y;
     glfwGetCursorPos(window, &x, &y);
-    if (button > 2)
+    if (button > 2) {
         return;
+    }
     int buttMask = (1 << button);
     gMillSimulator.MousePress(buttMask, action == GLFW_PRESS, (int)x, (int)y);
 }
@@ -187,9 +180,8 @@ void handle_mouse_move(GLFWwindow* window)
 }
 
 
-
-//The callback function receives two - dimensional scroll offsets.
-void scroll_callback(GLFWwindow * window, double xoffset, double yoffset)
+// The callback function receives two - dimensional scroll offsets.
+void scroll_callback(GLFWwindow* window, double xoffset, double yoffset)
 {
     gMillSimulator.MouseScroll(yoffset);
 }
@@ -201,21 +193,21 @@ static void error_callback(int error, const char* description)
 }
 
 
-int main(int argc, char **argv)
+int main(int argc, char** argv)
 {
     glfwSetErrorCallback(error_callback);
 
-    if (!glfwInit())
+    if (!glfwInit()) {
         exit(EXIT_FAILURE);
+    }
 
 
-    //glfwWindowHint(GLFW_CONTEXT_VERSION_MAJOR, 3);
-    //glfwWindowHint(GLFW_CONTEXT_VERSION_MINOR, 3);
-    //glfwWindowHint(GLFW_OPENGL_PROFILE, GLFW_OPENGL_CORE_PROFILE);
+    // glfwWindowHint(GLFW_CONTEXT_VERSION_MAJOR, 3);
+    // glfwWindowHint(GLFW_CONTEXT_VERSION_MINOR, 3);
+    // glfwWindowHint(GLFW_OPENGL_PROFILE, GLFW_OPENGL_CORE_PROFILE);
 
     glwind = glfwCreateWindow(WINDSIZE_W, WINDSIZE_H, "OpenGL Triangle", NULL, NULL);
-    if (!glwind)
-    {
+    if (!glwind) {
         glfwTerminate();
         exit(EXIT_FAILURE);
     }
@@ -229,25 +221,23 @@ int main(int argc, char **argv)
     glfwSwapInterval(1);
 
     std::cout << glGetString(GL_VERSION) << std::endl;
-    //gMillSimulator.LoadGCodeFile("cam_test1.txt");
+    // gMillSimulator.LoadGCodeFile("cam_test1.txt");
 
 
-    for (int i = 0; i < NUM_DEMO_MOTIONS; i++)
-    {
+    for (int i = 0; i < NUM_DEMO_MOTIONS; i++) {
         gMillSimulator.AddGcodeLine(demoCode[i]);
     }
     float rad = 3.175f / 2.0f;
-    float buff4[4] = { rad, 30, rad, 0 };
+    float buff4[4] = {rad, 30, rad, 0};
     gMillSimulator.AddTool(new EndMill(buff4, 2, 1, 3.175f));
     gMillSimulator.AddTool(new EndMillFlat(2, 1.5f));
     gMillSimulator.AddTool(new EndMillBall(4, 1, 4, 0.2f));
     gMillSimulator.AddTool(new EndMillTaper(3, 1, 90, 0.2f));
     gMillSimulator.SetBoxStock(-20, -20, 0.005f, 40, 40, 2);
     gMillSimulator.InitSimulation(10);
-    //gMillSimulator.SetBoxStock(-119, -124, 0.003f, 245, 234, 30);
-    
-    while (!glfwWindowShouldClose(glwind))
-    {
+    // gMillSimulator.SetBoxStock(-119, -124, 0.003f, 245, 234, 30);
+
+    while (!glfwWindowShouldClose(glwind)) {
         gMillSimulator.ProcessSim((unsigned int)(glfwGetTime() * 1000));
         display();
         glfwSwapBuffers(glwind);
@@ -263,4 +253,3 @@ int main(int argc, char **argv)
 
     return 0;
 }
-

@@ -30,6 +30,7 @@
 #include "GlUtils.h"
 #include "StockObject.h"
 #include "MillPathSegment.h"
+#include "SimDisplay.h"
 #include "GuiDisplay.h"
 #include <sstream>
 
@@ -55,11 +56,6 @@ public:
     void Render();
     void ProcessSim(unsigned int time_ms);
     void HandleKeyPress(int key);
-    void UpdateEyeFactor(float factor);
-    void TiltEye(float tiltStep);
-    void RotateEye(float rotStep);
-    void MoveEye(float x, float y);
-    void UpdateProjection();
     bool LoadGCodeFile(const char* fileName);
     bool AddGcodeLine(const char* line);
     void SetSimulationStage(float stage);
@@ -72,8 +68,6 @@ public:
 
 
 protected:
-    void CreateFboQuad();
-    void CreateSimulationFbo();
     void InitDisplay(float quality);
     void GlsimStart();
     void GlsimToolStep1(void);
@@ -91,9 +85,9 @@ protected:
 
 protected:
     std::vector<EndMill*> mToolTable;
-    Shader shader3D, shaderInv3D, shaderFlat, shaderSimFbo;
     GCodeParser mCodeParser;
     GuiDisplay guiDisplay;
+    SimDisplay simDisplay;
     std::vector<MillPathSegment*> MillPathSegments;
     std::ostringstream mFpsStream;
 
@@ -102,35 +96,10 @@ protected:
     MillMotion mDestMotion = {eNop, -1, 0, 0, 0, 0, 0, 0};
 
     StockObject mStockObject;
-    StockObject mlightObject;
-
-    vec3 lightColor = {0.8f, 0.9f, 1.0f};
-    vec3 lightPos = {20.0f, 20.0f, 10.0f};
-    vec3 ambientCol = {0.3f, 0.3f, 0.5f};
-
-    vec3 eye = {0, 100, 40};
-    vec3 target = {0, 0, -10};
-    vec3 upvec = {0, 0, 1};
 
     vec3 stockColor = {0.7f, 0.7f, 0.7f};
     vec3 cutColor = {0.4f, 0.7f, 0.4f};
     vec3 toolColor = {0.4f, 0.4f, 0.7f};
-
-    mat4x4 mMatLookAt;
-
-    float mEyeDistance = 30;
-    float mEyeRoration = 0;
-    float mEyeInclination = PI / 6;  // 30 degree
-    float mEyeStep = PI / 36;        // 5 degree
-
-    float mMaxStockDim = 100;
-    float mMaxFar = 100;
-    float mEyeDistFactor = 0.4f;
-    float mEyeXZFactor = 0.01f;
-    float mEyeXZScale = 0;
-    float mEyeX = 0.0f;
-    float mEyeZ = 0.0f;
-
 
     int mCurStep = 0;
     int mNTotalSteps = 0;
@@ -149,13 +118,7 @@ protected:
     bool mIsRotate = true;
     bool mSimPlaying = false;
     bool mSingleStep = false;
-    bool mSimRefresh = true;
 
-    // frame buffer
-    unsigned int mFbo;
-    unsigned int mFboTexture;
-    unsigned int mRboDepthStencil;
-    unsigned int mFboQuadVAO, mFboQuadVBO;
 };
 }  // namespace MillSim
 #endif

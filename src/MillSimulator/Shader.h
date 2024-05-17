@@ -39,8 +39,9 @@ public:
     void UpdateModelMat(mat4x4 transformMat, mat4x4 normalMat);
     void UpdateProjectionMat(mat4x4 mat);
     void UpdateViewMat(mat4x4 mat);
-    void UpdateEnvColor(vec3 lightPos, vec3 lightColor, vec3 ambient);
+    void UpdateEnvColor(vec3 lightPos, vec3 lightColor, vec3 ambient, float linearity);
     void UpdateObjColor(vec3 objColor);
+    void UpdateNormalState(bool isInverted);
     void UpdateTextureSlot(int slot);
     unsigned int CompileShader(const char* vertShader, const char* fragShader);
     void Activate();
@@ -57,9 +58,16 @@ protected:
     int viewPos = -1;
     int lightPosPos = -1;
     int lightColorPos = -1;
-    int ambientPos = -1;
+    int lightLinearPos = -1;
+    int lightAmbientPos = -1;
     int objectColorPos = -1;
     int texSlotPos = -1;
+    int invertedNormalsPos = -1;
+    int ssaoSamplesPos = -1;
+    int gAlbedoPos = -1;
+    int gPositionPos = -1;
+    int gNormalPos = -1;
+    int gSsaoPos = -1;
 
     const char* vertShader = nullptr;
     const char* fragShader = nullptr;
@@ -75,5 +83,12 @@ extern const char* VertShader2DTex;
 extern const char* FragShader2dTex;
 extern const char* VertShader2DFbo;
 extern const char* FragShader2dFbo;
+extern const char* VertShaderGeom;
+extern const char* FragShaderGeom;
+extern const char* FragShaderSSAO;
+extern const char* FragShaderSSAOLighting;
+extern const char* FragShaderStdLighting;
+extern const char* FragShaderSSAOBlur;
+
 }  // namespace MillSim
 #endif  // !__shader_h__

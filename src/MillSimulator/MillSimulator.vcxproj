@@ -142,6 +142,7 @@
     <ClCompile Include="main.cpp" />
     <ClCompile Include="MillSimulation.cpp" />
     <ClCompile Include="Shader.cpp" />
+    <ClCompile Include="SimDisplay.cpp" />
     <ClCompile Include="SimShapes.cpp" />
     <ClCompile Include="StockObject.cpp" />
     <ClCompile Include="Texture.cpp" />
@@ -160,6 +161,7 @@
     <ClInclude Include="MillSimulation.h" />
     <ClInclude Include="OpenGlWrapper.h" />
     <ClInclude Include="Shader.h" />
+    <ClInclude Include="SimDisplay.h" />
     <ClInclude Include="SimShapes.h" />
     <ClInclude Include="StockObject.h" />
     <ClInclude Include="Texture.h" />

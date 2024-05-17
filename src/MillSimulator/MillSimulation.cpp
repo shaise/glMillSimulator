@@ -36,7 +36,6 @@ MillSimulation::MillSimulation()
 
 MillSimulation::~MillSimulation()
 {
-    glDeleteFramebuffers(1, &mFbo);
 }
 
 void MillSimulation::ClearMillPathSegments()
@@ -91,7 +90,7 @@ void MillSimulation::InitSimulation(float quality)
     mCurStep = 0;
     mPathStep = -1;
     mNTotalSteps = 0;
-    MillPathSegment::SetQuality(quality, mMaxFar);
+    MillPathSegment::SetQuality(quality, simDisplay.maxFar);
     int nOperations = (int)mCodeParser.Operations.size();
     ;
     for (int i = 0; i < nOperations; i++) {
@@ -149,7 +148,6 @@ void MillSimulation::AddTool(const float* toolProfile, int numPoints, int toolid
 
 void MillSimulation::GlsimStart()
 {
-    glBindFramebuffer(GL_FRAMEBUFFER, mFbo);
     glClearColor(0, 0, 0, 0);
     glClear(GL_COLOR_BUFFER_BIT | GL_DEPTH_BUFFER_BIT | GL_STENCIL_BUFFER_BIT);
     glEnable(GL_CULL_FACE);
@@ -259,8 +257,7 @@ void MillSimulation::CalcSegmentPositions()
 
 void MillSimulation::RenderSimulation()
 {
-    shaderFlat.Activate();
-    shaderFlat.UpdateViewMat(mMatLookAt);
+    simDisplay.StartDepthPass();
 
     GlsimStart();
     mStockObject.render();
@@ -287,18 +284,13 @@ void MillSimulation::RenderSimulation()
     mStockObject.render();
 
     // start coloring
-    shader3D.Activate();
-    shader3D.UpdateViewMat(mMatLookAt);
-    shader3D.UpdateObjColor(stockColor);
+    simDisplay.StartGeometryPass(stockColor, false);
     GlsimRenderStock();
     mStockObject.render();
-    GlsimRenderTools();
 
     // render cuts (back faces of tools)
-
-    shaderInv3D.Activate();
-    shaderInv3D.UpdateViewMat(mMatLookAt);
-    shaderInv3D.UpdateObjColor(cutColor);
+    simDisplay.StartGeometryPass(cutColor, false);
+    GlsimRenderTools();
     for (int i = 0; i <= mPathStep; i++) {
         MillSim::MillPathSegment* p = MillPathSegments.at(i);
         int step = (i == mPathStep) ? mSubStep : p->numSimSteps;
@@ -320,49 +312,27 @@ void MillSimulation::RenderSimulation()
         mat4x4 tmat;
         mat4x4_translate(tmat, toolPos[0], toolPos[1], toolPos[2]);
         // mat4x4_translate(tmat, toolPos.x, toolPos.y, toolPos.z);
-        shader3D.Activate();
-        shader3D.UpdateObjColor(toolColor);
+        simDisplay.StartGeometryPass(toolColor, false);
         p->mEndmill->mToolShape.Render(tmat, identityMat);
     }
 
-    shaderFlat.Activate();
-    shaderFlat.UpdateObjColor(lightColor);
-    mlightObject.render();
-    glBindFramebuffer(GL_FRAMEBUFFER, 0);
+    simDisplay.RenderLightObject();
 }
 
 void MillSimulation::Render()
 {
-    mat4x4_look_at(mMatLookAt, eye, target, upvec);
-
     // set background
     glClearColor(0.6f, 0.8f, 1.0f, 1.0f);
     glClear(GL_COLOR_BUFFER_BIT | GL_DEPTH_BUFFER_BIT | GL_STENCIL_BUFFER_BIT);
+    simDisplay.PrepareDisplay(mStockObject.mCenter);
 
-    mat4x4_translate_in_place(mMatLookAt, mEyeX * mEyeXZFactor, 0, mEyeZ * mEyeXZFactor);
-    mat4x4_rotate_X(mMatLookAt, mMatLookAt, mEyeInclination);
-    mat4x4_rotate_Z(mMatLookAt, mMatLookAt, mEyeRoration);
-    mat4x4_translate_in_place(mMatLookAt,
-                              -mStockObject.mCenter[0],
-                              -mStockObject.mCenter[1],
-                              -mStockObject.mCenter[2]);
-
-     // render the simulation offscreen in an FBO
-    if (mSimRefresh) {
+    // render the simulation offscreen in an FBO
+    if (simDisplay.updateDisplay) {
         RenderSimulation();
-        mSimRefresh = false;
+        simDisplay.updateDisplay = false;
     }
+    simDisplay.RenderResult();
 
-     // display the sim result within the FBO
-    shaderSimFbo.Activate();
-    glBindVertexArray(mFboQuadVAO);
-    glDisable(GL_DEPTH_TEST);
-    glDisable(GL_CULL_FACE);
-    glActiveTexture(GL_TEXTURE0);
-    glBindTexture(GL_TEXTURE_2D, mFboTexture);
-    glEnable(GL_BLEND);
-    glBlendFunc(GL_SRC_ALPHA, GL_ONE_MINUS_SRC_ALPHA);
-    glDrawArrays(GL_TRIANGLES, 0, 6);
 
     if (mDebug > 0) {
         mat4x4 test;
@@ -377,6 +347,7 @@ void MillSimulation::Render()
         p->render(mDebug);
     }
     float progress = (float)mCurStep / mNTotalSteps;
+    glBindFramebuffer(GL_FRAMEBUFFER, 0);
     guiDisplay.Render(progress);
 }
 
@@ -392,7 +363,7 @@ void MillSimulation::ProcessSim(unsigned int time_ms)
     last = msec;
     msec = time_ms;
     if (mIsRotate) {
-        RotateEye((msec - last) / 4600.0f);
+        simDisplay.RotateEye((msec - last) / 4600.0f);
     }
 
     if (last / 1000 != msec / 1000) {
@@ -465,160 +436,16 @@ void MillSimulation::HandleKeyPress(int key)
     guiDisplay.UpdatePlayState(mSimPlaying);
 }
 
-void MillSimulation::UpdateEyeFactor(float factor)
-{
-    mEyeDistFactor = factor;
-    mEyeXZFactor = factor * mMaxFar * 0.005f;
-    eye[1] = -factor * mMaxFar;
-}
-
-void MillSimulation::TiltEye(float tiltStep)
-{
-    mEyeInclination += tiltStep;
-    if (mEyeInclination > PI / 2) {
-        mEyeInclination = PI / 2;
-    }
-    else if (mEyeInclination < -PI / 2) {
-        mEyeInclination = -PI / 2;
-    }
-}
-
-void MillSimulation::RotateEye(float rotStep)
-{
-    mEyeRoration += rotStep;
-    if (mEyeRoration > PI2) {
-        mEyeRoration -= PI2;
-    }
-    else if (mEyeRoration < 0) {
-        mEyeRoration += PI2;
-    }
-    mSimRefresh = true;
-}
-
-void MillSimulation::MoveEye(float x, float z)
-{
-    mEyeX += x;
-    if (mEyeX > 100) {
-        mEyeX = 100;
-    }
-    else if (mEyeX < -100) {
-        mEyeX = -100;
-    }
-    mEyeZ += z;
-    if (mEyeZ > 100) {
-        mEyeZ = 100;
-    }
-    else if (mEyeZ < -100) {
-        mEyeZ = -100;
-    }
-    mSimRefresh = true;
-}
-
-void MillSimulation::UpdateProjection()
-{
-    // Setup projection
-    mat4x4 projmat;
-    mat4x4_perspective(projmat, 0.7f, 4.0f / 3.0f, 1.0f, mMaxFar);
-    // mat4x4_perspective(projmat, 0.7f, 4.0f / 3.0f, 1, 100);
-    shader3D.Activate();
-    shader3D.UpdateProjectionMat(projmat);
-    shaderInv3D.Activate();
-    shaderInv3D.UpdateProjectionMat(projmat);
-    shaderFlat.Activate();
-    shaderFlat.UpdateProjectionMat(projmat);
-}
-
-void MillSimulation::CreateFboQuad()
-{
-    float quadVertices[] = {
-        // a quad that fills the entire screen in Normalized Device Coordinates.
-        // positions   // texCoords
-        -1.0f, 1.0f, 0.0f, 1.0f, -1.0f, -1.0f, 0.0f, 0.0f, 1.0f, -1.0f, 1.0f, 0.0f,
-        -1.0f, 1.0f, 0.0f, 1.0f, 1.0f,  -1.0f, 1.0f, 0.0f, 1.0f, 1.0f,  1.0f, 1.0f};
-
-    glGenVertexArrays(1, &mFboQuadVAO);
-    glGenBuffers(1, &mFboQuadVBO);
-    glBindVertexArray(mFboQuadVAO);
-    glBindBuffer(GL_ARRAY_BUFFER, mFboQuadVBO);
-    glBufferData(GL_ARRAY_BUFFER, sizeof(quadVertices), &quadVertices[0], GL_STATIC_DRAW);
-    glEnableVertexAttribArray(0);
-    glVertexAttribPointer(0, 2, GL_FLOAT, GL_FALSE, 4 * sizeof(float), (void*)0);
-    glEnableVertexAttribArray(1);
-    glVertexAttribPointer(1, 2, GL_FLOAT, GL_FALSE, 4 * sizeof(float), (void*)(2 * sizeof(float)));
-}
-
-void MillSimulation::CreateSimulationFbo()
-{
-    // setup frame buffer for simulation
-    glGenFramebuffers(1, &mFbo);
-    glBindFramebuffer(GL_FRAMEBUFFER, mFbo);
-
-    // a texture for the frame buffer
-    glGenTextures(1, &mFboTexture);
-    glBindTexture(GL_TEXTURE_2D, mFboTexture);
-    glTexImage2D(GL_TEXTURE_2D,
-                 0,
-                 GL_RGBA8,
-                 WINDSIZE_W,
-                 WINDSIZE_H,
-                 0,
-                 GL_RGBA,
-                 GL_UNSIGNED_BYTE,
-                 NULL);
-    glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_MIN_FILTER, GL_LINEAR);
-    glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_MAG_FILTER, GL_LINEAR);
-    glFramebufferTexture2D(GL_FRAMEBUFFER, GL_COLOR_ATTACHMENT0, GL_TEXTURE_2D, mFboTexture, 0);
-
-    glGenRenderbuffers(1, &mRboDepthStencil);
-    glBindRenderbuffer(GL_RENDERBUFFER, mRboDepthStencil);
-    glRenderbufferStorage(
-        GL_RENDERBUFFER,
-        GL_DEPTH24_STENCIL8,
-        WINDSIZE_W,
-        WINDSIZE_H);  // use a single renderbuffer object for both a depth AND stencil buffer.
-    glFramebufferRenderbuffer(GL_FRAMEBUFFER,
-                              GL_DEPTH_STENCIL_ATTACHMENT,
-                              GL_RENDERBUFFER,
-                              mRboDepthStencil);  // now actually attach it
-
-    if (glCheckFramebufferStatus(GL_FRAMEBUFFER) != GL_FRAMEBUFFER_COMPLETE)
-    {
-        return;
-    }
-
-    CreateFboQuad();
-
-}
-
 void MillSimulation::InitDisplay(float quality)
 {
-    // use shaders
-    //   standard diffuse shader
-    shader3D.CompileShader(VertShader3DNorm, FragShaderNorm);
-    shader3D.UpdateEnvColor(lightPos, lightColor, ambientCol);
-
-    //   invarted normal diffuse shader for inner mesh
-    shaderInv3D.CompileShader(VertShader3DInvNorm, FragShaderNorm);
-    shaderInv3D.UpdateEnvColor(lightPos, lightColor, ambientCol);
-
-    //   null shader to calculate meshes only (simulation stage)
-    shaderFlat.CompileShader(VertShader3DNorm, FragShaderFlat);
-
-    //   texture shader to render Simulator FBO
-    shaderSimFbo.CompileShader(VertShader2DFbo, FragShader2dFbo);
-    shaderSimFbo.UpdateTextureSlot(0);
-
-    UpdateProjection();
-
-    // setup light object and generate tools
-    mlightObject.GenerateBoxStock(-0.5f, -0.5f, -0.5f, 1, 1, 1);
-    for (int i = 0; i < mToolTable.size(); i++) {
+    // generate tools
+   for (int i = 0; i < mToolTable.size(); i++) {
         mToolTable[i]->GenerateDisplayLists(quality);
     }
 
-    // separate frame buffer for simulation
-    CreateSimulationFbo();
- 
+    // init 3d display
+    simDisplay.InitGL();
+
     // init gui elements
     guiDisplay.InutGui();
 }
@@ -626,23 +453,17 @@ void MillSimulation::InitDisplay(float quality)
 void MillSimulation::SetBoxStock(float x, float y, float z, float l, float w, float h)
 {
     mStockObject.GenerateBoxStock(x, y, z, l, w, h);
-    mMaxStockDim = fmaxf(w, l);
-    mMaxFar = mMaxStockDim * 4;
-    UpdateProjection();
-    vec3_set(eye, 0, 0, 0);
-    UpdateEyeFactor(0.4f);
-    vec3_set(lightPos, x, y, h + mMaxStockDim / 3);
-    mlightObject.SetPosition(lightPos);
+    simDisplay.ScaleViewToStock(&mStockObject);
 }
 
 void MillSimulation::MouseDrag(int buttons, int dx, int dy)
 {
     if (buttons == (MS_MOUSE_MID | MS_MOUSE_LEFT)) {
-        TiltEye((float)dy / 100.0f);
-        RotateEye((float)dx / 100.0f);
+        simDisplay.TiltEye((float)dy / 100.0f);
+        simDisplay.RotateEye((float)dx / 100.0f);
     }
     else if (buttons == MS_MOUSE_MID) {
-        MoveEye(dx, -dy);
+        simDisplay.MoveEye(dx, -dy);
     }
     guiDisplay.MouseDrag(buttons, dx, dy);
 }
@@ -665,7 +486,7 @@ void MillSimulation::MouseMove(int px, int py)
 
 void MillSimulation::MouseScroll(float dy)
 {
-    float f = mEyeDistFactor;
+    float f = simDisplay.GetEyeFactor();
     f += 0.05f * dy;
     if (f > 0.6f) {
         f = 0.6f;
@@ -673,7 +494,8 @@ void MillSimulation::MouseScroll(float dy)
     else if (f < 0.05f) {
         f = 0.05f;
     }
-    UpdateEyeFactor(f);
+    simDisplay.UpdateEyeFactor(f);
+
 }
 
 
@@ -720,7 +542,7 @@ void MillSimulation::SetSimulationStage(float stage)
         return;
     }
     mCurStep = newStep;
-    mSimRefresh = true;
+    simDisplay.updateDisplay = true;
     mSingleStep = true;
     CalcSegmentPositions();
 }
