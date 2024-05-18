@@ -145,6 +145,7 @@
     <ClCompile Include="SimShapes.cpp" />
     <ClCompile Include="StockObject.cpp" />
     <ClCompile Include="Texture.cpp" />
+    <ClCompile Include="TextureLoader.cpp" />
   </ItemGroup>
   <ItemGroup>
     <ClInclude Include="GCodeParser.h" />
@@ -163,6 +164,7 @@
     <ClInclude Include="SimShapes.h" />
     <ClInclude Include="StockObject.h" />
     <ClInclude Include="Texture.h" />
+    <ClInclude Include="TextureLoader.h" />
   </ItemGroup>
   <ItemGroup>
     <None Include="packages.config" />

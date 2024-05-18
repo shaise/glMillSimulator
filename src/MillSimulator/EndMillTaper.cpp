@@ -34,18 +34,18 @@ EndMillTaper::EndMillTaper(int toolid, float diameter, float taperAngle, float f
 	float l1 = flatRadius / ta;
 	if (l1 < 0.0001)
 		l1 = 0;
-	float l = mRadius / ta - l1;
+	float l = radius / ta - l1;
 	int idx = 0;
-	SET_DUAL(_profVerts, idx, mRadius, MILL_HEIGHT);
-	SET_DUAL(_profVerts, idx, mRadius, l);
+	SET_DUAL(_profVerts, idx, radius, MILL_HEIGHT);
+	SET_DUAL(_profVerts, idx, radius, l);
 	SET_DUAL(_profVerts, idx, flatRadius, 0);
-	mNPoints = 3;
+	nPoints = 3;
 	if (l1 > 0)
 	{
 		SET_DUAL(_profVerts, idx, 0, 0);
-		mNPoints++;
+		nPoints++;
 	}
-	mProfPoints = _profVerts;
+	profilePoints = _profVerts;
 	MirrorPointBuffer();
 	//GenerateDisplayLists();
 }
