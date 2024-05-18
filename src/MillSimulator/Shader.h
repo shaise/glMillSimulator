@@ -43,6 +43,7 @@ public:
     void UpdateObjColor(vec3 objColor);
     void UpdateNormalState(bool isInverted);
     void UpdateTextureSlot(int slot);
+    void UpdateMultiTexSlots(int albedoSlot, int posSlot, int NormalSlot);
     unsigned int CompileShader(const char* vertShader, const char* fragShader);
     void Activate();
     bool IsValid()

@@ -53,6 +53,8 @@ void SimDisplay::InitShaders()
 
     // ligthing shader - apply standard ligting based on geometric buffers
     shaderLighting.CompileShader(VertShader2DFbo, FragShaderStdLighting);
+    shaderLighting.UpdateMultiTexSlots(0, 1, 2);
+    shaderLighting.UpdateEnvColor(lightPos, lightColor, ambientCol, 0.0f);
 
     // SSAO shader - generate SSAO info and embed in texture buffer
     shaderSSAO.CompileShader(VertShader2DFbo, FragShaderSSAO);
@@ -62,6 +64,8 @@ void SimDisplay::InitShaders()
 
     // SSAO lighting shader - apply lightig modified by SSAO calculations
     shaderSSAOLighting.CompileShader(VertShader2DFbo, FragShaderSSAOLighting);
+    shaderSSAOLighting.UpdateMultiTexSlots(0, 1, 2);
+    shaderSSAOLighting.UpdateEnvColor(lightPos, lightColor, ambientCol, 0.0f);
 }
 
 void SimDisplay::CreateFboQuad()
@@ -135,6 +139,10 @@ void SimDisplay::CreateDisplayFbos()
     if (glCheckFramebufferStatus(GL_FRAMEBUFFER) != GL_FRAMEBUFFER_COMPLETE) {
         return;
     }
+
+    glBindFramebuffer(GL_FRAMEBUFFER, 0);
+    glDrawBuffers(3, attachments);
+
 
     CreateFboQuad();
 }
@@ -214,7 +222,8 @@ void SimDisplay::RenderResult()
     glBindFramebuffer(GL_FRAMEBUFFER, 0);
 
     // display the sim result within the FBO
-    shaderSimFbo.Activate();
+    shaderLighting.Activate();
+    //shaderSimFbo.Activate();
     glBindVertexArray(mFboQuadVAO);
     glDisable(GL_DEPTH_TEST);
     glDisable(GL_CULL_FACE);
@@ -226,6 +235,7 @@ void SimDisplay::RenderResult()
     glBindTexture(GL_TEXTURE_2D, mFboNormTexture);
     glEnable(GL_BLEND);
     glBlendFunc(GL_SRC_ALPHA, GL_ONE_MINUS_SRC_ALPHA);
+    glUniform1i(glGetUniformLocation(shaderLighting.shaderId, "gAlbedo"), 0);
     glDrawArrays(GL_TRIANGLES, 0, 6);
 }
 

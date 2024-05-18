@@ -92,6 +92,19 @@ void Shader::UpdateTextureSlot(int slot)
     }
 }
 
+void Shader::UpdateMultiTexSlots(int albedoSlot, int posSlot, int NormalSlot)
+{
+    if (gAlbedoPos >= 0) {
+        glUniform1i(gAlbedoPos, albedoSlot);
+    }
+    if (gPositionPos >= 0) {
+        glUniform1i(gPositionPos, posSlot);
+    }
+    if (gNormalPos >= 0) {
+        glUniform1i(gNormalPos, NormalSlot);
+    }
+}
+
 bool CheckCompileResult(int shader)
 {
 #ifdef QT_OPENGL_LIB
@@ -175,7 +188,7 @@ void Shader::Activate()
 
 
 const char* VertShader3DNorm =
-    "#version 330 core  \n"
+    "#version 330 core  \n"  // ----->   add long remark for a uniform auto formatting
 
     "layout(location = 0) in vec3 aPosition;  \n"
     "layout(location = 1) in vec3 aNormal;  \n"
@@ -190,9 +203,10 @@ const char* VertShader3DNorm =
 
     "void main(void)  \n"
     "{  \n"
-    "	gl_Position = projection * view * model * vec4(aPosition, 1.0);  \n"
-    "	FragPos = vec3(model * vec4(aPosition, 1.0));  \n"
-    "	Normal = vec3(normalRot * vec4(aNormal, 1.0));  \n"
+    "    vec4 viewPos = view * model * vec4(aPosition, 1.0);  \n"
+    "    FragPos = vec3(model * vec4(aPosition, 1.0));  \n"
+    "    Normal = vec3(normalRot * vec4(aNormal, 1.0));  \n"
+    "    gl_Position = projection * viewPos;  \n"
     "}  \n";
 
 const char* VertShader3DInvNorm =
@@ -355,11 +369,11 @@ const char* FragShaderGeom =
 
     "void main()  \n"
     "{      \n"
-         // store the fragment position vector in the first gbuffer texture
+    // store the fragment position vector in the first gbuffer texture
     "    gPosition = FragPos;  \n"
-         // also store the per-fragment normals into the gbuffer
+    // also store the per-fragment normals into the gbuffer
     "    gNormal = normalize(Normal);  \n"
-         // and the diffuse per-fragment color
+    // and the diffuse per-fragment color
     "    gAlbedo = vec4(objectColor, 1.0f);  \n"
     "}  \n";
 
@@ -367,7 +381,7 @@ const char* FragShaderSSAO =
     "#version 330 core  \n"  // ----->   add long remark for a uniform auto formatting
     "out float FragColor;  \n"
 
-    "in vec2 TexCoord;  \n"
+    "in vec2 texCoord;  \n"
 
     "uniform sampler2D gPosition;  \n"
     "uniform sampler2D gNormal;  \n"
@@ -387,32 +401,33 @@ const char* FragShaderSSAO =
 
     "void main()  \n"
     "{  \n"
-         // get input for SSAO algorithm
-    "    vec3 fragPos = texture(gPosition, TexCoord).xyz;  \n"
-    "    vec3 normal = normalize(texture(gNormal, TexCoord).rgb);  \n"
-    "    vec3 randomVec = normalize(texture(texNoise, TexCoord * noiseScale).xyz);  \n"
-         // create TBN change-of-basis matrix: from tangent-space to view-space
+    // get input for SSAO algorithm
+    "    vec3 fragPos = texture(gPosition, texCoord).xyz;  \n"
+    "    vec3 normal = normalize(texture(gNormal, texCoord).rgb);  \n"
+    "    vec3 randomVec = normalize(texture(texNoise, texCoord * noiseScale).xyz);  \n"
+    // create TBN change-of-basis matrix: from tangent-space to view-space
     "    vec3 tangent = normalize(randomVec - normal * dot(randomVec, normal));  \n"
     "    vec3 bitangent = cross(normal, tangent);  \n"
     "    mat3 TBN = mat3(tangent, bitangent, normal);  \n"
-         // iterate over the sample kernel and calculate occlusion factor
+    // iterate over the sample kernel and calculate occlusion factor
     "    float occlusion = 0.0;  \n"
     "    for(int i = 0; i < kernelSize; ++i)  \n"
     "    {  \n"
-             // get sample position
+    // get sample position
     "        vec3 samplePos = TBN * ssaoSamples[i];  \n"  // from tangent to view-space
     "        samplePos = fragPos + samplePos * radius;   \n"
 
-             // project sample position (to sample texture) (to get position on screen/texture)
+    // project sample position (to sample texture) (to get position on screen/texture)
     "        vec4 offset = vec4(samplePos, 1.0);  \n"
     "        offset = projection * offset;  \n"         // from view to clip-space
     "        offset.xyz /= offset.w;  \n"               // perspective divide
     "        offset.xyz = offset.xyz * 0.5 + 0.5;  \n"  // transform to range 0.0 - 1.0
 
-             // get sample depth
-    "        float sampleDepth = texture(gPosition, offset.xy).z;  \n" // get depth value of kernel sample
+    // get sample depth
+    "        float sampleDepth = texture(gPosition, offset.xy).z;  \n"  // get depth value of kernel
+                                                                        // sample
 
-             // range check & accumulate
+    // range check & accumulate
     "        float rangeCheck = smoothstep(0.0, 1.0, radius / abs(fragPos.z - sampleDepth));  \n"
     "        occlusion += (sampleDepth >= samplePos.z + bias ? 1.0 : 0.0) * rangeCheck;            "
     " \n"
@@ -425,7 +440,7 @@ const char* FragShaderSSAOLighting =
     "#version 330 core  \n"
     "out vec4 FragColor;  \n"
 
-    "in vec2 TexCoord;  \n"
+    "in vec2 texCoord;  \n"
 
     "uniform sampler2D gPosition;  \n"
     "uniform sampler2D gNormal;  \n"
@@ -440,14 +455,15 @@ const char* FragShaderSSAOLighting =
     "void main()  \n"
     "{               \n"
     // retrieve data from gbuffer
-    "    vec3 FragPos = texture(gPosition, TexCoord).rgb;  \n"
-    "    vec3 Normal = texture(gNormal, TexCoord).rgb;  \n"
-    "    vec3 Diffuse = texture(gAlbedo, TexCoord).rgb;  \n"
-    "    float AmbientOcclusion = texture(gSsao, TexCoord).r;  \n"
+    "    vec3 FragPos = texture(gPosition, texCoord).rgb;  \n"
+    "    vec3 Normal = texture(gNormal, texCoord).rgb;  \n"
+    "    vec4 DiffuseA = texture(gAlbedo, texCoord);  \n"
+    "    vec3 Diffuse = DiffuseA.rgb;  \n"
+    "    float AmbientOcclusion = texture(gSsao, texCoord).r;  \n"
 
     // then calculate lighting as usual
     "    vec3 lighting = lightAmbient * Diffuse * AmbientOcclusion;  \n"
-    "    vec3 viewDir  = normalize(-FragPos);  \n" // viewpos is (0.0.0)
+    "    vec3 viewDir  = normalize(-FragPos);  \n"  // viewpos is (0.0.0)
     // diffuse
     "    vec3 lightDir = normalize(lightPos - FragPos);  \n"
     "    vec3 diffuse = max(dot(Normal, lightDir), 0.0) * Diffuse * lightColor;  \n"
@@ -460,14 +476,14 @@ const char* FragShaderSSAOLighting =
     "    float attenuation = 1.0 / (1.0 + lightLinear * distance);  \n"
     "    lighting += (diffuse + specular) * attenuation;  \n"
 
-    "    FragColor = vec4(lighting, 1.0);  \n"
+    "    FragColor = vec4(lighting, DiffuseA.a);  \n"
     "}  \n";
 
 const char* FragShaderStdLighting =
     "#version 330 core  \n"
     "out vec4 FragColor;  \n"
 
-    "in vec2 TexCoord;  \n"
+    "in vec2 texCoord;  \n"
 
     "uniform sampler2D gAlbedo;  \n"
     "uniform sampler2D gPosition;  \n"
@@ -481,9 +497,10 @@ const char* FragShaderStdLighting =
     "void main()  \n"
     "{               \n"
     // retrieve data from gbuffer
-    "    vec3 Diffuse = texture(gAlbedo, TexCoord).rgb;  \n"
-    "    vec3 FragPos = texture(gPosition, TexCoord).rgb;  \n"
-    "    vec3 Normal = texture(gNormal, TexCoord).rgb;  \n"
+    "    vec4 DiffuseA = texture(gAlbedo, texCoord);  \n"
+    "    vec3 Diffuse = DiffuseA.rgb;  \n"
+    "    vec3 FragPos = texture(gPosition, texCoord).rgb;  \n"
+    "    vec3 Normal = texture(gNormal, texCoord).rgb;  \n"
 
     // then calculate lighting as usual
     "    vec3 lighting  = lightAmbient * Diffuse;   \n"
@@ -500,14 +517,14 @@ const char* FragShaderStdLighting =
     "    float attenuation = 1.0 / (1.0 + lightLinear * distance);  \n"
     "    lighting += (diffuse + specular) * attenuation;  \n"
 
-    "    FragColor = vec4(lighting, 1.0);  \n"
+    "    FragColor = vec4(lighting, DiffuseA.a);  \n"
     "}  \n";
 
 const char* FragShaderSSAOBlur =
     "#version 330 core  \n"
     "out float FragColor;  \n"
 
-    "in vec2 TexCoord;  \n"
+    "in vec2 texCoord;  \n"
 
     "uniform sampler2D ssaoInput;  \n"
 
@@ -520,7 +537,7 @@ const char* FragShaderSSAOBlur =
     "        for (int y = -2; y < 2; ++y)   \n"
     "        {  \n"
     "            vec2 offset = vec2(float(x), float(y)) * texelSize;  \n"
-    "            result += texture(ssaoInput, TexCoord + offset).r;  \n"
+    "            result += texture(ssaoInput, texCoord + offset).r;  \n"
     "        }  \n"
     "    }  \n"
     "    FragColor = result / (4.0 * 4.0);  \n"
