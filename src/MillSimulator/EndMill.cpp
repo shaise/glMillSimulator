@@ -38,12 +38,11 @@ EndMill::EndMill(const std::vector<float>& toolProfile, int toolid, float diamet
     profilePoints = nullptr;
     mHandleAllocation = false;
 
-    nPoints = toolProfile.size();
-    if (nPoints == 0) {
+    int srcBuffSize = toolProfile.size();
+    nPoints = srcBuffSize / 2;
+    if (nPoints < 2) {
         return;
     }
-
-    int srcBuffSize = nPoints * 2;
 
     // make sure last point is at 0,0 else, add it
     bool missingCenterPoint = fabs(toolProfile[nPoints * 2 - 2]) > 0.0001f;
