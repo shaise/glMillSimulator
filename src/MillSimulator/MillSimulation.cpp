@@ -132,11 +132,12 @@ namespace MillSim {
         mToolTable.push_back(tool);
     }
 
-    void MillSimulation::AddTool(const float* toolProfile, int numPoints, int toolid, float diameter)
+    void
+    MillSimulation::AddTool(const std::vector<float>& toolProfile, int toolid, float diameter)
     {
         // if we have another tool with same id, remove it
         RemoveTool(toolid);
-        EndMill* tool = new EndMill(toolProfile, numPoints, toolid, diameter);
+        EndMill* tool = new EndMill(toolProfile, toolid, diameter);
         mToolTable.push_back(tool);
     }
 

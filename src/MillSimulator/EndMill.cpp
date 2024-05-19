@@ -32,14 +32,21 @@ EndMill::EndMill(int toolid, float diameter)
     toolId = toolid;
 }
 
-EndMill::EndMill(const float* toolProfile, int numPoints, int toolid, float diameter)
+EndMill::EndMill(const std::vector<float>& toolProfile, int toolid, float diameter)
     : EndMill(toolid, diameter)
 {
-    nPoints = numPoints;
-    int srcBuffSize = numPoints * 2;
+    profilePoints = nullptr;
+    mHandleAllocation = false;
+
+    nPoints = toolProfile.size();
+    if (nPoints == 0) {
+        return;
+    }
+
+    int srcBuffSize = nPoints * 2;
 
     // make sure last point is at 0,0 else, add it
-    bool missingCenterPoint = fabs(toolProfile[numPoints * 2 - 2]) > 0.0001f;
+    bool missingCenterPoint = fabs(toolProfile[nPoints * 2 - 2]) > 0.0001f;
     if (missingCenterPoint) {
         nPoints++;
     }

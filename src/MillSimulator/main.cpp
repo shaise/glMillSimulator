@@ -237,8 +237,8 @@ int main(int argc, char **argv)
         gMillSimulator.AddGcodeLine(demoCode[i]);
     }
     float rad = 3.175f / 2.0f;
-    float buff4[4] = { rad, 30, rad, 0 };
-    gMillSimulator.AddTool(new EndMill(buff4, 2, 1, 3.175f));
+    //float buff4[4] = { rad, 30, rad, 0 };
+    //gMillSimulator.AddTool(new EndMill(buff4, 2, 1, 3.175f));
     gMillSimulator.AddTool(new EndMillFlat(2, 1.5f));
     gMillSimulator.AddTool(new EndMillBall(4, 1, 4, 0.2f));
     gMillSimulator.AddTool(new EndMillTaper(3, 1, 90, 0.2f));
