@@ -20,84 +20,39 @@
  *                                                                         *
  ***************************************************************************/
 
-#ifndef __guidisplay_t__
-#define __guidisplay_t__
-#include "OpenGlWrapper.h"
-#include "Texture.h"
-#include "Shader.h"
-#include "TextureLoader.h"
+#ifndef __texture_loader_h__
+#define __texture_loader_h__
+#include <string>
+#include <vector>
 
 namespace MillSim
 {
-class MillSimulation;
 
-struct GuiItem
+struct TextureItem
 {
-    unsigned int vbo, vao;
-    int sx, sy;     // screen location
-    int actionKey;  // action key when item pressed
-    bool hidden;    // is item hidden
-    bool mouseOver;
-    TextureItem texItem;
+    const char* imageData;
+    int tx, ty;  // texture location
+    int w, h;    // item size
 };
 
-struct Vertex2D
-{
-    float x, y;
-    float tx, ty;
-};
-
-enum eGuiItems
-{
-    eGuiItemSlider,
-    eGuiItemThumb,
-    eGuiItemPause,
-    eGuiItemPlay,
-    eGuiItemSingleStep,
-    eGuiItemFaster,
-    eGuiItemRotate,
-    eGuiItemCharXImg,
-    eGuiItemChar0Img,
-    eGuiItemChar1Img,
-    eGuiItemChar4Img,
-    eGuiItemMax
-};
-
-
-class GuiDisplay
+class TextureLoader
 {
 public:
-    // GuiDisplay() {};
-    bool InutGui();
-    void Render(float progress);
-    void MouseCursorPos(int x, int y);
-    void MousePressed(int button, bool isPressed, bool isRunning);
-    void MouseDrag(int buttons, int dx, int dy);
-    void SetMillSimulator(MillSimulation* millSim)
-    {
-        mMillSim = millSim;
-    }
-    void UpdatePlayState(bool isRunning);
-    void UpdateSimSpeed(int speed);
+    TextureLoader(std::string imgFolder, std::vector<std::string> fileNames, int textureSize);
+    ~TextureLoader();
+    unsigned int* GetRawData();
+    TextureItem* GetTextureItem(int i);
 
-private:
-    bool GenerateGlItem(GuiItem* guiItem);
-    void RenderItem(int itemId);
+protected:
+    int ReadNextVal();
+    bool ReadNextPixel(unsigned int* pix, int* amount);
+    bool ParseImage(TextureItem* guiItem, unsigned int* buffPos, int stride);
 
-    vec3 mStdColor = {0.8f, 0.8f, 0.4f};
-    vec3 mHighlightColor = {1.0f, 1.0f, 0.9f};
-    vec3 mPressedColor = {1.0f, 0.5f, 0.0f};
-    vec3 mTextColor = {1.0f, 0.5f, 0.0f};
-
-    Shader mShader;
-    Texture mTexture;
-    eGuiItems mPressedItem = eGuiItemMax;
-    MillSimulation* mMillSim = nullptr;
-    unsigned int mIbo = 0;
-    int mThumbStartX = 0;
-    float mThumbMaxMotion = 0;
+protected:
+    unsigned int* mRawData = nullptr;
+    const char* mPixPos = 0;
+    std::string mImageFolder;
 };
 
 }  // namespace MillSim
-
-#endif  // __guidisplay_t__
+#endif  // !__texture_loader_h__

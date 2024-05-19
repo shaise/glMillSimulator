@@ -33,6 +33,7 @@
 #include "SimDisplay.h"
 #include "GuiDisplay.h"
 #include <sstream>
+#include <vector>
 
 namespace MillSim
 {
@@ -47,7 +48,7 @@ public:
     void SimNext();
     void InitSimulation(float quality);
     void AddTool(EndMill* tool);
-    void AddTool(const float* toolProfile, int numPoints, int toolid, float diameter);
+    void AddTool(const std::vector<float>& toolProfile, int toolid, float diameter);
     bool ToolExists(int toolid)
     {
         return GetTool(toolid) != nullptr;

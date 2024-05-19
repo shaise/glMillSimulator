@@ -31,34 +31,34 @@ using namespace MillSim;
 EndMillBall::EndMillBall(int toolid, float diameter, int nSections, float flatRadius):
 	EndMill(toolid, diameter)
 {
-	mNPoints = nSections + 2;
+	nPoints = nSections + 2;
 	if (flatRadius < 0.0001)
 		flatRadius = 0;
 	else
-		mNPoints++;
-	mProfPoints = (float*)malloc(PROFILE_BUFFER_SIZE(mNPoints) * sizeof(float));
-	if (mProfPoints == nullptr)
+		nPoints++;
+	profilePoints = (float*)malloc(PROFILE_BUFFER_SIZE(nPoints) * sizeof(float));
+	if (profilePoints == nullptr)
 		return;
 
-	float r2 = mRadius - flatRadius;
+	float r2 = radius - flatRadius;
 	if (r2 < 0.0001)
 		r2 = 0.0001f;
 	float astep =  (float)(PI / (2 * nSections));
 	int idx = 0;
-	SET_DUAL(mProfPoints, idx, mRadius, MILL_HEIGHT);
-	SET_DUAL(mProfPoints, idx, mRadius, r2);
+	SET_DUAL(profilePoints, idx, radius, MILL_HEIGHT);
+	SET_DUAL(profilePoints, idx, radius, r2);
 	float ang = astep;
 	for (int i = 1; i <nSections; i++, ang += astep)
-		SET_DUAL(mProfPoints, idx, flatRadius + r2 * cosf(ang), r2 - r2 * sinf(ang));
-	SET_DUAL(mProfPoints, idx, flatRadius, 0);
+		SET_DUAL(profilePoints, idx, flatRadius + r2 * cosf(ang), r2 - r2 * sinf(ang));
+	SET_DUAL(profilePoints, idx, flatRadius, 0);
 	if (flatRadius > 0)
-		SET_DUAL(mProfPoints, idx, 0, 0);
+		SET_DUAL(profilePoints, idx, 0, 0);
 	MirrorPointBuffer();
 	//GenerateDisplayLists();
 }
 
 EndMillBall::~EndMillBall()
 {
-	if (mProfPoints != nullptr)
-		free(mProfPoints);
+	if (profilePoints != nullptr)
+		free(profilePoints);
 }

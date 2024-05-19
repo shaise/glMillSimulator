@@ -112,7 +112,7 @@ void MillSimulation::InitSimulation(float quality)
 EndMill* MillSimulation::GetTool(int toolId)
 {
     for (int i = 0; i < mToolTable.size(); i++) {
-        if (mToolTable[i]->mToolId == toolId) {
+        if (mToolTable[i]->toolId == toolId) {
             return mToolTable[i];
         }
     }
@@ -131,18 +131,19 @@ void MillSimulation::RemoveTool(int toolId)
     }
 }
 
+
 void MillSimulation::AddTool(EndMill* tool)
 {
     // if we have another tool with same id, remove it
-    RemoveTool(tool->mToolId);
+    RemoveTool(tool->toolId);
     mToolTable.push_back(tool);
 }
 
-void MillSimulation::AddTool(const float* toolProfile, int numPoints, int toolid, float diameter)
+void MillSimulation::AddTool(const std::vector<float>& toolProfile, int toolid, float diameter)
 {
     // if we have another tool with same id, remove it
     RemoveTool(toolid);
-    EndMill* tool = new EndMill(toolProfile, numPoints, toolid, diameter);
+    EndMill* tool = new EndMill(toolProfile, toolid, diameter);
     mToolTable.push_back(tool);
 }
 
@@ -313,7 +314,7 @@ void MillSimulation::RenderSimulation()
         mat4x4_translate(tmat, toolPos[0], toolPos[1], toolPos[2]);
         // mat4x4_translate(tmat, toolPos.x, toolPos.y, toolPos.z);
         simDisplay.StartGeometryPass(toolColor, false);
-        p->mEndmill->mToolShape.Render(tmat, identityMat);
+        p->endmill->toolShape.Render(tmat, identityMat);
     }
 
     simDisplay.RenderLightObject();
@@ -324,7 +325,7 @@ void MillSimulation::Render()
     // set background
     glClearColor(0.6f, 0.8f, 1.0f, 1.0f);
     glClear(GL_COLOR_BUFFER_BIT | GL_DEPTH_BUFFER_BIT | GL_STENCIL_BUFFER_BIT);
-    simDisplay.PrepareDisplay(mStockObject.mCenter);
+    simDisplay.PrepareDisplay(mStockObject.center);
 
     // render the simulation offscreen in an FBO
     if (simDisplay.updateDisplay) {
@@ -332,7 +333,6 @@ void MillSimulation::Render()
         simDisplay.updateDisplay = false;
     }
     simDisplay.RenderResult();
-
 
     if (mDebug > 0) {
         mat4x4 test;

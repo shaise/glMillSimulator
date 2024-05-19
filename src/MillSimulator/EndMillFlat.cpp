@@ -28,11 +28,11 @@ using namespace MillSim;
 EndMillFlat::EndMillFlat(int toolid, float diameter) : EndMill(toolid, diameter)
 {
 	int idx = 0;
-	SET_DUAL(_profVerts, idx, mRadius, MILL_HEIGHT);
-	SET_DUAL(_profVerts, idx, mRadius, 0);
+	SET_DUAL(_profVerts, idx, radius, MILL_HEIGHT);
+	SET_DUAL(_profVerts, idx, radius, 0);
 	SET_DUAL(_profVerts, idx, 0, 0);
-	mNPoints = 3;
-	mProfPoints = _profVerts;
+	nPoints = 3;
+	profilePoints = _profVerts;
 	MirrorPointBuffer();
 	//GenerateDisplayLists();
 }

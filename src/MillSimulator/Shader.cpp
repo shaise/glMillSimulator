@@ -31,77 +31,77 @@ Shader* CurrentShader = nullptr;
 
 void Shader::UpdateModelMat(mat4x4 tmat, mat4x4 nmat)
 {
-    if (modelPos >= 0) {
-        glUniformMatrix4fv(modelPos, 1, GL_FALSE, (GLfloat*)tmat);
+    if (mModelPos >= 0) {
+        glUniformMatrix4fv(mModelPos, 1, GL_FALSE, (GLfloat*)tmat);
     }
-    if (normalRotPos >= 0) {
-        glUniformMatrix4fv(normalRotPos, 1, GL_FALSE, (GLfloat*)nmat);
+    if (mNormalRotPos >= 0) {
+        glUniformMatrix4fv(mNormalRotPos, 1, GL_FALSE, (GLfloat*)nmat);
     }
 }
 
 void Shader::UpdateProjectionMat(mat4x4 mat)
 {
-    if (projectionPos >= 0) {
-        glUniformMatrix4fv(projectionPos, 1, GL_FALSE, (GLfloat*)mat);
+    if (mProjectionPos >= 0) {
+        glUniformMatrix4fv(mProjectionPos, 1, GL_FALSE, (GLfloat*)mat);
     }
 }
 
 void Shader::UpdateViewMat(mat4x4 mat)
 {
-    if (viewPos >= 0) {
-        if (viewPos >= 0) {
-            glUniformMatrix4fv(viewPos, 1, GL_FALSE, (GLfloat*)mat);
+    if (mViewPos >= 0) {
+        if (mViewPos >= 0) {
+            glUniformMatrix4fv(mViewPos, 1, GL_FALSE, (GLfloat*)mat);
         }
     }
 }
 
 void Shader::UpdateEnvColor(vec3 lightPos, vec3 lightColor, vec3 ambient, float linearity)
 {
-    if (lightPosPos >= 0) {
-        glUniform3fv(lightPosPos, 1, lightPos);
+    if (mLightPosPos >= 0) {
+        glUniform3fv(mLightPosPos, 1, lightPos);
     }
-    if (lightColorPos >= 0) {
-        glUniform3fv(lightColorPos, 1, lightColor);
+    if (mLightColorPos >= 0) {
+        glUniform3fv(mLightColorPos, 1, lightColor);
     }
-    if (lightAmbientPos >= 0) {
-        glUniform3fv(lightAmbientPos, 1, ambient);
+    if (mLightAmbientPos >= 0) {
+        glUniform3fv(mLightAmbientPos, 1, ambient);
     }
-    if (lightLinearPos >= 0) {
-        glUniform1f(lightLinearPos, linearity);
+    if (mLightLinearPos >= 0) {
+        glUniform1f(mLightLinearPos, linearity);
     }
 }
 
 void Shader::UpdateObjColor(vec3 objColor)
 {
-    if (objectColorPos >= 0) {
-        glUniform3fv(objectColorPos, 1, objColor);
+    if (mObjectColorPos >= 0) {
+        glUniform3fv(mObjectColorPos, 1, objColor);
     }
 }
 
 void Shader::UpdateNormalState(bool isInverted)
 {
-    if (invertedNormalsPos >= 0) {
-        glUniform1i(invertedNormalsPos, isInverted);
+    if (mInvertedNormalsPos >= 0) {
+        glUniform1i(mInvertedNormalsPos, isInverted);
     }
 }
 
 void Shader::UpdateTextureSlot(int slot)
 {
-    if (texSlotPos >= 0) {
-        glUniform1i(texSlotPos, slot);
+    if (mTexSlotPos >= 0) {
+        glUniform1i(mTexSlotPos, slot);
     }
 }
 
 void Shader::UpdateMultiTexSlots(int albedoSlot, int posSlot, int NormalSlot)
 {
-    if (gAlbedoPos >= 0) {
-        glUniform1i(gAlbedoPos, albedoSlot);
+    if (mAlbedoPos >= 0) {
+        glUniform1i(mAlbedoPos, albedoSlot);
     }
-    if (gPositionPos >= 0) {
-        glUniform1i(gPositionPos, posSlot);
+    if (mPositionPos >= 0) {
+        glUniform1i(mPositionPos, posSlot);
     }
-    if (gNormalPos >= 0) {
-        glUniform1i(gNormalPos, NormalSlot);
+    if (mNormalPos >= 0) {
+        glUniform1i(mNormalPos, NormalSlot);
     }
 }
 
@@ -157,23 +157,22 @@ unsigned int Shader::CompileShader(const char* _vertShader, const char* _fragSha
     }
 
     // get all uniform parameters positions
-    modelPos = glGetUniformLocation(shaderId, "model");
-    normalRotPos = glGetUniformLocation(shaderId, "normalRot");
-    projectionPos = glGetUniformLocation(shaderId, "projection");
-    viewPos = glGetUniformLocation(shaderId, "view");
-    lightPosPos = glGetUniformLocation(shaderId, "lightPos");
-    lightColorPos = glGetUniformLocation(shaderId, "lightColor");
-    lightLinearPos = glGetUniformLocation(shaderId, "lightLinear");
-    lightAmbientPos = glGetUniformLocation(shaderId, "lightAmbient");
-    objectColorPos = glGetUniformLocation(shaderId, "objectColor");
-    texSlotPos = glGetUniformLocation(shaderId, "texSlot");
-    invertedNormalsPos = glGetUniformLocation(shaderId, "invertedNormals");
-    ssaoSamplesPos = glGetUniformLocation(shaderId, "ssaoSamples");
-    gAlbedoPos = glGetUniformLocation(shaderId, "gAlbedo");
-    gPositionPos = glGetUniformLocation(shaderId, "gPosition");
-    gNormalPos = glGetUniformLocation(shaderId, "gNormal");
-    gSsaoPos = glGetUniformLocation(shaderId, "gSsao");
-
+    mModelPos = glGetUniformLocation(shaderId, "model");
+    mNormalRotPos = glGetUniformLocation(shaderId, "normalRot");
+    mProjectionPos = glGetUniformLocation(shaderId, "projection");
+    mViewPos = glGetUniformLocation(shaderId, "view");
+    mLightPosPos = glGetUniformLocation(shaderId, "lightPos");
+    mLightColorPos = glGetUniformLocation(shaderId, "lightColor");
+    mLightLinearPos = glGetUniformLocation(shaderId, "lightLinear");
+    mLightAmbientPos = glGetUniformLocation(shaderId, "lightAmbient");
+    mObjectColorPos = glGetUniformLocation(shaderId, "objectColor");
+    mTexSlotPos = glGetUniformLocation(shaderId, "texSlot");
+    mInvertedNormalsPos = glGetUniformLocation(shaderId, "invertedNormals");
+    mSsaoSamplesPos = glGetUniformLocation(shaderId, "ssaoSamples");
+    mAlbedoPos = glGetUniformLocation(shaderId, "gAlbedo");
+    mPositionPos = glGetUniformLocation(shaderId, "gPosition");
+    mNormalPos = glGetUniformLocation(shaderId, "gNormal");
+    mSsaoPos = glGetUniformLocation(shaderId, "gSsao");
     Activate();
     return shaderId;
 }
