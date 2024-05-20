@@ -151,6 +151,7 @@ void MillSimulation::GlsimStart()
 {
     glClearColor(0, 0, 0, 0);
     glClear(GL_COLOR_BUFFER_BIT | GL_DEPTH_BUFFER_BIT | GL_STENCIL_BUFFER_BIT);
+    glDisable(GL_BLEND);
     glEnable(GL_CULL_FACE);
     glEnable(GL_DEPTH_TEST);
     glEnable(GL_STENCIL_TEST);
@@ -290,7 +291,7 @@ void MillSimulation::RenderSimulation()
     mStockObject.render();
 
     // render cuts (back faces of tools)
-    simDisplay.StartGeometryPass(cutColor, false);
+    simDisplay.StartGeometryPass(cutColor, true);
     GlsimRenderTools();
     for (int i = 0; i <= mPathStep; i++) {
         MillSim::MillPathSegment* p = MillPathSegments.at(i);
@@ -316,8 +317,6 @@ void MillSimulation::RenderSimulation()
         simDisplay.StartGeometryPass(toolColor, false);
         p->endmill->toolShape.Render(tmat, identityMat);
     }
-
-    simDisplay.RenderLightObject();
 }
 
 void MillSimulation::Render()
@@ -332,9 +331,10 @@ void MillSimulation::Render()
         RenderSimulation();
         simDisplay.updateDisplay = false;
     }
+        
     simDisplay.RenderResult();
 
-    if (mDebug > 0) {
+ /*   if (mDebug > 0) {
         mat4x4 test;
         mat4x4_identity(test);
         mat4x4_translate_in_place(test, 20, 20, 3);
@@ -345,7 +345,8 @@ void MillSimulation::Render()
             mDebug = 1;
         }
         p->render(mDebug);
-    }
+    }*/
+
     float progress = (float)mCurStep / mNTotalSteps;
     glBindFramebuffer(GL_FRAMEBUFFER, 0);
     guiDisplay.Render(progress);

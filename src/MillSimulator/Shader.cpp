@@ -507,7 +507,7 @@ const char* FragShaderStdLighting =
     "    vec3 diffuse = max(dot(Normal, lightDir), 0.0) * Diffuse * lightColor;  \n"
     // specular
     "    vec3 halfwayDir = normalize(lightDir + viewDir);    \n"
-    "    float spec = pow(max(dot(Normal, halfwayDir), 0.0), 8.0);  \n"
+    "    float spec = pow(max(dot(Normal, halfwayDir), 0.0), 16.0);  \n"
     "    vec3 specular = lightColor * spec;  \n"
     // attenuation
     "    float distance = length(lightPos - FragPos);  \n"

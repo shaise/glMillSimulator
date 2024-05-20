@@ -41,7 +41,6 @@ public:
     void StartGeometryPass(vec3 objColor, bool invertNormals);
     void RenderLightObject();
     void ScaleViewToStock(StockObject* obj);
-    void StartInvertedGeometryPass();
     void RenderResult();
     void TiltEye(float tiltStep);
     void RotateEye(float rotStep);
@@ -56,7 +55,7 @@ public:
 
 public:
     bool applySSAO = false;
-    bool updateDisplay = true;
+    bool updateDisplay = false;
     float maxFar = 100;
 
 protected:

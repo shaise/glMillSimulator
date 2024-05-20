@@ -54,7 +54,7 @@ void SimDisplay::InitShaders()
     // ligthing shader - apply standard ligting based on geometric buffers
     shaderLighting.CompileShader(VertShader2DFbo, FragShaderStdLighting);
     shaderLighting.UpdateMultiTexSlots(0, 1, 2);
-    shaderLighting.UpdateEnvColor(lightPos, lightColor, ambientCol, 0.0f);
+    shaderLighting.UpdateEnvColor(lightPos, lightColor, ambientCol, 0.01f);
 
     // SSAO shader - generate SSAO info and embed in texture buffer
     shaderSSAO.CompileShader(VertShader2DFbo, FragShaderSSAO);
@@ -141,7 +141,6 @@ void SimDisplay::CreateDisplayFbos()
     }
 
     glBindFramebuffer(GL_FRAMEBUFFER, 0);
-    glDrawBuffers(3, attachments);
 
 
     CreateFboQuad();
@@ -181,21 +180,14 @@ void SimDisplay::StartDepthPass()
 
 void SimDisplay::StartGeometryPass(vec3 objColor, bool invertNormals)
 {
+    glBindFramebuffer(GL_FRAMEBUFFER, mFbo);
+    glBindTexture(GL_TEXTURE_2D, mFboColTexture);
+    glBindTexture(GL_TEXTURE_2D, mFboPosTexture);
+    glBindTexture(GL_TEXTURE_2D, mFboNormTexture);
     shaderGeom.Activate();
     shaderGeom.UpdateNormalState(invertNormals);
     shaderGeom.UpdateViewMat(mMatLookAt);
     shaderGeom.UpdateObjColor(objColor);
-
-    //if (invertNormals) {
-    //    shaderInv3D.Activate();
-    //    shaderInv3D.UpdateViewMat(mMatLookAt);
-    //    shaderInv3D.UpdateObjColor(objColor);
-    //}
-    //else {
-    //    shader3D.Activate();
-    //    shader3D.UpdateViewMat(mMatLookAt);
-    //    shader3D.UpdateObjColor(objColor);
-    //}
 }
 
 void SimDisplay::RenderLightObject()
@@ -235,7 +227,9 @@ void SimDisplay::RenderResult()
     glBindTexture(GL_TEXTURE_2D, mFboNormTexture);
     glEnable(GL_BLEND);
     glBlendFunc(GL_SRC_ALPHA, GL_ONE_MINUS_SRC_ALPHA);
-    glUniform1i(glGetUniformLocation(shaderLighting.shaderId, "gAlbedo"), 0);
+    //glUniform1i(glGetUniformLocation(shaderLighting.shaderId, "gAlbedo"), 0);
+    //glUniform1i(glGetUniformLocation(shaderLighting.shaderId, "gPosition"), 1);
+    //glUniform1i(glGetUniformLocation(shaderLighting.shaderId, "gNormal"), 2);
     glDrawArrays(GL_TRIANGLES, 0, 6);
 }
 

@@ -116,7 +116,7 @@ protected:
     int mMouseButtonState = 0;
 
     bool mIsInStock = false;
-    bool mIsRotate = true;
+    bool mIsRotate = false;
     bool mSimPlaying = false;
     bool mSingleStep = false;
 
