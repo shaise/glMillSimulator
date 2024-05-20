@@ -49,9 +49,7 @@ void Shader::UpdateProjectionMat(mat4x4 mat)
 void Shader::UpdateViewMat(mat4x4 mat)
 {
     if (mViewPos >= 0) {
-        if (mViewPos >= 0) {
-            glUniformMatrix4fv(mViewPos, 1, GL_FALSE, (GLfloat*)mat);
-        }
+        glUniformMatrix4fv(mViewPos, 1, GL_FALSE, (GLfloat*)mat);
     }
 }
 
@@ -224,9 +222,9 @@ const char* VertShader3DInvNorm =
 
     "void main(void)  \n"
     "{  \n"
-    "	gl_Position = projection * view * model * vec4(aPosition, 1.0);  \n"
-    "	FragPos = vec3(model * vec4(aPosition, 1.0));  \n"
-    "	Normal = -vec3(normalRot * vec4(aNormal, 1.0));  \n"
+    "    gl_Position = projection * view * model * vec4(aPosition, 1.0);  \n"
+    "    FragPos = vec3(model * vec4(aPosition, 1.0));  \n"
+    "    Normal = -vec3(normalRot * vec4(aNormal, 1.0));  \n"
     "}  \n";
 
 
@@ -243,8 +241,8 @@ const char* VertShader2DTex =
 
     "void main(void)  \n"
     "{  \n"
-    "	   gl_Position = projection * model * vec4(aPosition, 0.0, 1.0);  \n"
-    "	   texCoord = aTexCoord;  \n"
+    "    gl_Position = projection * model * vec4(aPosition, 0.0, 1.0);  \n"
+    "    texCoord = aTexCoord;  \n"
     "}  \n";
 
 const char* FragShader2dTex =
@@ -259,7 +257,7 @@ const char* FragShader2dTex =
     "void main()  \n"
     "{  \n"
     "    vec4 texColor = texture(texSlot, texCoord);  \n"
-    "	   FragColor = vec4(objectColor, 1.0) * texColor;  \n"
+    "    FragColor = vec4(objectColor, 1.0) * texColor;  \n"
     "}  \n";
 
 
@@ -281,9 +279,9 @@ const char* FragShaderNorm =
     "    vec3 norm = normalize(Normal);  \n"
     "    vec3 lightDir = normalize(lightPos - FragPos);  \n"
     "    float diff = max(dot(norm, lightDir), 0.0);  \n"
-    "	 vec3 diffuse = diff * lightColor;  \n"
-    "	 vec3 result = (lightAmbient + diffuse) * objectColor;  \n"
-    "	 FragColor = vec4(result, 1.0);  \n"
+    "    vec3 diffuse = diff * lightColor;  \n"
+    "    vec3 result = (lightAmbient + diffuse) * objectColor;  \n"
+    "    FragColor = vec4(result, 1.0);  \n"
     "}  \n";
 
 const char* FragShaderFlat =
@@ -297,7 +295,7 @@ const char* FragShaderFlat =
 
     "void main()  \n"
     "{  \n"
-    "	  FragColor = vec4(objectColor, 1.0); \n"
+    "    FragColor = vec4(objectColor, 1.0); \n"
     "}  \n";
 
 
@@ -325,8 +323,8 @@ const char* FragShader2dFbo =
 
     "void main()  \n"
     "{  \n"
-    "      vec4 tc = texture(texSlot, texCoord);  \n"
-    "	   FragColor = tc;  \n"
+    "    vec4 tc = texture(texSlot, texCoord);  \n"
+    "    FragColor = tc;  \n"
     "}  \n";
 
 
@@ -541,6 +539,5 @@ const char* FragShaderSSAOBlur =
     "    }  \n"
     "    FragColor = result / (4.0 * 4.0);  \n"
     "}    \n";
-
 
 }  // namespace MillSim
