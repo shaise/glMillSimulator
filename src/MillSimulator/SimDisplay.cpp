@@ -23,8 +23,10 @@
 #include "SimDisplay.h"
 #include "linmath.h"
 #include "OpenGlWrapper.h"
+#include <random>
 
 #define GL_UBYTE GL_UNSIGNED_BYTE
+
 
 namespace MillSim
 {
@@ -53,18 +55,26 @@ void SimDisplay::InitShaders()
 
     // ligthing shader - apply standard ligting based on geometric buffers
     shaderLighting.CompileShader(VertShader2DFbo, FragShaderStdLighting);
-    shaderLighting.UpdateMultiTexSlots(0, 1, 2);
+    shaderLighting.UpdateAlbedoTexSlot(0);
+    shaderLighting.UpdatePositionTexSlot(1);
+    shaderLighting.UpdateNormalTexSlot(2);
     shaderLighting.UpdateEnvColor(lightPos, lightColor, ambientCol, 0.01f);
 
     // SSAO shader - generate SSAO info and embed in texture buffer
     shaderSSAO.CompileShader(VertShader2DFbo, FragShaderSSAO);
+    shaderSSAO.UpdateNoiseTexSlot(0);
+    shaderSSAO.UpdatePositionTexSlot(1);
+    shaderSSAO.UpdateNormalTexSlot(2);
 
     // SSAO blur shader - smooth generated SSAO texture
     shaderSSAOBlur.CompileShader(VertShader2DFbo, FragShaderSSAOBlur);
 
     // SSAO lighting shader - apply lightig modified by SSAO calculations
     shaderSSAOLighting.CompileShader(VertShader2DFbo, FragShaderSSAOLighting);
-    shaderSSAOLighting.UpdateMultiTexSlots(0, 1, 2);
+    shaderSSAOLighting.UpdateAlbedoTexSlot(0);
+    shaderSSAOLighting.UpdatePositionTexSlot(1);
+    shaderSSAOLighting.UpdateNormalTexSlot(2);
+    shaderSSAOLighting.UpdateSsaoTexSlot(3);
     shaderSSAOLighting.UpdateEnvColor(lightPos, lightColor, ambientCol, 0.0f);
 }
 
@@ -118,7 +128,6 @@ void SimDisplay::CreateDisplayFbos()
     glFramebufferTexture2D(GL_FRAMEBUFFER, GL_COLOR_ATTACHMENT2, GL_TEXTURE_2D, mFboNormTexture, 0);
 
 
-
     unsigned int attachments[3] = {GL_COLOR_ATTACHMENT0,
                                    GL_COLOR_ATTACHMENT1,
                                    GL_COLOR_ATTACHMENT2};
@@ -141,9 +150,87 @@ void SimDisplay::CreateDisplayFbos()
     }
 
     glBindFramebuffer(GL_FRAMEBUFFER, 0);
+}
 
 
-    CreateFboQuad();
+void SimDisplay::CreateSsaoFbos()
+{
+
+    mSsaoValid = true;
+
+    // setup framebuffer for SSAO processing
+    glGenFramebuffers(1, &mSsaoFbo);
+    glBindFramebuffer(GL_FRAMEBUFFER, mSsaoFbo);
+    // SSAO color buffer
+    glGenTextures(1, &mFboSsaoTexture);
+    glBindTexture(GL_TEXTURE_2D, mFboSsaoTexture);
+    glTexImage2D(GL_TEXTURE_2D, 0, GL_RED, WINDSIZE_W, WINDSIZE_H, 0, GL_RED, GL_FLOAT, NULL);
+    glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_MIN_FILTER, GL_NEAREST);
+    glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_MAG_FILTER, GL_NEAREST);
+    glFramebufferTexture2D(GL_FRAMEBUFFER, GL_COLOR_ATTACHMENT0, GL_TEXTURE_2D, mFboSsaoTexture, 0);
+    if (glCheckFramebufferStatus(GL_FRAMEBUFFER) != GL_FRAMEBUFFER_COMPLETE) {
+        mSsaoValid = false;
+        return;
+    }
+
+    // setup framebuffer for SSAO blur processing
+    glGenFramebuffers(1, &mSsaoBlurFbo);
+    glBindFramebuffer(GL_FRAMEBUFFER, mSsaoBlurFbo);
+    glGenTextures(1, &mFboSsaoBlurTexture);
+    glBindTexture(GL_TEXTURE_2D, mFboSsaoBlurTexture);
+    glTexImage2D(GL_TEXTURE_2D, 0, GL_RED, WINDSIZE_W, WINDSIZE_H, 0, GL_RED, GL_FLOAT, NULL);
+    glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_MIN_FILTER, GL_NEAREST);
+    glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_MAG_FILTER, GL_NEAREST);
+    glFramebufferTexture2D(GL_FRAMEBUFFER,
+                           GL_COLOR_ATTACHMENT0,
+                           GL_TEXTURE_2D,
+                           mFboSsaoBlurTexture,
+                           0);
+    if (glCheckFramebufferStatus(GL_FRAMEBUFFER) != GL_FRAMEBUFFER_COMPLETE) {
+        mSsaoValid = false;
+        return;
+    }
+
+    glBindFramebuffer(GL_FRAMEBUFFER, 0);
+
+    // generate sample kernel
+    std::uniform_real_distribution<GLfloat> randomFloats(0.0, 1.0);
+    std::default_random_engine generator;
+    for (unsigned int i = 0; i < 64; ++i) {
+        vec3 sample;
+        vec3_set(sample,
+                 randomFloats(generator) * 2.0f - 1.0f,
+                 randomFloats(generator) * 2.0f - 1.0f,
+                 randomFloats(generator));
+        vec3_norm(sample, sample);
+        vec3_scale(sample, sample, randomFloats(generator));
+        float scale = float(i) / 64.0f;
+
+        // scale samples s.t. they're more aligned to center of kernel
+        scale = Lerp(0.1f, 1.0f, scale * scale);
+        vec3_scale(sample, sample, scale);
+        mSsaoKernel.push_back(*(Point3D*)sample);
+    }
+    shaderSSAO.Activate();
+    shaderSSAO.UpdateKernelVals(mSsaoKernel.size(), &mSsaoKernel[0].x);
+
+    // generate noise texture
+    std::vector<Point3D> ssaoNoise;
+    for (unsigned int i = 0; i < 16; i++) {
+        vec3 noise;
+        vec3_set(noise,
+                 randomFloats(generator) * 2.0f - 1.0f,
+                 randomFloats(generator) * 2.0f - 1.0f,
+                 0.0f);  // rotate around z-axis (in tangent space)
+        ssaoNoise.push_back(*(Point3D*)noise);
+    }
+    glGenTextures(1, &mFboSsaoNoiseTexture);
+    glBindTexture(GL_TEXTURE_2D, mFboSsaoNoiseTexture);
+    glTexImage2D(GL_TEXTURE_2D, 0, GL_RGBA32F, 4, 4, 0, GL_RGB, GL_FLOAT, &ssaoNoise[0]);
+    glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_MIN_FILTER, GL_NEAREST);
+    glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_MAG_FILTER, GL_NEAREST);
+    glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_WRAP_S, GL_REPEAT);
+    glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_WRAP_T, GL_REPEAT);
 }
 
 
@@ -159,6 +246,9 @@ void SimDisplay::InitGL()
 
     InitShaders();
     CreateDisplayFbos();
+    CreateSsaoFbos();
+    CreateFboQuad();
+
     UpdateProjection();
 }
 
@@ -215,7 +305,7 @@ void SimDisplay::RenderResult()
 
     // display the sim result within the FBO
     shaderLighting.Activate();
-    //shaderSimFbo.Activate();
+    // shaderSimFbo.Activate();
     glBindVertexArray(mFboQuadVAO);
     glDisable(GL_DEPTH_TEST);
     glDisable(GL_CULL_FACE);
@@ -227,9 +317,6 @@ void SimDisplay::RenderResult()
     glBindTexture(GL_TEXTURE_2D, mFboNormTexture);
     glEnable(GL_BLEND);
     glBlendFunc(GL_SRC_ALPHA, GL_ONE_MINUS_SRC_ALPHA);
-    //glUniform1i(glGetUniformLocation(shaderLighting.shaderId, "gAlbedo"), 0);
-    //glUniform1i(glGetUniformLocation(shaderLighting.shaderId, "gPosition"), 1);
-    //glUniform1i(glGetUniformLocation(shaderLighting.shaderId, "gNormal"), 2);
     glDrawArrays(GL_TRIANGLES, 0, 6);
 }
 

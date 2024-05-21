@@ -26,10 +26,16 @@
 #include "GlUtils.h"
 #include "Shader.h"
 #include "StockObject.h"
+#include <vector>
 
 
 namespace MillSim
 {
+
+struct Point3D
+{
+    float x, y, z;
+};
 
 class SimDisplay
 {
@@ -61,7 +67,12 @@ public:
 protected:
     void InitShaders();
     void CreateDisplayFbos();
+    void CreateSsaoFbos();
     void CreateFboQuad();
+    float Lerp(float a, float b, float f)
+    {
+        return a + f * (b - a);
+    }
 
 protected:
     // shaders
@@ -91,13 +102,22 @@ protected:
     float mEyeX = 0.0f;
     float mEyeZ = 0.0f;
 
-    // frame buffer
+    // base frame buffer
     unsigned int mFbo;
     unsigned int mFboColTexture;
     unsigned int mFboPosTexture;
     unsigned int mFboNormTexture;
     unsigned int mRboDepthStencil;
     unsigned int mFboQuadVAO, mFboQuadVBO;
+
+    // ssao frame buffers
+    bool mSsaoValid = true;
+    std::vector<Point3D> mSsaoKernel;
+    unsigned int mSsaoFbo;
+    unsigned int mSsaoBlurFbo;
+    unsigned int mFboSsaoTexture;
+    unsigned int mFboSsaoBlurTexture;
+    unsigned int mFboSsaoNoiseTexture;
 };
 
 }  // namespace MillSim

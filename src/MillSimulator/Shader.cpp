@@ -90,18 +90,46 @@ void Shader::UpdateTextureSlot(int slot)
     }
 }
 
-void Shader::UpdateMultiTexSlots(int albedoSlot, int posSlot, int NormalSlot)
+void Shader::UpdateAlbedoTexSlot(int albedoSlot)
 {
     if (mAlbedoPos >= 0) {
         glUniform1i(mAlbedoPos, albedoSlot);
     }
+}
+
+void Shader::UpdatePositionTexSlot(int positionSlot)
+{
     if (mPositionPos >= 0) {
-        glUniform1i(mPositionPos, posSlot);
-    }
-    if (mNormalPos >= 0) {
-        glUniform1i(mNormalPos, NormalSlot);
+        glUniform1i(mPositionPos, positionSlot);
     }
 }
+
+void Shader::UpdateNormalTexSlot(int normalSlot)
+{
+    if (mNormalPos >= 0) {
+        glUniform1i(mNormalPos, normalSlot);
+    }
+}
+
+void Shader::UpdateNoiseTexSlot(int noiseSlot)
+{
+    if (mNoisePos >= 0) {
+        glUniform1i(mAlbedoPos, noiseSlot);
+    }
+}
+
+void Shader::UpdateSsaoTexSlot(int ssaoSlot)
+{
+    if (mSsaoPos >= 0) {
+        glUniform1i(mAlbedoPos, ssaoSlot);
+    }
+}
+
+void Shader::UpdateKernelVals(int nVals, float *vals)
+{
+    glUniform3fv(mSamplesLoc, nVals, vals);
+}
+
 
 bool CheckCompileResult(int shader)
 {
@@ -167,10 +195,12 @@ unsigned int Shader::CompileShader(const char* _vertShader, const char* _fragSha
     mTexSlotPos = glGetUniformLocation(shaderId, "texSlot");
     mInvertedNormalsPos = glGetUniformLocation(shaderId, "invertedNormals");
     mSsaoSamplesPos = glGetUniformLocation(shaderId, "ssaoSamples");
-    mAlbedoPos = glGetUniformLocation(shaderId, "gAlbedo");
-    mPositionPos = glGetUniformLocation(shaderId, "gPosition");
-    mNormalPos = glGetUniformLocation(shaderId, "gNormal");
-    mSsaoPos = glGetUniformLocation(shaderId, "gSsao");
+    mAlbedoPos = glGetUniformLocation(shaderId, "texAlbedo");
+    mPositionPos = glGetUniformLocation(shaderId, "texPosition");
+    mNormalPos = glGetUniformLocation(shaderId, "texNormal");
+    mSsaoPos = glGetUniformLocation(shaderId, "texSsao");
+    mNoisePos = glGetUniformLocation(shaderId, "texNoise");
+    mSamplesLoc = glGetUniformLocation(shaderId, "ssaoSamples");
     Activate();
     return shaderId;
 }
@@ -355,9 +385,9 @@ const char* VertShaderGeom =
 
 const char* FragShaderGeom =
     "#version 330 core  \n"  // ----->   add long remark for a uniform auto formatting
-    "layout (location = 0) out vec4 gAlbedo;  \n"
-    "layout (location = 1) out vec3 gPosition;  \n"
-    "layout (location = 2) out vec3 gNormal;  \n"
+    "layout (location = 0) out vec4 texAlbedo;  \n"
+    "layout (location = 1) out vec3 texPosition;  \n"
+    "layout (location = 2) out vec3 texNormal;  \n"
 
     "in vec3 FragPos;  \n"
     "in vec3 Normal;  \n"
@@ -367,11 +397,11 @@ const char* FragShaderGeom =
     "void main()  \n"
     "{      \n"
     // store the fragment position vector in the first gbuffer texture
-    "    gPosition = FragPos;  \n"
+    "    texPosition = FragPos;  \n"
     // also store the per-fragment normals into the gbuffer
-    "    gNormal = normalize(Normal);  \n"
+    "    texNormal = normalize(Normal);  \n"
     // and the diffuse per-fragment color
-    "    gAlbedo = vec4(objectColor, 1.0f);  \n"
+    "    texAlbedo = vec4(objectColor, 1.0f);  \n"
     "}  \n";
 
 const char* FragShaderSSAO =
@@ -380,8 +410,8 @@ const char* FragShaderSSAO =
 
     "in vec2 texCoord;  \n"
 
-    "uniform sampler2D gPosition;  \n"
-    "uniform sampler2D gNormal;  \n"
+    "uniform sampler2D texPosition;  \n"
+    "uniform sampler2D texNormal;  \n"
     "uniform sampler2D texNoise;  \n"
 
     "uniform vec3 ssaoSamples[64];  \n"
@@ -399,8 +429,8 @@ const char* FragShaderSSAO =
     "void main()  \n"
     "{  \n"
     // get input for SSAO algorithm
-    "    vec3 fragPos = texture(gPosition, texCoord).xyz;  \n"
-    "    vec3 normal = normalize(texture(gNormal, texCoord).rgb);  \n"
+    "    vec3 fragPos = texture(texPosition, texCoord).xyz;  \n"
+    "    vec3 normal = normalize(texture(texNormal, texCoord).rgb);  \n"
     "    vec3 randomVec = normalize(texture(texNoise, texCoord * noiseScale).xyz);  \n"
     // create TBN change-of-basis matrix: from tangent-space to view-space
     "    vec3 tangent = normalize(randomVec - normal * dot(randomVec, normal));  \n"
@@ -421,7 +451,7 @@ const char* FragShaderSSAO =
     "        offset.xyz = offset.xyz * 0.5 + 0.5;  \n"  // transform to range 0.0 - 1.0
 
     // get sample depth
-    "        float sampleDepth = texture(gPosition, offset.xy).z;  \n"  // get depth value of kernel
+    "        float sampleDepth = texture(texPosition, offset.xy).z;  \n"  // get depth value of kernel
                                                                         // sample
 
     // range check & accumulate
@@ -439,10 +469,10 @@ const char* FragShaderSSAOLighting =
 
     "in vec2 texCoord;  \n"
 
-    "uniform sampler2D gPosition;  \n"
-    "uniform sampler2D gNormal;  \n"
-    "uniform sampler2D gAlbedo;  \n"
-    "uniform sampler2D gSsao;  \n"
+    "uniform sampler2D texAlbedo;  \n"
+    "uniform sampler2D texPosition;  \n"
+    "uniform sampler2D texNormal;  \n"
+    "uniform sampler2D texSsao;  \n"
 
     "uniform vec3 lightPos;  \n"
     "uniform vec3 lightColor;  \n"
@@ -452,11 +482,11 @@ const char* FragShaderSSAOLighting =
     "void main()  \n"
     "{               \n"
     // retrieve data from gbuffer
-    "    vec3 FragPos = texture(gPosition, texCoord).rgb;  \n"
-    "    vec3 Normal = texture(gNormal, texCoord).rgb;  \n"
-    "    vec4 DiffuseA = texture(gAlbedo, texCoord);  \n"
+    "    vec3 FragPos = texture(texPosition, texCoord).rgb;  \n"
+    "    vec3 Normal = texture(texNormal, texCoord).rgb;  \n"
+    "    vec4 DiffuseA = texture(texAlbedo, texCoord);  \n"
     "    vec3 Diffuse = DiffuseA.rgb;  \n"
-    "    float AmbientOcclusion = texture(gSsao, texCoord).r;  \n"
+    "    float AmbientOcclusion = texture(texSsao, texCoord).r;  \n"
 
     // then calculate lighting as usual
     "    vec3 lighting = lightAmbient * Diffuse * AmbientOcclusion;  \n"
@@ -482,9 +512,9 @@ const char* FragShaderStdLighting =
 
     "in vec2 texCoord;  \n"
 
-    "uniform sampler2D gAlbedo;  \n"
-    "uniform sampler2D gPosition;  \n"
-    "uniform sampler2D gNormal;  \n"
+    "uniform sampler2D texAlbedo;  \n"
+    "uniform sampler2D texPosition;  \n"
+    "uniform sampler2D texNormal;  \n"
 
     "uniform vec3 lightPos;  \n"
     "uniform vec3 lightColor;  \n"
@@ -494,10 +524,10 @@ const char* FragShaderStdLighting =
     "void main()  \n"
     "{               \n"
     // retrieve data from gbuffer
-    "    vec4 DiffuseA = texture(gAlbedo, texCoord);  \n"
+    "    vec4 DiffuseA = texture(texAlbedo, texCoord);  \n"
     "    vec3 Diffuse = DiffuseA.rgb;  \n"
-    "    vec3 FragPos = texture(gPosition, texCoord).rgb;  \n"
-    "    vec3 Normal = texture(gNormal, texCoord).rgb;  \n"
+    "    vec3 FragPos = texture(texPosition, texCoord).rgb;  \n"
+    "    vec3 Normal = texture(texNormal, texCoord).rgb;  \n"
 
     // then calculate lighting as usual
     "    vec3 lighting  = lightAmbient * Diffuse;   \n"

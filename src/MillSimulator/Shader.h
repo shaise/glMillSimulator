@@ -43,7 +43,12 @@ public:
     void UpdateObjColor(vec3 objColor);
     void UpdateNormalState(bool isInverted);
     void UpdateTextureSlot(int slot);
-    void UpdateMultiTexSlots(int albedoSlot, int posSlot, int NormalSlot);
+    void UpdateAlbedoTexSlot(int albedoSlot);
+    void UpdatePositionTexSlot(int positionSlot);
+    void UpdateNormalTexSlot(int normalSlot);
+    void UpdateNoiseTexSlot(int noiseSlot);
+    void UpdateSsaoTexSlot(int ssaoSlot);
+    void UpdateKernelVals(int nVals, float *vals);
     unsigned int CompileShader(const char* vertShader, const char* fragShader);
     void Activate();
     bool IsValid()
@@ -69,6 +74,8 @@ protected:
     int mPositionPos = -1;
     int mNormalPos = -1;
     int mSsaoPos = -1;
+    int mNoisePos = -1;
+    int mSamplesLoc = -1;
 
     const char* vertShader = nullptr;
     const char* fragShader = nullptr;
