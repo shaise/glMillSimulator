@@ -406,13 +406,13 @@ const char* FragShaderGeom =
 
 const char* FragShaderSSAO =
     "#version 330 core  \n"  // ----->   add long remark for a uniform auto formatting
-    "out float FragColor;  \n"
+    "out vec4 FragColor;  \n"
 
     "in vec2 texCoord;  \n"
 
+    "uniform sampler2D texNoise;  \n"
     "uniform sampler2D texPosition;  \n"
     "uniform sampler2D texNormal;  \n"
-    "uniform sampler2D texNoise;  \n"
 
     "uniform vec3 ssaoSamples[64];  \n"
 
@@ -460,7 +460,7 @@ const char* FragShaderSSAO =
     " \n"
     "    }  \n"
     "    occlusion = 1.0 - (occlusion / kernelSize);  \n"
-    "    FragColor = occlusion;  \n"
+    "    FragColor = vec4(0.2f, 0.0f, 0.0f, 1.0f); //occlusion;  \n"
     "}  \n";
 
 const char* FragShaderSSAOLighting =
@@ -482,10 +482,10 @@ const char* FragShaderSSAOLighting =
     "void main()  \n"
     "{               \n"
     // retrieve data from gbuffer
-    "    vec3 FragPos = texture(texPosition, texCoord).rgb;  \n"
-    "    vec3 Normal = texture(texNormal, texCoord).rgb;  \n"
     "    vec4 DiffuseA = texture(texAlbedo, texCoord);  \n"
     "    vec3 Diffuse = DiffuseA.rgb;  \n"
+    "    vec3 FragPos = texture(texPosition, texCoord).rgb;  \n"
+    "    vec3 Normal = texture(texNormal, texCoord).rgb;  \n"
     "    float AmbientOcclusion = texture(texSsao, texCoord).r;  \n"
 
     // then calculate lighting as usual
@@ -496,14 +496,14 @@ const char* FragShaderSSAOLighting =
     "    vec3 diffuse = max(dot(Normal, lightDir), 0.0) * Diffuse * lightColor;  \n"
     // specular
     "    vec3 halfwayDir = normalize(lightDir + viewDir);    \n"
-    "    float spec = pow(max(dot(Normal, halfwayDir), 0.0), 8.0);  \n"
+    "    float spec = pow(max(dot(Normal, halfwayDir), 0.0), 16.0);  \n"
     "    vec3 specular = lightColor * spec;  \n"
     // attenuation
     "    float distance = length(lightPos - FragPos);  \n"
     "    float attenuation = 1.0 / (1.0 + lightLinear * distance);  \n"
     "    lighting += (diffuse + specular) * attenuation;  \n"
 
-    "    FragColor = vec4(lighting, DiffuseA.a);  \n"
+    "    FragColor = vec4(AmbientOcclusion,0.0f,AmbientOcclusion, DiffuseA.a);  \n"
     "}  \n";
 
 const char* FragShaderStdLighting =
@@ -553,18 +553,18 @@ const char* FragShaderSSAOBlur =
 
     "in vec2 texCoord;  \n"
 
-    "uniform sampler2D ssaoInput;  \n"
+    "uniform sampler2D texSsao;  \n"
 
     "void main()   \n"
     "{  \n"
-    "    vec2 texelSize = 1.0 / vec2(textureSize(ssaoInput, 0));  \n"
+    "    vec2 texelSize = 1.0 / vec2(textureSize(texSsao, 0));  \n"
     "    float result = 0.0;  \n"
     "    for (int x = -2; x < 2; ++x)   \n"
     "    {  \n"
     "        for (int y = -2; y < 2; ++y)   \n"
     "        {  \n"
     "            vec2 offset = vec2(float(x), float(y)) * texelSize;  \n"
-    "            result += texture(ssaoInput, texCoord + offset).r;  \n"
+    "            result += texture(texSsao, texCoord + offset).r;  \n"
     "        }  \n"
     "    }  \n"
     "    FragColor = result / (4.0 * 4.0);  \n"
