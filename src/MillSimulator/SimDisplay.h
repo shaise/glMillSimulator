@@ -48,6 +48,8 @@ public:
     void RenderLightObject();
     void ScaleViewToStock(StockObject* obj);
     void RenderResult();
+    void RenderResultStandard();
+    void RenderResultSSAO();
     void TiltEye(float tiltStep);
     void RotateEye(float rotStep);
     void MoveEye(float x, float z);

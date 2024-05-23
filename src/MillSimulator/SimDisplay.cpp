@@ -68,6 +68,7 @@ void SimDisplay::InitShaders()
 
     // SSAO blur shader - smooth generated SSAO texture
     shaderSSAOBlur.CompileShader(VertShader2DFbo, FragShaderSSAOBlur);
+    shaderSSAOBlur.UpdateSsaoTexSlot(0);
 
     // SSAO lighting shader - apply lightig modified by SSAO calculations
     shaderSSAOLighting.CompileShader(VertShader2DFbo, FragShaderSSAOLighting);
@@ -75,7 +76,7 @@ void SimDisplay::InitShaders()
     shaderSSAOLighting.UpdatePositionTexSlot(1);
     shaderSSAOLighting.UpdateNormalTexSlot(2);
     shaderSSAOLighting.UpdateSsaoTexSlot(3);
-    shaderSSAOLighting.UpdateEnvColor(lightPos, lightColor, ambientCol, 0.0f);
+    shaderSSAOLighting.UpdateEnvColor(lightPos, lightColor, ambientCol, 0.01f);
 }
 
 void SimDisplay::CreateFboQuad()
@@ -271,13 +272,13 @@ void SimDisplay::StartDepthPass()
 void SimDisplay::StartGeometryPass(vec3 objColor, bool invertNormals)
 {
     glBindFramebuffer(GL_FRAMEBUFFER, mFbo);
-    glBindTexture(GL_TEXTURE_2D, mFboColTexture);
-    glBindTexture(GL_TEXTURE_2D, mFboPosTexture);
-    glBindTexture(GL_TEXTURE_2D, mFboNormTexture);
     shaderGeom.Activate();
     shaderGeom.UpdateNormalState(invertNormals);
     shaderGeom.UpdateViewMat(mMatLookAt);
     shaderGeom.UpdateObjColor(objColor);
+    //glBindTexture(GL_TEXTURE_2D, mFboColTexture);
+    //glBindTexture(GL_TEXTURE_2D, mFboPosTexture);
+    //glBindTexture(GL_TEXTURE_2D, mFboNormTexture);
 }
 
 void SimDisplay::RenderLightObject()
@@ -300,6 +301,16 @@ void SimDisplay::ScaleViewToStock(StockObject* obj)
 
 void SimDisplay::RenderResult()
 {
+    if (mSsaoValid) {
+        RenderResultSSAO();
+    }
+    else {
+        RenderResultStandard();
+    }
+}
+
+void SimDisplay::RenderResultStandard()
+{
     // set default frame buffer
     glBindFramebuffer(GL_FRAMEBUFFER, 0);
 
@@ -317,6 +328,58 @@ void SimDisplay::RenderResult()
     glBindTexture(GL_TEXTURE_2D, mFboNormTexture);
     glEnable(GL_BLEND);
     glBlendFunc(GL_SRC_ALPHA, GL_ONE_MINUS_SRC_ALPHA);
+    glDrawArrays(GL_TRIANGLES, 0, 6);
+}
+
+void SimDisplay::RenderResultSSAO()
+{
+    glDisable(GL_DEPTH_TEST);
+    glDisable(GL_CULL_FACE);
+    // generate SSAO texture
+    glBindFramebuffer(GL_FRAMEBUFFER, mSsaoFbo);
+    glClearColor(0.2f, 0, 0, 1.0f);
+    glClear(GL_COLOR_BUFFER_BIT);
+    //shaderSSAO.Activate();
+
+    //glActiveTexture(GL_TEXTURE0);
+    //glBindTexture(GL_TEXTURE_2D, mFboSsaoNoiseTexture);
+    //glActiveTexture(GL_TEXTURE1);
+    //glBindTexture(GL_TEXTURE_2D, mFboPosTexture);
+    //glActiveTexture(GL_TEXTURE2);
+    //glBindTexture(GL_TEXTURE_2D, mFboNormTexture);
+    //glBindVertexArray(mFboQuadVAO);
+    //glDrawArrays(GL_TRIANGLES, 0, 6);
+    //glBindFramebuffer(GL_FRAMEBUFFER, 0);
+
+    // blur SSAO texture to remove noise
+    //glBindFramebuffer(GL_FRAMEBUFFER, mSsaoBlurFbo);
+    //glClear(GL_COLOR_BUFFER_BIT);
+    //shaderSSAOBlur.Activate();
+    //glActiveTexture(GL_TEXTURE0);
+    //glBindTexture(GL_TEXTURE_2D, mFboSsaoTexture);
+    //glBindVertexArray(mFboQuadVAO);
+    //glDrawArrays(GL_TRIANGLES, 0, 6);
+
+    glBindFramebuffer(GL_FRAMEBUFFER, 0);
+
+    // lighting pass: deferred Blinn-Phong lighting with added screen-space ambient occlusion
+    glClear(GL_COLOR_BUFFER_BIT | GL_DEPTH_BUFFER_BIT);
+    shaderSSAOLighting.Activate();
+    shaderSSAOLighting.UpdateAlbedoTexSlot(1);
+    shaderSSAOLighting.UpdatePositionTexSlot(2);
+    shaderSSAOLighting.UpdateNormalTexSlot(3);
+    shaderSSAOLighting.UpdateSsaoTexSlot(0);
+    glActiveTexture(GL_TEXTURE1);
+    glBindTexture(GL_TEXTURE_2D, mFboColTexture);
+    glActiveTexture(GL_TEXTURE2);
+    glBindTexture(GL_TEXTURE_2D, mFboPosTexture);
+    glActiveTexture(GL_TEXTURE3);
+    glBindTexture(GL_TEXTURE_2D, mFboNormTexture);
+    glActiveTexture(GL_TEXTURE0);  // add extra SSAO texture to lighting pass
+    glBindTexture(GL_TEXTURE_2D, mFboSsaoTexture);
+    glEnable(GL_BLEND);
+    glBlendFunc(GL_SRC_ALPHA, GL_ONE_MINUS_SRC_ALPHA);
+    glBindVertexArray(mFboQuadVAO);
     glDrawArrays(GL_TRIANGLES, 0, 6);
 }
 
@@ -387,6 +450,8 @@ void SimDisplay::UpdateProjection()
     shaderFlat.UpdateProjectionMat(projmat);
     shaderGeom.Activate();
     shaderGeom.UpdateProjectionMat(projmat);
+    shaderSSAO.Activate();
+    shaderSSAO.UpdateProjectionMat(projmat);
 }
 
 
