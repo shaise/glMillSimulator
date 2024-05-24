@@ -51,7 +51,6 @@ void SimDisplay::InitShaders()
 
     // geometric shader - generate texture with all geometric info for further processing
     shaderGeom.CompileShader(VertShaderGeom, FragShaderGeom);
-    shaderInv3D.UpdateEnvColor(lightPos, lightColor, ambientCol, 0.0f);
 
     // ligthing shader - apply standard ligting based on geometric buffers
     shaderLighting.CompileShader(VertShader2DFbo, FragShaderStdLighting);
@@ -276,9 +275,6 @@ void SimDisplay::StartGeometryPass(vec3 objColor, bool invertNormals)
     shaderGeom.UpdateNormalState(invertNormals);
     shaderGeom.UpdateViewMat(mMatLookAt);
     shaderGeom.UpdateObjColor(objColor);
-    //glBindTexture(GL_TEXTURE_2D, mFboColTexture);
-    //glBindTexture(GL_TEXTURE_2D, mFboPosTexture);
-    //glBindTexture(GL_TEXTURE_2D, mFboNormTexture);
 }
 
 void SimDisplay::RenderLightObject()
@@ -337,46 +333,46 @@ void SimDisplay::RenderResultSSAO()
     glDisable(GL_CULL_FACE);
     // generate SSAO texture
     glBindFramebuffer(GL_FRAMEBUFFER, mSsaoFbo);
-    glClearColor(0.2f, 0, 0, 1.0f);
-    glClear(GL_COLOR_BUFFER_BIT);
-    //shaderSSAO.Activate();
+    //glClearColor(1.0f, 0.5f, 0.0f, 1.0f);
+    //glClear(GL_COLOR_BUFFER_BIT);
+    shaderSSAO.Activate();
 
-    //glActiveTexture(GL_TEXTURE0);
-    //glBindTexture(GL_TEXTURE_2D, mFboSsaoNoiseTexture);
-    //glActiveTexture(GL_TEXTURE1);
-    //glBindTexture(GL_TEXTURE_2D, mFboPosTexture);
-    //glActiveTexture(GL_TEXTURE2);
-    //glBindTexture(GL_TEXTURE_2D, mFboNormTexture);
-    //glBindVertexArray(mFboQuadVAO);
-    //glDrawArrays(GL_TRIANGLES, 0, 6);
-    //glBindFramebuffer(GL_FRAMEBUFFER, 0);
+    glActiveTexture(GL_TEXTURE0);
+    glBindTexture(GL_TEXTURE_2D, mFboSsaoNoiseTexture);
+    glActiveTexture(GL_TEXTURE1);
+    glBindTexture(GL_TEXTURE_2D, mFboPosTexture);
+    glActiveTexture(GL_TEXTURE2);
+    glBindTexture(GL_TEXTURE_2D, mFboNormTexture);
+    glBindVertexArray(mFboQuadVAO);
+    glDrawArrays(GL_TRIANGLES, 0, 6);
+    glBindFramebuffer(GL_FRAMEBUFFER, 0);
 
     // blur SSAO texture to remove noise
-    //glBindFramebuffer(GL_FRAMEBUFFER, mSsaoBlurFbo);
-    //glClear(GL_COLOR_BUFFER_BIT);
-    //shaderSSAOBlur.Activate();
-    //glActiveTexture(GL_TEXTURE0);
-    //glBindTexture(GL_TEXTURE_2D, mFboSsaoTexture);
-    //glBindVertexArray(mFboQuadVAO);
-    //glDrawArrays(GL_TRIANGLES, 0, 6);
-
+    glBindFramebuffer(GL_FRAMEBUFFER, mSsaoBlurFbo);
+    glClear(GL_COLOR_BUFFER_BIT);
+    shaderSSAOBlur.Activate();
+    glActiveTexture(GL_TEXTURE0);
+    glBindTexture(GL_TEXTURE_2D, mFboSsaoTexture);
+    glBindVertexArray(mFboQuadVAO);
+    glDrawArrays(GL_TRIANGLES, 0, 6);
     glBindFramebuffer(GL_FRAMEBUFFER, 0);
 
     // lighting pass: deferred Blinn-Phong lighting with added screen-space ambient occlusion
+    glClearColor(0.6f, 0.8f, 1.0f, 1.0f);
     glClear(GL_COLOR_BUFFER_BIT | GL_DEPTH_BUFFER_BIT);
     shaderSSAOLighting.Activate();
-    shaderSSAOLighting.UpdateAlbedoTexSlot(1);
-    shaderSSAOLighting.UpdatePositionTexSlot(2);
-    shaderSSAOLighting.UpdateNormalTexSlot(3);
-    shaderSSAOLighting.UpdateSsaoTexSlot(0);
-    glActiveTexture(GL_TEXTURE1);
+    shaderSSAOLighting.UpdateAlbedoTexSlot(0);
+    shaderSSAOLighting.UpdatePositionTexSlot(1);
+    shaderSSAOLighting.UpdateNormalTexSlot(2);
+    shaderSSAOLighting.UpdateSsaoTexSlot(3);
+    glActiveTexture(GL_TEXTURE0);
     glBindTexture(GL_TEXTURE_2D, mFboColTexture);
-    glActiveTexture(GL_TEXTURE2);
+    glActiveTexture(GL_TEXTURE1);
     glBindTexture(GL_TEXTURE_2D, mFboPosTexture);
-    glActiveTexture(GL_TEXTURE3);
+    glActiveTexture(GL_TEXTURE2);
     glBindTexture(GL_TEXTURE_2D, mFboNormTexture);
-    glActiveTexture(GL_TEXTURE0);  // add extra SSAO texture to lighting pass
-    glBindTexture(GL_TEXTURE_2D, mFboSsaoTexture);
+    glActiveTexture(GL_TEXTURE3);  // add extra SSAO texture to lighting pass
+    glBindTexture(GL_TEXTURE_2D, mFboSsaoBlurTexture);
     glEnable(GL_BLEND);
     glBlendFunc(GL_SRC_ALPHA, GL_ONE_MINUS_SRC_ALPHA);
     glBindVertexArray(mFboQuadVAO);

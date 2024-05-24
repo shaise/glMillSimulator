@@ -121,7 +121,7 @@ void Shader::UpdateNoiseTexSlot(int noiseSlot)
 void Shader::UpdateSsaoTexSlot(int ssaoSlot)
 {
     if (mSsaoPos >= 0) {
-        glUniform1i(mAlbedoPos, ssaoSlot);
+        glUniform1i(mSsaoPos, ssaoSlot);
     }
 }
 
@@ -418,7 +418,7 @@ const char* FragShaderSSAO =
 
     // parameters (you'd probably want to use them as uniforms to more easily tweak the effect)
     "int kernelSize = 64;  \n"
-    "float radius = 0.5;  \n"
+    "float radius = 2.5f;  \n"
     "float bias = 0.025;  \n"
 
     // tile noise texture over screen based on screen dimensions divided by noise size
@@ -455,12 +455,11 @@ const char* FragShaderSSAO =
                                                                         // sample
 
     // range check & accumulate
-    "        float rangeCheck = smoothstep(0.0, 1.0, radius / abs(fragPos.z - sampleDepth));  \n"
-    "        occlusion += (sampleDepth >= samplePos.z + bias ? 1.0 : 0.0) * rangeCheck;            "
-    " \n"
+    "        float rangeCheck = smoothstep(0.0, 1.0, radius * 0.1f / abs(fragPos.z - sampleDepth));  \n"
+    "        occlusion += (sampleDepth >= samplePos.z + bias ? 1.0 : 0.0) * rangeCheck;  \n"
     "    }  \n"
     "    occlusion = 1.0 - (occlusion / kernelSize);  \n"
-    "    FragColor = vec4(0.2f, 0.0f, 0.0f, 1.0f); //occlusion;  \n"
+    "    FragColor = vec4(pow(occlusion, 2), 0, 0, 1);  \n"
     "}  \n";
 
 const char* FragShaderSSAOLighting =
@@ -469,15 +468,16 @@ const char* FragShaderSSAOLighting =
 
     "in vec2 texCoord;  \n"
 
+    "uniform sampler2D texSsao;  \n"
     "uniform sampler2D texAlbedo;  \n"
     "uniform sampler2D texPosition;  \n"
     "uniform sampler2D texNormal;  \n"
-    "uniform sampler2D texSsao;  \n"
 
     "uniform vec3 lightPos;  \n"
     "uniform vec3 lightColor;  \n"
-    "uniform float lightLinear;  \n"
     "uniform vec3 lightAmbient;  \n"
+
+    "uniform float lightLinear;  \n"
 
     "void main()  \n"
     "{               \n"
@@ -489,7 +489,7 @@ const char* FragShaderSSAOLighting =
     "    float AmbientOcclusion = texture(texSsao, texCoord).r;  \n"
 
     // then calculate lighting as usual
-    "    vec3 lighting = lightAmbient * Diffuse * AmbientOcclusion;  \n"
+    "    vec3 lighting = lightAmbient * Diffuse * AmbientOcclusion;  \n "
     "    vec3 viewDir  = normalize(-FragPos);  \n"  // viewpos is (0.0.0)
     // diffuse
     "    vec3 lightDir = normalize(lightPos - FragPos);  \n"
@@ -503,7 +503,7 @@ const char* FragShaderSSAOLighting =
     "    float attenuation = 1.0 / (1.0 + lightLinear * distance);  \n"
     "    lighting += (diffuse + specular) * attenuation;  \n"
 
-    "    FragColor = vec4(AmbientOcclusion,0.0f,AmbientOcclusion, DiffuseA.a);  \n"
+    "    FragColor = vec4(lighting, DiffuseA.a);  \n"
     "}  \n";
 
 const char* FragShaderStdLighting =
@@ -549,7 +549,7 @@ const char* FragShaderStdLighting =
 
 const char* FragShaderSSAOBlur =
     "#version 330 core  \n"
-    "out float FragColor;  \n"
+    "out vec4 FragColor;  \n"
 
     "in vec2 texCoord;  \n"
 
@@ -559,15 +559,15 @@ const char* FragShaderSSAOBlur =
     "{  \n"
     "    vec2 texelSize = 1.0 / vec2(textureSize(texSsao, 0));  \n"
     "    float result = 0.0;  \n"
-    "    for (int x = -2; x < 2; ++x)   \n"
+    "    for (int x = -2; x <= 1; ++x)   \n"
     "    {  \n"
-    "        for (int y = -2; y < 2; ++y)   \n"
+    "        for (int y = -2; y <= 1; ++y)   \n"
     "        {  \n"
     "            vec2 offset = vec2(float(x), float(y)) * texelSize;  \n"
     "            result += texture(texSsao, texCoord + offset).r;  \n"
     "        }  \n"
     "    }  \n"
-    "    FragColor = result / (4.0 * 4.0);  \n"
+    "    FragColor = vec4(result / (4.0 * 4.0), 0, 0, 1);  \n"
     "}    \n";
 
 }  // namespace MillSim

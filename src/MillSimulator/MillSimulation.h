@@ -98,8 +98,8 @@ protected:
 
     StockObject mStockObject;
 
-    vec3 stockColor = {0.7f, 0.7f, 0.7f};
-    vec3 cutColor = {0.4f, 0.7f, 0.4f};
+    vec3 stockColor = {0.4f, 0.5f, 0.7f};
+    vec3 cutColor = {0.5f, 0.8f, 0.5f};
     vec3 toolColor = {0.4f, 0.4f, 0.7f};
 
     int mCurStep = 0;
