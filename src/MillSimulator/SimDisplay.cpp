@@ -237,6 +237,23 @@ void SimDisplay::CreateSsaoFbos()
 SimDisplay::~SimDisplay()
 {
     glDeleteFramebuffers(1, &mFbo);
+    glDeleteFramebuffers(1, &mSsaoFbo);
+    glDeleteFramebuffers(1, &mSsaoBlurFbo);
+    glDeleteTextures(1, &mFboColTexture);
+    glDeleteTextures(1, &mFboPosTexture);
+    glDeleteTextures(1, &mFboNormTexture);
+    glDeleteTextures(1, &mFboNormTexture);
+    glDeleteTextures(1, &mFboNormTexture);
+    glDeleteTextures(1, &mFboNormTexture);
+    glDeleteTextures(1, &mFboNormTexture);
+    glDeleteTextures(1, &mFboSsaoTexture);
+    glDeleteTextures(1, &mFboSsaoBlurTexture);
+    glDeleteTextures(1, &mFboSsaoNoiseTexture);
+
+    glDeleteVertexArrays(1, &mFboQuadVAO);
+    glDeleteVertexArrays(1, &mFboQuadVAO);
+
+    glDeleteRenderbuffers(1, &mFboQuadVBO);
 }
 
 void SimDisplay::InitGL()
