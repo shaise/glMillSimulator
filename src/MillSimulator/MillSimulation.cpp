@@ -57,6 +57,7 @@ void MillSimulation::Clear()
     for (int i = 0; i < mToolTable.size(); i++) {
         delete mToolTable[i];
     }
+    mStockObject.~StockObject();
     mToolTable.clear();
     mCurStep = 0;
     mPathStep = -1;
@@ -90,6 +91,9 @@ void MillSimulation::InitSimulation(float quality)
     mCurStep = 0;
     mPathStep = -1;
     mNTotalSteps = 0;
+    mIsRotate = false;
+    mSimPlaying = false;
+    mSimSpeed = 1;
     MillPathSegment::SetQuality(quality, simDisplay.maxFar);
     int nOperations = (int)mCodeParser.Operations.size();
     ;
@@ -322,7 +326,7 @@ void MillSimulation::RenderSimulation()
 void MillSimulation::Render()
 {
     // set background
-    glClearColor(0.6f, 0.8f, 1.0f, 1.0f);
+    glClearColor(bgndColor[0], bgndColor[1], bgndColor[2], 1.0f);
     glClear(GL_COLOR_BUFFER_BIT | GL_DEPTH_BUFFER_BIT | GL_STENCIL_BUFFER_BIT);
     simDisplay.PrepareDisplay(mStockObject.center);
 

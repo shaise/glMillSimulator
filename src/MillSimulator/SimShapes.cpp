@@ -71,7 +71,7 @@ static bool GenerateSinTable(int nSlices)
 }
 
 
-void MillSim::Shape::RotateProfile(float* profPoints, int nPoints, float distance, float deltaHeight, int nSlices, bool isHalfTurn)
+void Shape::RotateProfile(float* profPoints, int nPoints, float distance, float deltaHeight, int nSlices, bool isHalfTurn)
 {
     int vidx = 0;
     int iidx = 0;
@@ -153,7 +153,7 @@ void MillSim::Shape::RotateProfile(float* profPoints, int nPoints, float distanc
     free(ibuffer);
 }
 
-void MillSim::Shape::CalculateExtrudeBufferSizes(int nProfilePoints, bool capStart, bool capEnd,
+void Shape::CalculateExtrudeBufferSizes(int nProfilePoints, bool capStart, bool capEnd,
     int* numVerts, int* numIndices, int* vc1idx, int* vc2idx, int* ic1idx, int* ic2idx)
 {
     *numVerts = nProfilePoints * 4; // one face per profile point times 4 vertex per face
@@ -174,7 +174,7 @@ void MillSim::Shape::CalculateExtrudeBufferSizes(int nProfilePoints, bool capSta
     }
 }
 
-void MillSim::Shape::ExtrudeProfileRadial(float* profPoints, int nPoints, float radius, float angleRad, float deltaHeight, bool capStart, bool capEnd)
+void Shape::ExtrudeProfileRadial(float* profPoints, int nPoints, float radius, float angleRad, float deltaHeight, bool capStart, bool capEnd)
 {
     int vidx = 0, vc1idx, vc2idx;
     int iidx = 0, ic1idx, ic2idx;
@@ -272,7 +272,7 @@ void MillSim::Shape::ExtrudeProfileRadial(float* profPoints, int nPoints, float 
     free(ibuffer);
 }
 
-void MillSim::Shape::ExtrudeProfileLinear(float* profPoints, int nPoints, float fromX, float toX, float fromZ, float toZ, bool capStart, bool capEnd)
+void Shape::ExtrudeProfileLinear(float* profPoints, int nPoints, float fromX, float toX, float fromZ, float toZ, bool capStart, bool capEnd)
 {
     int vidx = 0, vc1idx, vc2idx;
     int iidx = 0, ic1idx, ic2idx;
@@ -345,7 +345,7 @@ void MillSim::Shape::ExtrudeProfileLinear(float* profPoints, int nPoints, float 
     free(ibuffer);
 }
 
-void MillSim::Shape::GenerateModel(float* vbuffer, GLushort* ibuffer, int numVerts, int nIndices)
+void Shape::GenerateModel(float* vbuffer, GLushort* ibuffer, int numVerts, int nIndices)
 {
     //GLuint vbo, ibo, vao;
 
@@ -372,32 +372,33 @@ void MillSim::Shape::GenerateModel(float* vbuffer, GLushort* ibuffer, int numVer
     numIndices = nIndices;
 }
 
-void MillSim::Shape::Render()
+void Shape::Render()
 {
     glBindVertexArray(vao);
     glBindBuffer(GL_ELEMENT_ARRAY_BUFFER, ibo);
     glDrawElements(GL_TRIANGLES, numIndices, GL_UNSIGNED_SHORT, nullptr);
 }
 
-void MillSim::Shape::Render(mat4x4 modelMat, mat4x4 normallMat) // normals are rotated only
+void Shape::Render(mat4x4 modelMat, mat4x4 normallMat) // normals are rotated only
 {
     CurrentShader->UpdateModelMat(modelMat, normallMat);
     Render();
 }
 
-void MillSim::Shape::FreeResources()
+void Shape::FreeResources()
 {
     if (vao > 0)
     {
         glBindVertexArray(vao);
         if (vbo > 0) glDeleteBuffers(1, &vbo);
         if (ibo > 0) glDeleteBuffers(1, &ibo);
+        glBindVertexArray(0);
         glDeleteVertexArrays(1, &vao);
         vbo = ibo = vao = 0;
     }
 }
 
-MillSim::Shape::~Shape()
+Shape::~Shape()
 {
     FreeResources();
 }

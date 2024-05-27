@@ -97,6 +97,9 @@ bool GuiDisplay::GenerateGlItem(GuiItem* guiItem)
 
 bool GuiDisplay::InutGui()
 {
+    if (guiInitiated) {
+        return true;
+    }
     // index buffer
     glGenBuffers(1, &mIbo);
     GLshort indices[6] = {0, 2, 3, 0, 3, 1};
@@ -125,6 +128,7 @@ bool GuiDisplay::InutGui()
     mShader.CompileShader((char*)VertShader2DTex, (char*)FragShader2dTex);
     mShader.UpdateTextureSlot(0);
     mShader.UpdateProjectionMat(projmat);
+    guiInitiated = true;
     return true;
 }
 

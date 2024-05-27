@@ -201,7 +201,7 @@ void SimDisplay::CreateSsaoFbos()
         vec3_set(sample,
                  randomFloats(generator) * 2.0f - 1.0f,
                  randomFloats(generator) * 2.0f - 1.0f,
-                 randomFloats(generator));
+                 randomFloats(generator) * 2.0f - 1.0f);
         vec3_norm(sample, sample);
         vec3_scale(sample, sample, randomFloats(generator));
         float scale = float(i) / 64.0f;
@@ -258,6 +258,10 @@ SimDisplay::~SimDisplay()
 
 void SimDisplay::InitGL()
 {
+    if (displayInitiated) {
+        return;
+    }
+
     // setup light object
     mlightObject.GenerateBoxStock(-0.5f, -0.5f, -0.5f, 1, 1, 1);
 
@@ -267,6 +271,7 @@ void SimDisplay::InitGL()
     CreateFboQuad();
 
     UpdateProjection();
+    displayInitiated = true;
 }
 
 void SimDisplay::PrepareDisplay(vec3 objCenter)
@@ -375,8 +380,8 @@ void SimDisplay::RenderResultSSAO()
     glBindFramebuffer(GL_FRAMEBUFFER, 0);
 
     // lighting pass: deferred Blinn-Phong lighting with added screen-space ambient occlusion
-    glClearColor(0.6f, 0.8f, 1.0f, 1.0f);
-    glClear(GL_COLOR_BUFFER_BIT | GL_DEPTH_BUFFER_BIT);
+    //glClearColor(0.6f, 0.8f, 1.0f, 1.0f);
+    //glClear(GL_COLOR_BUFFER_BIT | GL_DEPTH_BUFFER_BIT);
     shaderSSAOLighting.Activate();
     shaderSSAOLighting.UpdateAlbedoTexSlot(0);
     shaderSSAOLighting.UpdatePositionTexSlot(1);

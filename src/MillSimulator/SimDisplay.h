@@ -65,6 +65,7 @@ public:
     bool applySSAO = false;
     bool updateDisplay = false;
     float maxFar = 100;
+    bool displayInitiated = false;
 
 protected:
     void InitShaders();
@@ -82,7 +83,7 @@ protected:
     Shader shaderGeom, shaderSSAO, shaderLighting, shaderSSAOLighting, shaderSSAOBlur;
     vec3 lightColor = {0.8f, 0.9f, 1.0f};
     vec3 lightPos = {20.0f, 20.0f, 10.0f};
-    vec3 ambientCol = {0.5f, 0.5f, 0.6f};
+    vec3 ambientCol = {0.6f, 0.6f, 0.7f};
 
     vec3 eye = {0, 100, 40};
     vec3 target = {0, 0, -10};
