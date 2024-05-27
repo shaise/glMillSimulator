@@ -236,24 +236,7 @@ void SimDisplay::CreateSsaoFbos()
 
 SimDisplay::~SimDisplay()
 {
-    glDeleteFramebuffers(1, &mFbo);
-    glDeleteFramebuffers(1, &mSsaoFbo);
-    glDeleteFramebuffers(1, &mSsaoBlurFbo);
-    glDeleteTextures(1, &mFboColTexture);
-    glDeleteTextures(1, &mFboPosTexture);
-    glDeleteTextures(1, &mFboNormTexture);
-    glDeleteTextures(1, &mFboNormTexture);
-    glDeleteTextures(1, &mFboNormTexture);
-    glDeleteTextures(1, &mFboNormTexture);
-    glDeleteTextures(1, &mFboNormTexture);
-    glDeleteTextures(1, &mFboSsaoTexture);
-    glDeleteTextures(1, &mFboSsaoBlurTexture);
-    glDeleteTextures(1, &mFboSsaoNoiseTexture);
-
-    glDeleteVertexArrays(1, &mFboQuadVAO);
-    glDeleteVertexArrays(1, &mFboQuadVAO);
-
-    glDeleteRenderbuffers(1, &mFboQuadVBO);
+    CleanGL();
 }
 
 void SimDisplay::InitGL()
@@ -272,6 +255,39 @@ void SimDisplay::InitGL()
 
     UpdateProjection();
     displayInitiated = true;
+}
+
+void SimDisplay::CleanGL()
+{
+    // cleanup frame buffers
+    GLDELETE_FRAMEBUFFER(mFbo);
+    GLDELETE_FRAMEBUFFER(mSsaoFbo);
+    GLDELETE_FRAMEBUFFER(mSsaoBlurFbo);
+
+    // cleanup textures;
+    GLDELETE_TEXTURE(mFboColTexture);
+    GLDELETE_TEXTURE(mFboPosTexture);
+    GLDELETE_TEXTURE(mFboNormTexture);
+    GLDELETE_TEXTURE(mFboSsaoTexture);
+    GLDELETE_TEXTURE(mFboSsaoBlurTexture);
+    GLDELETE_TEXTURE(mFboSsaoNoiseTexture);
+
+    // cleanup geometry
+    GLDELETE_VERTEXARRAY(mFboQuadVAO);
+    GLDELETE_RENDERBUFFER(mFboQuadVBO);
+
+    // cleanup shaders
+    shader3D.Destroy();
+    shaderInv3D.Destroy();
+    shaderFlat.Destroy();
+    shaderSimFbo.Destroy();
+    shaderGeom.Destroy();
+    shaderSSAO.Destroy();
+    shaderLighting.Destroy();
+    shaderSSAOLighting.Destroy();
+    shaderSSAOBlur.Destroy();
+
+    displayInitiated = false;
 }
 
 void SimDisplay::PrepareDisplay(vec3 objCenter)

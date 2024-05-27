@@ -223,7 +223,6 @@ int main(int argc, char** argv)
     std::cout << glGetString(GL_VERSION) << std::endl;
     // gMillSimulator.LoadGCodeFile("cam_test1.txt");
 
-
     for (int i = 0; i < NUM_DEMO_MOTIONS; i++) {
         gMillSimulator.AddGcodeLine(demoCode[i]);
     }

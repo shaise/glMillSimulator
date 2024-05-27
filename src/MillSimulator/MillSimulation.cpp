@@ -36,15 +36,11 @@ MillSimulation::MillSimulation()
 
 MillSimulation::~MillSimulation()
 {
+    Clear();
 }
 
 void MillSimulation::ClearMillPathSegments()
 {
-    // for (std::vector<MillPathSegment*>::const_iterator i = MillPathSegments.begin(); i !=
-    // MillPathSegments.end(); ++i) {
-    //     MillSim::MillPathSegment* p = *i;
-    //     delete p;
-    // }
     for (int i = 0; i < MillPathSegments.size(); i++) {
         delete MillPathSegments[i];
     }
@@ -57,8 +53,11 @@ void MillSimulation::Clear()
     for (int i = 0; i < mToolTable.size(); i++) {
         delete mToolTable[i];
     }
+    ClearMillPathSegments();
     mStockObject.~StockObject();
     mToolTable.clear();
+    guiDisplay.ResetGui();
+    simDisplay.CleanGL();
     mCurStep = 0;
     mPathStep = -1;
     mNTotalSteps = 0;
@@ -79,6 +78,7 @@ void MillSimulation::SimNext()
     if (mCurStep < mNTotalSteps) {
         mCurStep += mSimSpeed;
         CalcSegmentPositions();
+        simDisplay.updateDisplay = true;
     }
 }
 
@@ -452,7 +452,7 @@ void MillSimulation::InitDisplay(float quality)
     simDisplay.InitGL();
 
     // init gui elements
-    guiDisplay.InutGui();
+    guiDisplay.InitGui();
 }
 
 void MillSimulation::SetBoxStock(float x, float y, float z, float l, float w, float h)

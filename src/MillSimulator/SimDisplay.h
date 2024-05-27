@@ -42,6 +42,7 @@ class SimDisplay
 public:
     ~SimDisplay();
     void InitGL();
+    void CleanGL();
     void PrepareDisplay(vec3 objCenter);
     void StartDepthPass();
     void StartGeometryPass(vec3 objColor, bool invertNormals);
