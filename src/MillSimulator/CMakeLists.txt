@@ -8,6 +8,7 @@ set(SOURCES
     GlUtils.cpp
     GuiDisplay.cpp
     main.cpp
+    SimDisplay.cpp
     MillPathSegment.cpp
     MillSimulation.cpp
     Shader.cpp
