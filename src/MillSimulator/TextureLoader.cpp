@@ -21,6 +21,7 @@
  ***************************************************************************/
 
 #include "TextureLoader.h"
+#include <string.h>
 
 using namespace MillSim;
 
