@@ -17,19 +17,29 @@ set(SOURCES
     TextureLoader.cpp
 )
 
-add_definitions(-DCAM_SIM_USE_GLEW)
-
 # Include directories
 #include_directories(${CMAKE_SOURCE_DIR}/include)
 
 # Add executable
 add_executable(glMillSimulator ${SOURCES})
 
+# Option to select whether to use Qt or GLEW
+option(USE_QT "Use Qt for the project" OFF)
+if (USE_QT)
+
+find_package(Qt5 COMPONENTS Core REQUIRED)
+target_link_libraries(helloworld Qt5::Core)
+
+else()
+
+add_definitions(-DCAM_SIM_USE_GLEW)
 find_package(GLEW REQUIRED)
-#find_package(GLFW REQUIRED)
 find_package(glfw3 3.3 REQUIRED)
-#include_directories(${GLEW_INCLUDE_DIRS})
-#link_libraries(${GLEW_LIBRARIES} GL)
 
 # Link libraries
 target_link_libraries(glMillSimulator glfw ${GLEW_LIBRARIES} GL)
+endif()
+
+#include_directories(${GLEW_INCLUDE_DIRS})
+#link_libraries(${GLEW_LIBRARIES} GL)
+
