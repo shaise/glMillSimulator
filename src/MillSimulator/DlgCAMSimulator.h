@@ -26,14 +26,15 @@
 #include <QWindow>
 #include <QOpenGLExtraFunctions>
 #include <QPainter>
+#include <QExposeEvent>
+#include <QResizeEvent>
+#include <QMouseEvent>
+#include <QOpenGLContext>
 
-namespace MillSim
-{
-class MillSimulation;  // use short declaration as using 'include' causes a header loop
-}
-
-namespace CAMSimulator
-{
+ namespace MillSim
+ {
+   class MillSimulation;  // use short declaration as using 'include' causes a header loop
+ }
 
 struct SimStock
 {
@@ -50,15 +51,16 @@ class DlgCAMSimulator: public QWindow, public QOpenGLExtraFunctions
 {
     Q_OBJECT
 public:
-    explicit DlgCAMSimulator(QWindow* parent = nullptr);
+     explicit DlgCAMSimulator(QWindow* parent);
     ~DlgCAMSimulator() override = default;
-
+    static DlgCAMSimulator* GetInstance();
+ 
     virtual void render(QPainter* painter);
     virtual void render();
     virtual void initialize();
 
     void setAnimating(bool animating);
-    static DlgCAMSimulator* GetInstance();
+    MillSim::MillSimulation* GetSimulator() { return mMillSimulator; }
 
 public:  // slots:
     void renderLater();
@@ -85,16 +87,14 @@ protected:
 private:
     bool mAnimating = false;
     bool mNeedsInitialize = false;
-
-    QOpenGLContext* mContext = nullptr;
-    MillSim::MillSimulation* mMillSimulator = nullptr;
-    static DlgCAMSimulator* mInstance;
     SimStock mStock = {0, 0, 0, 1, 1, 1, 1};
     float mQuality = 10;
+    MillSim::MillSimulation* mMillSimulator = nullptr;
+#
+    QOpenGLContext* mContext = nullptr;
+    static DlgCAMSimulator* mInstance;
 };
 
-
-}  // namespace CAMSimulator
 
 
 #endif  // PATHSIMULATOR_PathSim_H

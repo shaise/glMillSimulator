@@ -20,7 +20,7 @@
 
 #define gEyeStep (PI / 36)
 
-MillSim::MillSimulation gMillSimulator;
+bool quitApp = false;
 
 using namespace MillSim;
 
@@ -118,32 +118,10 @@ const char *demoCode[] = {
 #define NUM_DEMO_MOTIONS (sizeof(demoCode) / sizeof(char *))
 
 
-
-
-
-// test section - remove!
-GLuint tprogram, tmodel, tview, tprojection, tarray;
-
-void ShowStats() {
-    glDisable(GL_DEPTH_TEST);
-    glLoadIdentity();
-    glMatrixMode(GL_PROJECTION);
-    //glPushMatrix();
-    glLoadIdentity();
-    glColor3f(0.0f, 0.0f, 0.0f);
-    glRasterPos2f(-1.0f, -1.0f);
-    glDisable(GL_LIGHTING);
-    glEnable(GL_LIGHTING);
-    //glPopMatrix();
-    glMatrixMode(GL_MODELVIEW);
-    glEnable(GL_DEPTH_TEST);
-}
-
-// add stuff here to show over simulation
-void display()
-{
-    //ShowStats();
-}
+#ifdef CAM_SIM_USE_GLEW
+#include <GLFW/glfw3.h>
+MillSim::MillSimulation gMillSimulator;
+GLFWwindow* glwind;
 
 void key_callback(GLFWwindow* window, int key, int scancode, int action, int mods) 
 {
@@ -185,7 +163,6 @@ void handle_mouse_move(GLFWwindow* window)
 }
 
 
-
 //The callback function receives two - dimensional scroll offsets.
 void scroll_callback(GLFWwindow * window, double xoffset, double yoffset)
 {
@@ -199,8 +176,6 @@ static void error_callback(int error, const char* description)
 }
 
 
-#ifdef CAM_SIM_USE_GLEW
-GLFWwindow* glwind;
 int main(int argc, char **argv)
 {
     glfwSetErrorCallback(error_callback);
@@ -249,7 +224,6 @@ int main(int argc, char **argv)
     while (!glfwWindowShouldClose(glwind))
     {
         gMillSimulator.ProcessSim((unsigned int)(glfwGetTime() * 1000));
-        display();
         glfwSwapBuffers(glwind);
         glfwPollEvents();
         handle_mouse_move(glwind);
@@ -265,8 +239,45 @@ int main(int argc, char **argv)
 }
 #else 
 // USE QT
+#include <unistd.h>
+#include <QGuiApplication>
+#include <QSurfaceFormat>
+
+
+MillSim::MillSimulation *gMillSimulator;
+DlgCAMSimulator *gSimWindow;
+
 int main(int argc, char **argv)
 {
+    QGuiApplication app(argc, argv);
+
+    QSurfaceFormat format;
+    format.setDepthBufferSize(24);
+    QSurfaceFormat::setDefaultFormat(format);
+    gSimWindow = DlgCAMSimulator::GetInstance();
+    gSimWindow->resetSimulation();
+    gMillSimulator = (MillSim::MillSimulation *)gSimWindow->GetSimulator();
+    for (int i = 0; i < NUM_DEMO_MOTIONS; i++)
+    {
+        gMillSimulator->AddGcodeLine(demoCode[i]);
+    }
+    float rad = 3.175f / 2.0f;
+    //float buff4[4] = { rad, 30, rad, 0 };
+    //gMillSimulator->AddTool(new EndMill(buff4, 2, 1, 3.175f));
+    gMillSimulator->AddTool(new EndMillFlat(2, 1.5f));
+    gMillSimulator->AddTool(new EndMillBall(4, 1, 4, 0.2f));
+    gMillSimulator->AddTool(new EndMillTaper(3, 1, 90, 0.2f));
+    //gMillSimulator->SetBoxStock(-20, -20, 0.005f, 40, 40, 2);
+    SimStock stk(-20, -20, 0.005f, 40, 40, 2, 10);
+    gSimWindow->startSimulation(&stk, 10);
+ 
+    return app.exec();
+
+    while (!quitApp)
+    {
+        sleep(1);
+    }
+
 }
 #endif
 

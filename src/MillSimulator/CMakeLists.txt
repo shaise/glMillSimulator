@@ -1,3 +1,10 @@
+cmake_minimum_required(VERSION 3.10)
+project(glMillSimulator)
+
+set(CMAKE_CXX_STANDARD 11)
+set(CMAKE_AUTOMOC ON)
+#set(CMAKE_CXX_STANDARD_REQUIRED ON)
+
 # Create a variable with all source files
 set(SOURCES
     EndMill.cpp
@@ -18,23 +25,30 @@ set(SOURCES
 )
 
 set(QT_SOURCES
-}
+    DlgCAMSimulator.cpp
+)
 
 
 # Include directories
 #include_directories(${CMAKE_SOURCE_DIR}/include)
 
-# Add executable
-add_executable(glMillSimulator ${SOURCES})
 
 # Option to select whether to use Qt or GLEW
 option(USE_QT "Use Qt for the project" OFF)
 if (USE_QT)
 
-find_package(Qt5 COMPONENTS Core REQUIRED)
-target_link_libraries(helloworld Qt5::Core)
+# Add executable
+add_executable(glMillSimulator ${SOURCES} ${QT_SOURCES})
+
+find_package(Qt5 COMPONENTS Gui REQUIRED)
+message(${Qt5Gui_INCLUDE_DIRS})
+target_include_directories(glMillSimulator PRIVATE ${Qt5Gui_INCLUDE_DIRS})
+target_link_libraries(glMillSimulator Qt5::Gui)
 
 else()
+
+# Add executable
+add_executable(glMillSimulator ${SOURCES})
 
 add_definitions(-DCAM_SIM_USE_GLEW)
 find_package(GLEW REQUIRED)

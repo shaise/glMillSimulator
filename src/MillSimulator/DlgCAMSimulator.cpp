@@ -20,27 +20,14 @@
  *                                                                         *
  ***************************************************************************/
 
-#include "PreCompiled.h"
-
 #include "DlgCAMSimulator.h"
 #include "MillSimulation.h"
-#include <QMatrix4x4>
-#include <QScreen>
 #include <QDateTime>
-#include <QSurfaceFormat>
-#include <QMouseEvent>
-#include <QWheelEvent>
 #include <QPoint>
 
-using namespace CAMSimulator;
 using namespace MillSim;
 
 QOpenGLContext* gOpenGlContext;
-
-using namespace MillSim;
-
-namespace CAMSimulator
-{
 
 DlgCAMSimulator::DlgCAMSimulator(QWindow* parent)
     : QWindow(parent)
@@ -214,7 +201,9 @@ DlgCAMSimulator* DlgCAMSimulator::GetInstance()
         QSurfaceFormat format;
         format.setSamples(16);
         format.setSwapInterval(2);
-        mInstance = new DlgCAMSimulator();
+        format.setDepthBufferSize(24);
+        format.setStencilBufferSize(8);
+        mInstance = new DlgCAMSimulator(nullptr);
         mInstance->setFormat(format);
         mInstance->resize(800, 600);
         mInstance->setModality(Qt::ApplicationModal);
@@ -241,5 +230,3 @@ SimStock::SimStock(float px, float py, float pz, float lx, float ly, float lz, f
 
 SimStock::~SimStock()
 {}
-
-}  // namespace CAMSimulator

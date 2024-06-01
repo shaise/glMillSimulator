@@ -27,7 +27,10 @@
 #else
 #include "DlgCAMSimulator.h"
 extern QOpenGLContext* gOpenGlContext;
-#define gSimWindow CAMSimulator::DlgCAMSimulator::GetInstance()
+extern DlgCAMSimulator* gSimWindow;
+#define glClearColor gSimWindow->glClearColor
+#define glBlendFunc gSimWindow->glBlendFunc
+#define glClear gSimWindow->glClear
 #define glGenBuffers gSimWindow->glGenBuffers
 #define glBindBuffer gSimWindow->glBindBuffer
 #define glBufferData gSimWindow->glBufferData
@@ -66,6 +69,9 @@ extern QOpenGLContext* gOpenGlContext;
 #define glTexParameteri gSimWindow->glTexParameteri
 #define glTexImage2D gSimWindow->glTexImage2D
 #define glDeleteTextures gSimWindow->glDeleteTextures
+#define glGetShaderiv gSimWindow->glGetShaderiv
+#define glGetShaderInfoLog gSimWindow->glGetShaderInfoLog
+
 #endif  // HAVE_OPENGL_EXT
 
 #endif  // !__openglwrapper_h__
