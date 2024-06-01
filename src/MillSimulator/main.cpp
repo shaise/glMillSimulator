@@ -14,6 +14,7 @@
 #include "EndMillBall.h"
 #include "EndMillTaper.h"
 #include <iostream>
+#include <fstream>
 #include <sstream>
 #include <string>
 #include <vector>
@@ -223,8 +224,19 @@ int main(int argc, char** argv)
     std::cout << glGetString(GL_VERSION) << std::endl;
     // gMillSimulator.LoadGCodeFile("cam_test1.txt");
 
-    for (int i = 0; i < NUM_DEMO_MOTIONS; i++) {
-        gMillSimulator.AddGcodeLine(demoCode[i]);
+    // if "testcam.nc" exists, load it
+    std::ifstream file("testcam.nc");
+    if (file.is_open()) {
+        std::string line;
+        while (std::getline(file, line)) {
+            gMillSimulator.AddGcodeLine(line.c_str());
+        }
+        file.close();
+    }
+    else {
+        for (int i = 0; i < NUM_DEMO_MOTIONS; i++) {
+            gMillSimulator.AddGcodeLine(demoCode[i]);
+        }
     }
     float rad = 3.175f / 2.0f;
     gMillSimulator.AddTool(new EndMillFlat(2, 1.5f));
