@@ -110,3 +110,5 @@ build/src/Makefile
 build/src/cmake_install.cmake
 build/cmake_install.cmake
 build/Makefile
+build/src/MillSimulator/cmake_install.cmake
+build/src/MillSimulator/Makefile

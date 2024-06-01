@@ -7,7 +7,7 @@
 
 
 #include "GlUtils.h"
-#include <GLFW/glfw3.h>
+#include "OpenGlWrapper.h"
 #include "linmath.h"
 #include "MillSimulation.h"
 #include "EndMillFlat.h"
@@ -21,8 +21,6 @@
 #define gEyeStep (PI / 36)
 
 MillSim::MillSimulation gMillSimulator;
-
-GLFWwindow* glwind;
 
 using namespace MillSim;
 
@@ -201,6 +199,8 @@ static void error_callback(int error, const char* description)
 }
 
 
+#ifdef CAM_SIM_USE_GLEW
+GLFWwindow* glwind;
 int main(int argc, char **argv)
 {
     glfwSetErrorCallback(error_callback);
@@ -263,4 +263,10 @@ int main(int argc, char **argv)
 
     return 0;
 }
+#else 
+// USE QT
+int main(int argc, char **argv)
+{
+}
+#endif
 
