@@ -153,18 +153,27 @@ namespace MillSim {
     void MillSimulation::GlsimToolStep1(void)
     {
         glCullFace(GL_BACK);
+        // glDisable(GL_CULL_FACE);
         glDepthFunc(GL_LESS);
+        glStencilMask(0xFF);
         glStencilFunc(GL_ALWAYS, 1, 0xFF);
-        glStencilOp(GL_ZERO, GL_ZERO, GL_REPLACE);
+        glStencilOp(GL_KEEP, GL_KEEP, GL_INCR);
         glDepthMask(GL_FALSE);
+    }
+
+    void MillSimulation::GlsimToolStep1a(void)
+    {
+        glCullFace(GL_FRONT);
+        glStencilOp(GL_KEEP, GL_KEEP, GL_DECR);
     }
 
 
     void MillSimulation::GlsimToolStep2(void)
     {
-        glStencilFunc(GL_EQUAL, 1, 0xFF);
+        glStencilFunc(GL_LESS, 0, 0xFF);
         glStencilOp(GL_KEEP, GL_KEEP, GL_KEEP);
         glDepthFunc(GL_GREATER);
+        glEnable(GL_CULL_FACE);
         glCullFace(GL_FRONT);
         glDepthMask(GL_TRUE);
     }
@@ -209,13 +218,27 @@ namespace MillSim {
         MillSim::MillPathSegment* p = MillPathSegments.at(iSeg);
         int step = iSeg == mPathStep ? mSubStep : p->numSimSteps;
         int start = p->isMultyPart ? 1 : step;
-        for (int i = start; i <= step; i++)
-        {
-            GlsimToolStep1();
-            p->render(i);
-            GlsimToolStep2();
+        //for (int i = start; i <= step; i++)
+        //{
+        //    GlsimToolStep1();
+        //    p->render(i);
+        //    GlsimToolStep2();
+        //    p->render(i);
+        //}
+        glClear(GL_STENCIL_BUFFER_BIT);
+        GlsimToolStep1();
+        for (int i = start; i <= step; i++) {
             p->render(i);
         }
+        GlsimToolStep1a();
+        for (int i = start; i <= step; i++) {
+            p->render(i);
+        }
+        GlsimToolStep2();
+        for (int i = start; i <= step; i++) {
+            p->render(i);
+        }
+
     }
 
     void MillSimulation::renderSegmentReversed(int iSeg)
@@ -275,14 +298,14 @@ namespace MillSim {
         for (int i = 0; i <= mPathStep; i++)
             renderSegmentForward(i);
 
-        for (int i = mPathStep; i >= 0; i--)
-            renderSegmentForward(i);
+        //for (int i = mPathStep; i >= 0; i--)
+        //    renderSegmentForward(i);
 
-        for (int i = 0; i < mPathStep; i++)
-            renderSegmentReversed(i);
+        //for (int i = 0; i < mPathStep; i++)
+        //    renderSegmentReversed(i);
 
-        for (int i = mPathStep; i >= 0; i--)
-            renderSegmentReversed(i);
+        //for (int i = mPathStep; i >= 0; i--)
+        //    renderSegmentReversed(i);
 
         GlsimClipBack();
         mStockObject.render();

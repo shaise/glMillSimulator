@@ -74,6 +74,7 @@ protected:
     void InitDisplay(float quality);
     void GlsimStart();
     void GlsimToolStep1(void);
+    void GlsimToolStep1a(void);
     void GlsimToolStep2(void);
     void GlsimClipBack(void);
     void GlsimRenderStock(void);
