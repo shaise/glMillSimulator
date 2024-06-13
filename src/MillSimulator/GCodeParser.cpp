@@ -43,7 +43,7 @@ GCodeParser::~GCodeParser()
 bool GCodeParser::Parse(const char* filename)
 {
     Operations.clear();
-    lastState = {eNop, -1, 0, 0, 0, 0, 0, 0};
+    lastState = {eNop, -1, 0.0F, 0.0F, 0.0F, 0.0F, 0.0F, 0.0F, 0.0F};
     lastTool = -1;
 
     FILE* fl;
@@ -222,9 +222,6 @@ bool GCodeParser::AddLine(const char* ptr)
             Operations.push_back(lastState);
             lastState.z = rPlane;
             Operations.push_back(lastState);
-            // restore original state
-            lastState.z = finalDepth;
-            lastState.cmd = eDril;
         }
         else {
             Operations.push_back(lastState);

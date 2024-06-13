@@ -49,7 +49,9 @@ void Shader::UpdateProjectionMat(mat4x4 mat)
 void Shader::UpdateViewMat(mat4x4 mat)
 {
     if (mViewPos >= 0) {
-        glUniformMatrix4fv(mViewPos, 1, GL_FALSE, (GLfloat*)mat);
+        if (mViewPos >= 0) {
+            glUniformMatrix4fv(mViewPos, 1, GL_FALSE, (GLfloat*)mat);
+        }
     }
 }
 
@@ -83,6 +85,7 @@ void Shader::UpdateTextureSlot(int slot)
 bool CheckCompileResult(int shader)
 {
 #ifdef QT_OPENGL_LIB
+    (void)shader;
     return false;
 #else
     char log[1024];
