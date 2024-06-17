@@ -24,7 +24,6 @@
 #include "OpenGlWrapper.h"
 #include <vector>
 #include <iostream>
-#include <algorithm>
 
 namespace MillSim
 {
@@ -336,21 +335,21 @@ void MillSimulation::Render()
         RenderSimulation();
         simDisplay.updateDisplay = false;
     }
-        
+
     simDisplay.RenderResult();
 
- /*   if (mDebug > 0) {
-        mat4x4 test;
-        mat4x4_identity(test);
-        mat4x4_translate_in_place(test, 20, 20, 3);
-        mat4x4_rotate_Z(test, test, 30.f * 3.14f / 180.f);
-        int dpos = mNPathSteps - mDebug2;
-        MillSim::MillPathSegment* p = MillPathSegments.at(dpos);
-        if (mDebug > p->numSimSteps) {
-            mDebug = 1;
-        }
-        p->render(mDebug);
-    }*/
+    /*   if (mDebug > 0) {
+           mat4x4 test;
+           mat4x4_identity(test);
+           mat4x4_translate_in_place(test, 20, 20, 3);
+           mat4x4_rotate_Z(test, test, 30.f * 3.14f / 180.f);
+           int dpos = mNPathSteps - mDebug2;
+           MillSim::MillPathSegment* p = MillPathSegments.at(dpos);
+           if (mDebug > p->numSimSteps) {
+               mDebug = 1;
+           }
+           p->render(mDebug);
+       }*/
 
     float progress = (float)mCurStep / mNTotalSteps;
     glBindFramebuffer(GL_FRAMEBUFFER, 0);
@@ -361,12 +360,12 @@ void MillSimulation::ProcessSim(unsigned int time_ms)
 {
 
     static int ancient = 0;
-    static int last = 0;
-    static int msec = 0;
+    static unsigned int last = 0;
+    static unsigned int msec = 0xFFFFFFFF;
     static int fps = 0;
     static int renderTime = 0;
 
-    last = msec;
+    last = msec == 0xFFFFFFFF ? time_ms : msec;
     msec = time_ms;
     if (mIsRotate) {
         simDisplay.RotateEye((msec - last) / 4600.0f);
@@ -442,10 +441,11 @@ void MillSimulation::HandleKeyPress(int key)
     guiDisplay.UpdatePlayState(mSimPlaying);
 }
 
+
 void MillSimulation::InitDisplay(float quality)
 {
     // generate tools
-   for (int i = 0; i < mToolTable.size(); i++) {
+    for (int i = 0; i < mToolTable.size(); i++) {
         mToolTable[i]->GenerateDisplayLists(quality);
     }
 
@@ -501,7 +501,6 @@ void MillSimulation::MouseScroll(float dy)
         f = 0.05f;
     }
     simDisplay.UpdateEyeFactor(f);
-
 }
 
 
