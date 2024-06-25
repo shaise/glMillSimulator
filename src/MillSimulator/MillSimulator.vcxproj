@@ -139,6 +139,7 @@
     <ClCompile Include="EndMillTaper.cpp" />
     <ClCompile Include="GlUtils.cpp" />
     <ClCompile Include="GuiDisplay.cpp" />
+    <ClCompile Include="MillPathLine.cpp" />
     <ClCompile Include="MillPathSegment.cpp" />
     <ClCompile Include="main.cpp" />
     <ClCompile Include="MillSimulation.cpp" />
@@ -159,6 +160,7 @@
     <ClInclude Include="GuiDisplay.h" />
     <ClInclude Include="linmath.h" />
     <ClInclude Include="MillMotion.h" />
+    <ClInclude Include="MillPathLine.h" />
     <ClInclude Include="MillPathSegment.h" />
     <ClInclude Include="MillSimulation.h" />
     <ClInclude Include="OpenGlWrapper.h" />

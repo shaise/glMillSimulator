@@ -85,6 +85,7 @@ void MillSimulation::SimNext()
 void MillSimulation::InitSimulation(float quality)
 {
     ClearMillPathSegments();
+    millPathLine.Clear();
 
     mDestMotion = mZeroPos;
     // gDestPos = curMillOperation->startPos;
@@ -96,7 +97,7 @@ void MillSimulation::InitSimulation(float quality)
     mSimSpeed = 1;
     MillPathSegment::SetQuality(quality, simDisplay.maxFar);
     int nOperations = (int)mCodeParser.Operations.size();
-    ;
+    int segId = 0;
     for (int i = 0; i < nOperations; i++) {
         mCurMotion = mDestMotion;
         mDestMotion = mCodeParser.Operations[i];
@@ -105,11 +106,14 @@ void MillSimulation::InitSimulation(float quality)
             MillSim::MillPathSegment* segment =
                 new MillSim::MillPathSegment(tool, &mCurMotion, &mDestMotion);
             segment->indexInArray = i;
+            segment->segmentIndex = segId++;
             mNTotalSteps += segment->numSimSteps;
             MillPathSegments.push_back(segment);
+            segment->AppendPathPoints(millPathLine.MillPathPointsBuffer);
         }
     }
     mNPathSteps = (int)MillPathSegments.size();
+    millPathLine.GenerateModel();
     InitDisplay(quality);
 }
 
@@ -321,6 +325,13 @@ void MillSimulation::RenderSimulation()
         simDisplay.StartGeometryPass(toolColor, false);
         p->endmill->toolShape.Render(tmat, identityMat);
     }
+
+    if (mIsPathShown) {
+        simDisplay.SetupLinePathPass(mPathStep, false);
+        millPathLine.Render();
+        simDisplay.SetupLinePathPass(mPathStep, true);
+        millPathLine.Render();
+    }
 }
 
 void MillSimulation::Render()
@@ -392,34 +403,42 @@ void MillSimulation::ProcessSim(unsigned int time_ms)
 
 void MillSimulation::HandleKeyPress(int key)
 {
-    switch (key) {
-        case ' ':
-            mIsRotate = !mIsRotate;
+    if (key >= '1' && key <= '9') {
+        mSimSpeed = key - '0';
+    }
+    else if (key == 'D') {
+        mDebug++;
+    }
+    else if (key == 'K') {
+        mDebug2++;
+        gDebug = mNPathSteps - mDebug2;
+    }
+    else {
+        guiDisplay.HandleKeyPress(key);
+    }
+}
+
+void MillSimulation::HandleGuiAction(eGuiItems actionItem, bool checked)
+{
+    switch (actionItem) {
+        case eGuiItemRotate:
+            mIsRotate = checked;
             break;
 
-        case 'S':
+        case eGuiItemPlay:
             mSimPlaying = true;
             break;
 
-        case 'P':
+        case eGuiItemPause:
             mSimPlaying = false;
             break;
 
-        case 'T':
+        case eGuiItemSingleStep:
             mSimPlaying = false;
             mSingleStep = true;
             break;
 
-        case 'D':
-            mDebug++;
-            break;
-
-        case 'K':
-            mDebug2++;
-            gDebug = mNPathSteps - mDebug2;
-            break;
-
-        case 'F':
+        case eGuiItemFaster:
             if (mSimSpeed == 1) {
                 mSimSpeed = 10;
             }
@@ -432,10 +451,14 @@ void MillSimulation::HandleKeyPress(int key)
             guiDisplay.UpdateSimSpeed(mSimSpeed);
             break;
 
-        default:
-            if (key >= '1' && key <= '9') {
-                mSimSpeed = key - '0';
-            }
+        case eGuiItemPath:
+            mIsPathShown = checked;
+            simDisplay.updateDisplay = true;
+            break;
+
+        case eGuiItemAmbientOclusion:
+            simDisplay.applySSAO = checked;
+            simDisplay.updateDisplay = true;
             break;
     }
     guiDisplay.UpdatePlayState(mSimPlaying);
