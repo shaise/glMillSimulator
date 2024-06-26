@@ -142,15 +142,18 @@ MillPathSegment::~MillPathSegment()
 void MillPathSegment::AppendPathPoints(std::vector<MillPathPosition>& pointsBuffer)
 {
     MillPathPosition mpPos;
+    // float angRad = mStartAngRad - mStepNumber * mStepAngRad;
+    // vec3_set(mHeadPos, -mRadius * sinf(angRad), mRadius * cosf(angRad), 0);
+    // vec3_add(mHeadPos, mHeadPos, mCenter);
     if (mMotionType == MTCurved) {
         float ang = mStartAngRad;
         float z = mStartPos[PZ];
         float zStep = mDiff[PZ] / numSimSteps;
         for (int i = 1; i < numSimSteps; i++) {
-            ang += mStepAngRad;
+            ang -= mStepAngRad;
             z += zStep;
-            mpPos.X = mCenter[PX] + cosf(ang) * mRadius;
-            mpPos.Y = mCenter[PY] - sinf(ang) * mRadius;
+            mpPos.X = mCenter[PX] - sinf(ang) * mRadius;
+            mpPos.Y = mCenter[PY] + cosf(ang) * mRadius;
             mpPos.Z = z;
             mpPos.SegmentId = segmentIndex;
             pointsBuffer.push_back(mpPos);

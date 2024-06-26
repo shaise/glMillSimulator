@@ -223,7 +223,10 @@ void GuiDisplay::MousePressed(int button, bool isPressed, bool isSimRunning)
         else  // button released
         {
             UpdatePlayState(isSimRunning);
-            mPressedItem = nullptr;
+            if (mPressedItem != nullptr) {
+                MouseCursorPos(mPressedItem->sx + 1, mPressedItem->sy + 1);
+                mPressedItem = nullptr;
+            }
         }
     }
 }
